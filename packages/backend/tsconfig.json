@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    // "target": "ESNext",
+    // "module": "ESNext",
+    // "strict": true,
+    // "verbatimModuleSyntax": true,
+    // "skipLibCheck": true,
+    // "types": ["node"],
+    // "jsx": "react-jsx",
+    // "jsxImportSource": "hono/jsx",
+    // "outDir": "./dist",
+    // "baseUrl": "src", // enables direct import from src
+    // "paths": {
+    //   "trpc/*": ["trpc/*"],
+    //   "db/*": ["db/*"],
+    //   "helpers/*": ["helpers/*"]
+    // },
+    // "moduleResolution": "Bundler"
+    "lib": ["es2023"],
+    "module": "node16",
+    "target": "es2022",
+
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node16",
+    "outDir": "dist"
+  }
+}
