@@ -2,8 +2,9 @@ import { Home, Inbox, RefreshCcw, Delete, User } from "lucide-react";
 
 import { CollapsibleSidebarMenu } from "@/components/app-sidebar/collapsible-sidebar-menu";
 import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
-import { TrpcTypes } from "@/common/trpc-api";
+
 import { isAllowed } from "@/lib/utils";
+import { TrpcTypes } from "../../../../backend/src/trpc/router";
 
 const productionRoutes = [
   {

@@ -19,7 +19,7 @@ export const loginProcedure = publicProcedure
       password: z.string().min(1, { message: "Password is required" }),
     })
   )
-  .mutation(async ({ input, ctx }) => {
+  .mutation(async ({ input }) => {
     const user = await getUserFromAccount(input.account);
 
     if (!user || !user.passwordHash) {

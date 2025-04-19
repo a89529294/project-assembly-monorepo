@@ -17,7 +17,9 @@ export const router = createRouter({
 const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
-      url: "http://localhost:3000/trpc",
+      url: import.meta.env.PROD
+        ? "https://awstesthonobe.zapto.org/trpc"
+        : "http://localhost:3000/trpc",
       headers: () => {
         const token = localStorage.getItem(sessionTokenKey);
 

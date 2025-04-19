@@ -115,6 +115,7 @@ export const getAppUsersByPermissionProcedure = protectedProcedure(
     })
   )
   .query(async ({ input, ctx }) => {
+    console.log(ctx);
     // Permission already checked by middleware
     const users = await db
       .select({ appUser: appUsersTable })

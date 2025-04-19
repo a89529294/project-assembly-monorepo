@@ -1,17 +1,6 @@
-import { initTRPC, TRPCError } from "@trpc/server";
-import { getCurrentSession } from "../db/session-api.js";
-import { getUserRoles, hasPermission, isAdmin } from "../helpers/auth.js";
-import type { Context } from "hono";
-// import {
-//   loginProcedure,
-//   logoutProcedure,
-//   meProcedure,
-// } from "trpc/auth/procedures";
-// import { loginProcedure, logoutProcedure } from "./auth/procedures.js";
 import { authRouter } from "./auth/router.js";
-// import { t } from "trpc/core";
-import { personnelPermissionRouter } from "./personnel-permission/router.js";
 import { router } from "./core.js";
+import { personnelPermissionRouter } from "./personnel-permission/router.js";
 
 export const appRouter = router({
   auth: authRouter,

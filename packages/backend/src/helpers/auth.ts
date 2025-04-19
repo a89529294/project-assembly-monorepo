@@ -1,25 +1,15 @@
 import { and, eq, inArray } from "drizzle-orm";
-import type { MiddlewareHandler } from "hono";
 import { db } from "../db/index.js";
 import {
-  departmentsTable,
-  employeesTable,
   employeeDepartmentsTable,
+  employeesTable,
   permissionsTable,
   roleDepartmentsTable,
   rolesTable,
   userRolesTable,
   usersTable,
-  type SessionFromDb,
-  type UserFromDb,
 } from "../db/schema.js";
-import { getCurrentSession } from "../db/session-api.js";
 import type { Role } from "../db/types.js";
-
-type User = Omit<UserFromDb, "passwordHash" | "created_at" | "updated_at"> & {
-  isAdmin: boolean;
-};
-type Session = SessionFromDb;
 
 /**
  * Get user roles based on user ID
