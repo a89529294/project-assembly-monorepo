@@ -2,8 +2,12 @@ import { TRPCError } from "@trpc/server";
 import { db } from "../../db/index.js";
 import { hashPassword } from "../../db/password.js";
 import {
+  AppUserFromDb,
   appUserPermissions,
   appUsersTable,
+  departmentsTable,
+  employeeDepartmentsTable,
+  EmployeeFromDb,
   employeesTable,
   rolesTable,
   userRolesTable,
@@ -13,6 +17,7 @@ import { eq, inArray } from "drizzle-orm";
 import { generatePassword } from "../../helpers/auth.js";
 import { protectedProcedure } from "../../trpc/core.js";
 import { z } from "zod";
+import { PgSelect, PgSelectBase } from "drizzle-orm/pg-core";
 
 export const createUserForEmployeeProcedure = protectedProcedure("")
   .input(
@@ -116,20 +121,86 @@ export const getAppUsersByPermissionProcedure = protectedProcedure(
       })
       .optional()
   )
-  .query(async ({ input, ctx }) => {
-    console.log(ctx);
+  .query(async ({ input }) => {
+    console.log(input);
 
-    const baseQuery = db.select({ appUser: appUsersTable }).from(appUsersTable);
+    const genPartialUser = (v: AppUserFromDb) => ({
+      id: v.id,
+      account: v.account,
+      employeeId: v.employeeId,
+    });
+    const genPartialEmployee = (v: EmployeeFromDb) => {
+      const { created_at, updated_at, ...rest } = v;
+      return rest;
+    };
 
-    if (!input?.permission) {
-      return (await baseQuery).map((v) => v.appUser);
-    }
-
-    const users = await baseQuery
+    const baseQuery = db
+      .select({
+        appUser: appUsersTable,
+        employee: employeesTable,
+        department: departmentsTable,
+      })
+      .from(appUsersTable)
       .innerJoin(
-        appUserPermissions,
-        eq(appUsersTable.id, appUserPermissions.appUserId)
+        employeesTable,
+        eq(appUsersTable.employeeId, employeesTable.id)
       )
-      .where(eq(appUserPermissions.permission, input.permission));
-    return users.map((v) => v.appUser);
+      .innerJoin(
+        employeeDepartmentsTable,
+        eq(appUsersTable.employeeId, employeeDepartmentsTable.employeeId)
+      )
+      .innerJoin(
+        departmentsTable,
+        eq(employeeDepartmentsTable.departmentId, departmentsTable.id)
+      )
+      .$dynamic();
+
+    // const q = await baseQuery;
+    // console.log(q);
+
+    // return baseQuery;
+
+    type AggregatedUser = ReturnType<typeof genPartialUser> & {
+      employee: ReturnType<typeof genPartialEmployee>;
+      departments: (typeof departmentsTable.$inferSelect)[];
+    };
+
+    const genUsers = async (q: typeof baseQuery) => {
+      let rows: any[] = [];
+
+      if (input?.permission) {
+        rows = await q
+          .innerJoin(
+            appUserPermissions,
+            eq(appUsersTable.id, appUserPermissions.appUserId)
+          )
+          .where(eq(appUserPermissions.permission, input.permission));
+      } else {
+        rows = await q;
+      }
+
+      const userMap = new Map<string, AggregatedUser>();
+      for (const row of rows) {
+        const key = row.appUser.id;
+        if (!userMap.has(key)) {
+          userMap.set(key, {
+            ...genPartialUser(row.appUser),
+            employee: genPartialEmployee(row.employee),
+            departments: [row.department],
+          });
+        } else {
+          userMap.get(key)!.departments.push(row.department);
+        }
+      }
+      const x = Array.from(userMap.values());
+      return x;
+    };
+
+    return genUsers(baseQuery);
+
+    // if (!input?.permission) {
+    //   return genUsers(baseQuery);
+    // }
+
+    // return genUsers(filteredQuery);
   });

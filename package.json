@@ -10,6 +10,7 @@
     "dev": "pnpm -r --parallel dev"
   },
   "dependencies": {
+    "superjson": "^2.2.2",
     "zod": "^3.24.3"
   }
 }

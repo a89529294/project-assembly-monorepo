@@ -1,5 +1,6 @@
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "../../backend/src/trpc/router";
+import superjson from "superjson";
 
 import { sessionTokenKey } from "@/constants";
 // import { QueryClient } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ const trpcClient = createTRPCClient<AppRouter>({
       url: import.meta.env.PROD
         ? "https://awstesthonobe.zapto.org/trpc"
         : "http://localhost:3000/trpc",
+      transformer: superjson,
       headers: () => {
         const token = localStorage.getItem(sessionTokenKey);
 

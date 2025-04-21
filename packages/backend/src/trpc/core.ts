@@ -3,8 +3,11 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import { getCurrentSession } from "../db/session-api.js";
 import { getUserRoles, hasPermission, isAdmin } from "../helpers/auth.js";
 import { Context } from "hono";
+import superjson from "superjson";
 
-export const t = initTRPC.context<{ c: Context }>().create();
+export const t = initTRPC.context<{ c: Context }>().create({
+  transformer: superjson,
+});
 
 export const router = t.router;
 

@@ -50,6 +50,8 @@ export const permissionsTable = pgTable("permissions", {
 export const departmentsTable = pgTable("departments", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar({ length: 100 }).notNull(),
+  en_prefix: varchar({ length: 10 }).notNull(),
+  zh_prefix: varchar({ length: 10 }).notNull(),
   ...timestamps,
 });
 
@@ -86,12 +88,13 @@ export const usersTable = pgTable("users", {
 
 export const employeeDepartmentsTable = pgTable("employee_departments", {
   id: uuid("id").primaryKey().defaultRandom(),
-  employeeId: uuid("user_id")
+  employeeId: uuid("employee_id")
     .notNull()
     .references(() => employeesTable.id),
   departmentId: uuid("department_id")
     .notNull()
     .references(() => departmentsTable.id),
+  jobTitle: varchar("job_title", { length: 100 }),
   ...timestamps,
 });
 
@@ -106,7 +109,7 @@ export const appUsersTable = pgTable("app_users", {
   ...timestamps,
 });
 
-export const appUserPermissions = pgTable("appuser_permissions", {
+export const appUserPermissions = pgTable("app_user_permissions", {
   id: uuid("id").primaryKey().defaultRandom(),
   appUserId: uuid("app_user_id")
     .notNull()
@@ -268,11 +271,12 @@ export const usersRelations = relations(usersTable, ({ many, one }) => ({
   }),
 }));
 
-export const appUsersRelations = relations(appUsersTable, ({ one }) => ({
+export const appUsersRelations = relations(appUsersTable, ({ one, many }) => ({
   employee: one(employeesTable, {
     fields: [appUsersTable.employeeId],
     references: [employeesTable.id],
   }),
+  permissions: many(appUserPermissions),
 }));
 
 export const employeeDepartmentsRelations = relations(
@@ -348,6 +352,7 @@ export const appUserRefreshTokensRelations = relations(
 export type RoleFromDb = InferSelectModel<typeof rolesTable>;
 export type PermissionFromDb = InferSelectModel<typeof permissionsTable>;
 export type UserFromDb = InferSelectModel<typeof usersTable>;
+export type AppUserFromDb = InferSelectModel<typeof appUsersTable>;
 export type SessionFromDb = InferSelectModel<typeof sessionsTable>;
 export type CustomerFromDb = InferSelectModel<typeof customersTable>;
 export type ProjectFromDb = InferSelectModel<typeof projectsTable>;

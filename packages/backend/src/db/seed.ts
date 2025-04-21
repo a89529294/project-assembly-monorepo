@@ -21,6 +21,7 @@ import {
 } from "./schema.js";
 import { db } from "./index.js";
 import { randomUUID } from "crypto";
+import { seedEmployees, DepartmentConfig } from "./employee-seed.js";
 
 // const envPath = `.env.${process.env.NODE_ENV}`;
 // dotenv.config({ path: envPath });
@@ -100,42 +101,62 @@ async function main() {
     {
       id: hrDeptId,
       name: "Human Resources",
+      en_prefix: "HR",
+      zh_prefix: "人資",
     },
     {
       id: financeDeptId,
       name: "Finance",
+      en_prefix: "FIN",
+      zh_prefix: "財務",
     },
     {
       id: marketingDeptId,
       name: "Marketing",
+      en_prefix: "MKT",
+      zh_prefix: "行銷",
     },
     {
       id: salesDeptId,
       name: "Sales",
+      en_prefix: "SAL",
+      zh_prefix: "銷售",
     },
     {
       id: engineeringDeptId,
       name: "Engineering",
+      en_prefix: "ENG",
+      zh_prefix: "工程",
     },
     {
       id: productDeptId,
       name: "Product",
+      en_prefix: "PRD",
+      zh_prefix: "產品",
     },
     {
       id: operationsDeptId,
       name: "Operations",
+      en_prefix: "OPS",
+      zh_prefix: "營運",
     },
     {
       id: customerServiceDeptId,
       name: "Customer Service",
+      en_prefix: "CS",
+      zh_prefix: "客服",
     },
     {
       id: researchDeptId,
-      name: "Research & Development",
+      name: "Research",
+      en_prefix: "RND",
+      zh_prefix: "研發",
     },
     {
       id: legalDeptId,
       name: "Legal",
+      en_prefix: "LEG",
+      zh_prefix: "法律",
     },
   ];
 
@@ -310,209 +331,104 @@ async function main() {
   await db.insert(permissionsTable).values(permissions);
   console.log("Permissions created!");
 
-  // Create users
-  // --- Admin user (no employee, has user_role) ---
-  const adminUserId = randomUUID();
-  await db.insert(usersTable).values({
-    id: adminUserId,
-    account: "admin",
-    name: "Admin",
-    employeeId: null,
-    passwordHash:
-      "$argon2id$v=19$m=19456,t=2,p=1$EGTc0PR3V8ihyus3qz/WJA$sbAvDU2mZOJw7XkmKzeBQl79a6JiJUaGTthKJuh+mP0", // sample hash
-  });
-  await db.insert(userRolesTable).values({
-    id: randomUUID(),
-    userId: adminUserId,
-    roleId: adminRoleId,
-  });
+  // --- Bulk create employees, users, and appUsers ---
+  const NUM_USERS = 30;
+  const NUM_APP_USERS = 20;
+  const DEFAULT_PASSWORD_HASH =
+    "$argon2id$v=19$m=19456,t=2,p=1$EGTc0PR3V8ihyus3qz/WJA$sbAvDU2mZOJw7XkmKzeBQl79a6JiJUaGTthKJuh+mP0";
 
-  // --- Other users: create employee, department mapping, and user ---
-  // HR user
-  const hrEmployeeId = randomUUID();
-  await db.insert(employeesTable).values({
-    id: hrEmployeeId,
-    idNumber: "hr001",
-    chName: "王小明",
-    gender: "male",
-    phone1: "0912345678",
-  });
-  await db.insert(employeeDepartmentsTable).values({
-    id: randomUUID(),
-    employeeId: hrEmployeeId,
-    departmentId: hrDeptId,
-  });
-  const hrUserId = randomUUID();
-  await db.insert(usersTable).values({
-    id: hrUserId,
-    account: "hr001", // match employee idNumber
-    name: "王小明",
-    employeeId: hrEmployeeId,
-    passwordHash:
-      "$argon2id$v=19$m=19456,t=2,p=1$EGTc0PR3V8ihyus3qz/WJA$sbAvDU2mZOJw7XkmKzeBQl79a6JiJUaGTthKJuh+mP0",
-  });
+  // 1. Create employees per department (dynamic, random count, uses zh_prefix)
+  const allDepartments = await db.select().from(departmentsTable);
+  const departmentConfigs: DepartmentConfig[] = allDepartments.map((dept) => ({
+    departmentId: dept.id,
+    count: Math.floor(Math.random() * 10) + 1, // 1 to 10 employees
+    chPrefix: dept.zh_prefix,
+    enPrefix: dept.en_prefix,
+  }));
 
-  // Create app user for HR employee
-  const hrAppUserId = randomUUID();
-  await db.insert(appUsersTable).values({
-    id: hrAppUserId,
-    account: "hr001", // same as employee idNumber
-    passwordHash:
-      "$argon2id$v=19$m=19456,t=2,p=1$uYynoESvp104MjN0NXYc1g$dCuvbbaE9GoeJKmJaSGI8wCmBhBsmt97/2QNpg7zzKM",
-    employeeId: hrEmployeeId,
-  });
-  await db.insert(appUserPermissions).values([
-    { id: randomUUID(), appUserId: hrAppUserId, permission: "man-production" },
-    { id: randomUUID(), appUserId: hrAppUserId, permission: "ctr-gdstd" },
-    { id: randomUUID(), appUserId: hrAppUserId, permission: "monitor-weight" },
-  ]);
-  console.log("App user for HR created!");
+  const employeesFromDB = await seedEmployees(departmentConfigs);
 
-  // Finance user
-  const financeEmployeeId = randomUUID();
-  await db.insert(employeesTable).values({
-    id: financeEmployeeId,
-    idNumber: "finance001",
-    chName: "李小紅",
-    gender: "female",
-    phone1: "0922333444",
-  });
-  await db.insert(employeeDepartmentsTable).values({
-    id: randomUUID(),
-    employeeId: financeEmployeeId,
-    departmentId: financeDeptId,
-  });
-  const financeUserId = randomUUID();
-  await db.insert(usersTable).values({
-    id: financeUserId,
-    account: "finance001", // match employee idNumber
-    name: "李小紅",
-    employeeId: financeEmployeeId,
-    passwordHash:
-      "$argon2id$v=19$m=19456,t=2,p=1$EGTc0PR3V8ihyus3qz/WJA$sbAvDU2mZOJw7XkmKzeBQl79a6JiJUaGTthKJuh+mP0",
-  });
-
-  // Create app user for Finance employee (with only one permission)
-  const financeAppUserId = randomUUID();
-  await db.insert(appUsersTable).values({
-    id: financeAppUserId,
-    account: "finance001", // same as employee idNumber
-    passwordHash:
-      "$argon2id$v=19$m=19456,t=2,p=1$lCs2vAWLKYwFGeIU57d0eg$PefujxGXtY1J65Sx63pgPM9m/5uv9272VnsZV64xrXo",
-    employeeId: financeEmployeeId,
-  });
-  await db
-    .insert(appUserPermissions)
-    .values([
-      {
+  // --- Give at least 5 employees an extra department ---
+  // Fetch all departments again for assignment
+  const allDepartmentsAgain = await db.select().from(departmentsTable);
+  const employeeDepartmentsToAdd = [];
+  for (let i = 0; i < Math.min(5, employeesFromDB.length); i++) {
+    const emp = employeesFromDB[i];
+    // Pick a department different from the employee's current one
+    const otherDept = allDepartmentsAgain.find((d) => d.id !== emp.departmentId);
+    if (otherDept) {
+      employeeDepartmentsToAdd.push({
         id: randomUUID(),
-        appUserId: financeAppUserId,
-        permission: "man-production",
-      },
-    ]);
-  console.log("App user for Finance created!");
+        employeeId: emp.id,
+        departmentId: otherDept.id,
+      });
+    }
+  }
+  if (employeeDepartmentsToAdd.length > 0) {
+    await db.insert(employeeDepartmentsTable).values(employeeDepartmentsToAdd);
+  }
 
-  // Marketing user
-  const marketingEmployeeId = randomUUID();
-  await db.insert(employeesTable).values({
-    id: marketingEmployeeId,
-    idNumber: "marketing001",
-    chName: "趙小明",
-    gender: "male",
-    phone1: "0933444555",
-  });
-  await db.insert(employeeDepartmentsTable).values({
-    id: randomUUID(),
-    employeeId: marketingEmployeeId,
-    departmentId: marketingDeptId,
-  });
-  const marketingUserId = randomUUID();
-  await db.insert(usersTable).values({
-    id: marketingUserId,
-    account: "marketing001", // match employee idNumber
-    name: "趙小明",
-    employeeId: marketingEmployeeId,
-    passwordHash:
-      "$argon2id$v=19$m=19456,t=2,p=1$EGTc0PR3V8ihyus3qz/WJA$sbAvDU2mZOJw7XkmKzeBQl79a6JiJUaGTthKJuh+mP0",
-  });
+  // 2. Create 2 admin users (not linked to employee)
+  const adminUsers = [
+    { account: "admin", name: "管理員" },
+    { account: "admin2", name: "管理員二號" },
+  ];
+  for (const admin of adminUsers) {
+    const adminId = randomUUID();
+    await db.insert(usersTable).values({
+      id: adminId,
+      account: admin.account,
+      name: admin.name,
+      passwordHash: DEFAULT_PASSWORD_HASH,
+      // no employeeId
+    });
+    // Assign admin role via userRolesTable
+    await db.insert(userRolesTable).values({
+      id: randomUUID(),
+      userId: adminId,
+      roleId: adminRoleId,
+    });
+  }
 
-  // Sales user
-  const salesEmployeeId = randomUUID();
-  await db.insert(employeesTable).values({
-    id: salesEmployeeId,
-    idNumber: "sales001",
-    chName: "周小紅",
-    gender: "female",
-    phone1: "0944555666",
-  });
-  await db.insert(employeeDepartmentsTable).values({
-    id: randomUUID(),
-    employeeId: salesEmployeeId,
-    departmentId: salesDeptId,
-  });
-  const salesUserId = randomUUID();
-  await db.insert(usersTable).values({
-    id: salesUserId,
-    account: "sales001", // match employee idNumber
-    name: "周小紅",
-    employeeId: salesEmployeeId,
-    passwordHash:
-      "$argon2id$v=19$m=19456,t=2,p=1$EGTc0PR3V8ihyus3qz/WJA$sbAvDU2mZOJw7XkmKzeBQl79a6JiJUaGTthKJuh+mP0",
-  });
+  // 3. Create regular users, each linked to a unique employee
+  const availableEmployees = employeesFromDB.length;
+  const numRegularUsers = Math.min(28, availableEmployees);
+  const numAppUsers = Math.min(20, availableEmployees);
 
-  // Engineering user
-  const engineeringEmployeeId = randomUUID();
-  await db.insert(employeesTable).values({
-    id: engineeringEmployeeId,
-    idNumber: "engineering001",
-    chName: "孫小明",
-    gender: "male",
-    phone1: "0955666777",
-  });
-  await db.insert(employeeDepartmentsTable).values({
-    id: randomUUID(),
-    employeeId: engineeringEmployeeId,
-    departmentId: engineeringDeptId,
-  });
-  const engineeringUserId = randomUUID();
-  await db.insert(usersTable).values({
-    id: engineeringUserId,
-    account: "engineering001", // match employee idNumber
-    name: "孫小明",
-    employeeId: engineeringEmployeeId,
-    passwordHash:
-      "$argon2id$v=19$m=19456,t=2,p=1$EGTc0PR3V8ihyus3qz/WJA$sbAvDU2mZOJw7XkmKzeBQl79a6JiJUaGTthKJuh+mP0",
-  });
+  for (let i = 0; i < numRegularUsers; i++) {
+    await db.insert(usersTable).values({
+      id: randomUUID(),
+      account: employeesFromDB[i].idNumber,
+      name: employeesFromDB[i].chName,
+      employeeId: employeesFromDB[i].id,
+      passwordHash: DEFAULT_PASSWORD_HASH,
+    });
+  }
 
-  // Multi-department user
-  const multiDeptEmployeeId = randomUUID();
-  await db.insert(employeesTable).values({
-    id: multiDeptEmployeeId,
-    idNumber: "multi001",
-    chName: "複部門員工",
-    gender: "male",
-    phone1: "0966777888",
-  });
-  await db.insert(employeeDepartmentsTable).values({
-    id: randomUUID(),
-    employeeId: multiDeptEmployeeId,
-    departmentId: hrDeptId,
-  });
-  await db.insert(employeeDepartmentsTable).values({
-    id: randomUUID(),
-    employeeId: multiDeptEmployeeId,
-    departmentId: engineeringDeptId,
-  });
-  const multiDeptUserId = randomUUID();
-  await db.insert(usersTable).values({
-    id: multiDeptUserId,
-    account: "multi001", // match employee idNumber
-    name: "複部門員工",
-    employeeId: multiDeptEmployeeId,
-    passwordHash:
-      "$argon2id$v=19$m=19456,t=2,p=1$EGTc0PR3V8ihyus3qz/WJA$sbAvDU2mZOJw7XkmKzeBQl79a6JiJUaGTthKJuh+mP0",
-  });
-  console.log("Multi-department employee and user created!");
+  // 4. Create appUsers, each linked to a unique employee
+  for (let i = 0; i < numAppUsers; i++) {
+    await db.insert(appUsersTable).values({
+      id: randomUUID(),
+      account: employeesFromDB[i].idNumber,
+      employeeId: employeesFromDB[i].id,
+      passwordHash: DEFAULT_PASSWORD_HASH,
+    });
+  }
+
+  // --- Grant every appUser at least one permission ---
+  const appUsers = await db.select().from(appUsersTable);
+  const permissionsList = [
+    "man-production",
+    "ctr-gdstd",
+    "monitor-weight",
+  ] as const;
+  for (let i = 0; i < appUsers.length; i++) {
+    await db.insert(appUserPermissions).values({
+      id: randomUUID(),
+      appUserId: appUsers[i].id,
+      permission: permissionsList[i % permissionsList.length],
+    });
+  }
 
   console.log("Users and employees created!");
 

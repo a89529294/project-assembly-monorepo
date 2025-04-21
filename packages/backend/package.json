@@ -27,7 +27,8 @@
     "hono": "^4.7.7",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.14.1",
-     "zod": "*"
+    "zod": "*",
+    "superjson": "*"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.9",

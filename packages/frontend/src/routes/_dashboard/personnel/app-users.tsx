@@ -11,9 +11,7 @@ export const Route = createFileRoute("/_dashboard/personnel/app-users")({
   component: RouteComponent,
   loader: async () => {
     await queryClient.ensureQueryData(
-      trpc.personnelPermission.getAppUserByPermission.queryOptions({
-        permission: "ctr-gdstd",
-      })
+      trpc.personnelPermission.getAppUserByPermission.queryOptions()
     );
   },
   pendingComponent: () => "loading...",
@@ -33,9 +31,11 @@ const USERS = {
 
 export function RouteComponent() {
   const [activeTab, setActiveTab] = useState(TABS[0].key);
-  const [openDialog, setOpenDialog] = useState(false);
+
   const { data } = useSuspenseQuery(
-    trpc.personnelPermission.getAppUserByPermission.queryOptions()
+    trpc.personnelPermission.getAppUserByPermission.queryOptions({
+      permission: "monitor-weight",
+    })
   );
 
   console.log(data);
@@ -43,13 +43,7 @@ export function RouteComponent() {
   return (
     <div className="max-w-xl mt-10 p-6 bg-white rounded-lg shadow-lg grow">
       <div className="flex justify-end mb-6">
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          onClick={() => setOpenDialog(true)}
-        >
-          + Add App User
-        </button>
-        <DialogAddAppUser open={openDialog} onOpenChange={setOpenDialog} />
+        <DialogAddAppUser />
       </div>
       <div className="flex border-b border-gray-200 mb-4">
         {TABS.map((tab) => (
