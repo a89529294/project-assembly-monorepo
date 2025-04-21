@@ -110,20 +110,26 @@ export const getAppUsersByPermissionProcedure = protectedProcedure(
   "appUser:read"
 )
   .input(
-    z.object({
-      permission: z.enum(["man-production", "ctr-gdstd", "monitor-weight"]),
-    })
+    z
+      .object({
+        permission: z.enum(["man-production", "ctr-gdstd", "monitor-weight"]),
+      })
+      .optional()
   )
   .query(async ({ input, ctx }) => {
     console.log(ctx);
-    // Permission already checked by middleware
-    const users = await db
-      .select({ appUser: appUsersTable })
-      .from(appUsersTable)
+
+    const baseQuery = db.select({ appUser: appUsersTable }).from(appUsersTable);
+
+    if (!input?.permission) {
+      return (await baseQuery).map((v) => v.appUser);
+    }
+
+    const users = await baseQuery
       .innerJoin(
         appUserPermissions,
         eq(appUsersTable.id, appUserPermissions.appUserId)
       )
       .where(eq(appUserPermissions.permission, input.permission));
-    return users.map((row) => row.appUser);
+    return users.map((v) => v.appUser);
   });

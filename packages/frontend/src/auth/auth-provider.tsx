@@ -2,16 +2,15 @@ import * as React from "react";
 import { AuthContext } from ".";
 
 import { useMutation } from "@tanstack/react-query";
-import { router, trpc } from "@/trpc";
+import { trpc } from "@/trpc";
+import { router } from "@/router";
+import { sessionTokenKey, userKey } from "@/constants";
 import { TrpcTypes } from "../../../backend/src/trpc/router";
 
 type StoredAuth = {
   user: TrpcTypes["User"];
   sessionToken: string;
 };
-
-const userKey = "tanstack.auth.user";
-export const sessionTokenKey = "tanstack.auth.session.token";
 
 function getStoredAuth() {
   if (

@@ -1,7 +1,8 @@
 import { RouterProvider } from "@tanstack/react-router";
 
-import { queryClient, router } from "@/trpc.js";
+import { router } from "@/router";
 import { useAuth } from "@/auth/use-auth";
+import { queryClient } from "@/query-client";
 
 export function App() {
   const auth = useAuth();

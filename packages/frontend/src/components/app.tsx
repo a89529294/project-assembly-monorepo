@@ -5,7 +5,8 @@ import { InnerApp } from "./inner-app";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/auth/auth-provider";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { queryClient, router } from "@/trpc";
+import { queryClient } from "@/query-client";
+import { router } from "@/router";
 
 export function App() {
   return (
