@@ -1,23 +1,23 @@
 import { TRPCError } from "@trpc/server";
+import { eq, inArray } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "../../db/index.js";
 import { hashPassword } from "../../db/password.js";
 import {
   AppUserFromDb,
   appUserPermissions,
   appUsersTable,
+  DepartmentFromDb,
   departmentsTable,
-  employeeDepartmentsTable,
   EmployeeFromDb,
   employeesTable,
   rolesTable,
   userRolesTable,
   usersTable,
 } from "../../db/schema.js";
-import { eq, inArray } from "drizzle-orm";
 import { generatePassword } from "../../helpers/auth.js";
 import { protectedProcedure } from "../../trpc/core.js";
-import { z } from "zod";
-import { PgSelect, PgSelectBase } from "drizzle-orm/pg-core";
+import { appUsersWithEmployeeAndDepartmentsQuery } from "./helpers.js";
 
 export const createUserForEmployeeProcedure = protectedProcedure("")
   .input(
@@ -134,41 +134,25 @@ export const getAppUsersByPermissionProcedure = protectedProcedure(
       return rest;
     };
 
-    const baseQuery = db
-      .select({
-        appUser: appUsersTable,
-        employee: employeesTable,
-        department: departmentsTable,
-      })
-      .from(appUsersTable)
-      .innerJoin(
-        employeesTable,
-        eq(appUsersTable.employeeId, employeesTable.id)
-      )
-      .innerJoin(
-        employeeDepartmentsTable,
-        eq(appUsersTable.employeeId, employeeDepartmentsTable.employeeId)
-      )
-      .innerJoin(
-        departmentsTable,
-        eq(employeeDepartmentsTable.departmentId, departmentsTable.id)
-      )
-      .$dynamic();
+    const baseQuery = appUsersWithEmployeeAndDepartmentsQuery();
 
-    // const q = await baseQuery;
-    // console.log(q);
-
-    // return baseQuery;
-
-    type AggregatedUser = ReturnType<typeof genPartialUser> & {
+    type AppUserWithEmpAndDepartments = ReturnType<typeof genPartialUser> & {
       employee: ReturnType<typeof genPartialEmployee>;
-      departments: (typeof departmentsTable.$inferSelect)[];
+      departments: (typeof departmentsTable.$inferSelect & {
+        jobTitle: string;
+      })[];
     };
 
     const genUsers = async (q: typeof baseQuery) => {
-      let rows: any[] = [];
+      let rows: {
+        appUser: AppUserFromDb;
+        employee: EmployeeFromDb;
+        department: DepartmentFromDb;
+        jobTitle: string | null;
+      }[] = [];
 
       if (input?.permission) {
+        // filter by permission
         rows = await q
           .innerJoin(
             appUserPermissions,
@@ -179,28 +163,29 @@ export const getAppUsersByPermissionProcedure = protectedProcedure(
         rows = await q;
       }
 
-      const userMap = new Map<string, AggregatedUser>();
+      const userMap = new Map<string, AppUserWithEmpAndDepartments>();
       for (const row of rows) {
         const key = row.appUser.id;
         if (!userMap.has(key)) {
           userMap.set(key, {
             ...genPartialUser(row.appUser),
             employee: genPartialEmployee(row.employee),
-            departments: [row.department],
+            departments: [
+              {
+                ...row.department,
+                jobTitle: row.jobTitle ?? "",
+              },
+            ],
           });
         } else {
-          userMap.get(key)!.departments.push(row.department);
+          userMap.get(key)!.departments.push({
+            ...row.department,
+            jobTitle: row.jobTitle ?? "",
+          });
         }
       }
-      const x = Array.from(userMap.values());
-      return x;
+      return Array.from(userMap.values());
     };
 
     return genUsers(baseQuery);
-
-    // if (!input?.permission) {
-    //   return genUsers(baseQuery);
-    // }
-
-    // return genUsers(filteredQuery);
   });

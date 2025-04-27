@@ -26,11 +26,11 @@ import { Route as DashboardPersonnelUpdateImport } from './routes/_dashboard/per
 import { Route as DashboardPersonnelReadImport } from './routes/_dashboard/personnel/read'
 import { Route as DashboardPersonnelDeleteImport } from './routes/_dashboard/personnel/delete'
 import { Route as DashboardPersonnelCreateImport } from './routes/_dashboard/personnel/create'
-import { Route as DashboardPersonnelAppUsersImport } from './routes/_dashboard/personnel/app-users'
 import { Route as DashboardBasicInfoUpdateImport } from './routes/_dashboard/basic-info/update'
 import { Route as DashboardBasicInfoReadImport } from './routes/_dashboard/basic-info/read'
 import { Route as DashboardBasicInfoDeleteImport } from './routes/_dashboard/basic-info/delete'
 import { Route as DashboardBasicInfoCreateImport } from './routes/_dashboard/basic-info/create'
+import { Route as DashboardPersonnelAppUsersIndexImport } from './routes/_dashboard/personnel/app-users/index'
 
 // Create/Update Routes
 
@@ -123,14 +123,6 @@ const DashboardPersonnelCreateRoute = DashboardPersonnelCreateImport.update({
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 
-const DashboardPersonnelAppUsersRoute = DashboardPersonnelAppUsersImport.update(
-  {
-    id: '/personnel/app-users',
-    path: '/personnel/app-users',
-    getParentRoute: () => DashboardRouteRoute,
-  } as any,
-)
-
 const DashboardBasicInfoUpdateRoute = DashboardBasicInfoUpdateImport.update({
   id: '/basic-info/update',
   path: '/basic-info/update',
@@ -154,6 +146,13 @@ const DashboardBasicInfoCreateRoute = DashboardBasicInfoCreateImport.update({
   path: '/basic-info/create',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+
+const DashboardPersonnelAppUsersIndexRoute =
+  DashboardPersonnelAppUsersIndexImport.update({
+    id: '/personnel/app-users/',
+    path: '/personnel/app-users/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 
 // Populate the FileRoutesByPath interface
 
@@ -206,13 +205,6 @@ declare module '@tanstack/react-router' {
       path: '/basic-info/update'
       fullPath: '/basic-info/update'
       preLoaderRoute: typeof DashboardBasicInfoUpdateImport
-      parentRoute: typeof DashboardRouteImport
-    }
-    '/_dashboard/personnel/app-users': {
-      id: '/_dashboard/personnel/app-users'
-      path: '/personnel/app-users'
-      fullPath: '/personnel/app-users'
-      preLoaderRoute: typeof DashboardPersonnelAppUsersImport
       parentRoute: typeof DashboardRouteImport
     }
     '/_dashboard/personnel/create': {
@@ -299,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStorageUpdateImport
       parentRoute: typeof DashboardRouteImport
     }
+    '/_dashboard/personnel/app-users/': {
+      id: '/_dashboard/personnel/app-users/'
+      path: '/personnel/app-users'
+      fullPath: '/personnel/app-users'
+      preLoaderRoute: typeof DashboardPersonnelAppUsersIndexImport
+      parentRoute: typeof DashboardRouteImport
+    }
   }
 }
 
@@ -310,7 +309,6 @@ interface DashboardRouteRouteChildren {
   DashboardBasicInfoDeleteRoute: typeof DashboardBasicInfoDeleteRoute
   DashboardBasicInfoReadRoute: typeof DashboardBasicInfoReadRoute
   DashboardBasicInfoUpdateRoute: typeof DashboardBasicInfoUpdateRoute
-  DashboardPersonnelAppUsersRoute: typeof DashboardPersonnelAppUsersRoute
   DashboardPersonnelCreateRoute: typeof DashboardPersonnelCreateRoute
   DashboardPersonnelDeleteRoute: typeof DashboardPersonnelDeleteRoute
   DashboardPersonnelReadRoute: typeof DashboardPersonnelReadRoute
@@ -323,6 +321,7 @@ interface DashboardRouteRouteChildren {
   DashboardStorageDeleteRoute: typeof DashboardStorageDeleteRoute
   DashboardStorageReadRoute: typeof DashboardStorageReadRoute
   DashboardStorageUpdateRoute: typeof DashboardStorageUpdateRoute
+  DashboardPersonnelAppUsersIndexRoute: typeof DashboardPersonnelAppUsersIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
@@ -331,7 +330,6 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardBasicInfoDeleteRoute: DashboardBasicInfoDeleteRoute,
   DashboardBasicInfoReadRoute: DashboardBasicInfoReadRoute,
   DashboardBasicInfoUpdateRoute: DashboardBasicInfoUpdateRoute,
-  DashboardPersonnelAppUsersRoute: DashboardPersonnelAppUsersRoute,
   DashboardPersonnelCreateRoute: DashboardPersonnelCreateRoute,
   DashboardPersonnelDeleteRoute: DashboardPersonnelDeleteRoute,
   DashboardPersonnelReadRoute: DashboardPersonnelReadRoute,
@@ -344,6 +342,7 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardStorageDeleteRoute: DashboardStorageDeleteRoute,
   DashboardStorageReadRoute: DashboardStorageReadRoute,
   DashboardStorageUpdateRoute: DashboardStorageUpdateRoute,
+  DashboardPersonnelAppUsersIndexRoute: DashboardPersonnelAppUsersIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
@@ -358,7 +357,6 @@ export interface FileRoutesByFullPath {
   '/basic-info/delete': typeof DashboardBasicInfoDeleteRoute
   '/basic-info/read': typeof DashboardBasicInfoReadRoute
   '/basic-info/update': typeof DashboardBasicInfoUpdateRoute
-  '/personnel/app-users': typeof DashboardPersonnelAppUsersRoute
   '/personnel/create': typeof DashboardPersonnelCreateRoute
   '/personnel/delete': typeof DashboardPersonnelDeleteRoute
   '/personnel/read': typeof DashboardPersonnelReadRoute
@@ -371,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/storage/delete': typeof DashboardStorageDeleteRoute
   '/storage/read': typeof DashboardStorageReadRoute
   '/storage/update': typeof DashboardStorageUpdateRoute
+  '/personnel/app-users': typeof DashboardPersonnelAppUsersIndexRoute
 }
 
 export interface FileRoutesByTo {
@@ -380,7 +379,6 @@ export interface FileRoutesByTo {
   '/basic-info/delete': typeof DashboardBasicInfoDeleteRoute
   '/basic-info/read': typeof DashboardBasicInfoReadRoute
   '/basic-info/update': typeof DashboardBasicInfoUpdateRoute
-  '/personnel/app-users': typeof DashboardPersonnelAppUsersRoute
   '/personnel/create': typeof DashboardPersonnelCreateRoute
   '/personnel/delete': typeof DashboardPersonnelDeleteRoute
   '/personnel/read': typeof DashboardPersonnelReadRoute
@@ -393,6 +391,7 @@ export interface FileRoutesByTo {
   '/storage/delete': typeof DashboardStorageDeleteRoute
   '/storage/read': typeof DashboardStorageReadRoute
   '/storage/update': typeof DashboardStorageUpdateRoute
+  '/personnel/app-users': typeof DashboardPersonnelAppUsersIndexRoute
 }
 
 export interface FileRoutesById {
@@ -404,7 +403,6 @@ export interface FileRoutesById {
   '/_dashboard/basic-info/delete': typeof DashboardBasicInfoDeleteRoute
   '/_dashboard/basic-info/read': typeof DashboardBasicInfoReadRoute
   '/_dashboard/basic-info/update': typeof DashboardBasicInfoUpdateRoute
-  '/_dashboard/personnel/app-users': typeof DashboardPersonnelAppUsersRoute
   '/_dashboard/personnel/create': typeof DashboardPersonnelCreateRoute
   '/_dashboard/personnel/delete': typeof DashboardPersonnelDeleteRoute
   '/_dashboard/personnel/read': typeof DashboardPersonnelReadRoute
@@ -417,6 +415,7 @@ export interface FileRoutesById {
   '/_dashboard/storage/delete': typeof DashboardStorageDeleteRoute
   '/_dashboard/storage/read': typeof DashboardStorageReadRoute
   '/_dashboard/storage/update': typeof DashboardStorageUpdateRoute
+  '/_dashboard/personnel/app-users/': typeof DashboardPersonnelAppUsersIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -429,7 +428,6 @@ export interface FileRouteTypes {
     | '/basic-info/delete'
     | '/basic-info/read'
     | '/basic-info/update'
-    | '/personnel/app-users'
     | '/personnel/create'
     | '/personnel/delete'
     | '/personnel/read'
@@ -442,6 +440,7 @@ export interface FileRouteTypes {
     | '/storage/delete'
     | '/storage/read'
     | '/storage/update'
+    | '/personnel/app-users'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -450,7 +449,6 @@ export interface FileRouteTypes {
     | '/basic-info/delete'
     | '/basic-info/read'
     | '/basic-info/update'
-    | '/personnel/app-users'
     | '/personnel/create'
     | '/personnel/delete'
     | '/personnel/read'
@@ -463,6 +461,7 @@ export interface FileRouteTypes {
     | '/storage/delete'
     | '/storage/read'
     | '/storage/update'
+    | '/personnel/app-users'
   id:
     | '__root__'
     | '/_dashboard'
@@ -472,7 +471,6 @@ export interface FileRouteTypes {
     | '/_dashboard/basic-info/delete'
     | '/_dashboard/basic-info/read'
     | '/_dashboard/basic-info/update'
-    | '/_dashboard/personnel/app-users'
     | '/_dashboard/personnel/create'
     | '/_dashboard/personnel/delete'
     | '/_dashboard/personnel/read'
@@ -485,6 +483,7 @@ export interface FileRouteTypes {
     | '/_dashboard/storage/delete'
     | '/_dashboard/storage/read'
     | '/_dashboard/storage/update'
+    | '/_dashboard/personnel/app-users/'
   fileRoutesById: FileRoutesById
 }
 
@@ -520,7 +519,6 @@ export const routeTree = rootRoute
         "/_dashboard/basic-info/delete",
         "/_dashboard/basic-info/read",
         "/_dashboard/basic-info/update",
-        "/_dashboard/personnel/app-users",
         "/_dashboard/personnel/create",
         "/_dashboard/personnel/delete",
         "/_dashboard/personnel/read",
@@ -532,7 +530,8 @@ export const routeTree = rootRoute
         "/_dashboard/storage/create",
         "/_dashboard/storage/delete",
         "/_dashboard/storage/read",
-        "/_dashboard/storage/update"
+        "/_dashboard/storage/update",
+        "/_dashboard/personnel/app-users/"
       ]
     },
     "/login": {
@@ -556,10 +555,6 @@ export const routeTree = rootRoute
     },
     "/_dashboard/basic-info/update": {
       "filePath": "_dashboard/basic-info/update.tsx",
-      "parent": "/_dashboard"
-    },
-    "/_dashboard/personnel/app-users": {
-      "filePath": "_dashboard/personnel/app-users.tsx",
       "parent": "/_dashboard"
     },
     "/_dashboard/personnel/create": {
@@ -608,6 +603,10 @@ export const routeTree = rootRoute
     },
     "/_dashboard/storage/update": {
       "filePath": "_dashboard/storage/update.tsx",
+      "parent": "/_dashboard"
+    },
+    "/_dashboard/personnel/app-users/": {
+      "filePath": "_dashboard/personnel/app-users/index.tsx",
       "parent": "/_dashboard"
     }
   }

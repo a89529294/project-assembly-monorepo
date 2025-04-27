@@ -40,7 +40,7 @@ export async function seedEmployees(departments: DepartmentConfig[]) {
         id: randomUUID(),
         employeeId: id,
         departmentId: dept.departmentId,
-        jobTitle: ["總理", "主管", "員工"][Math.floor(Math.random()) * 3],
+        jobTitle: ["總理", "主管", "員工"][Math.floor(Math.random() * 3)],
       });
       globalIndex++;
 

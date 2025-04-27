@@ -355,12 +355,15 @@ async function main() {
   for (let i = 0; i < Math.min(5, employeesFromDB.length); i++) {
     const emp = employeesFromDB[i];
     // Pick a department different from the employee's current one
-    const otherDept = allDepartmentsAgain.find((d) => d.id !== emp.departmentId);
+    const otherDept = allDepartmentsAgain.find(
+      (d) => d.id !== emp.departmentId
+    );
     if (otherDept) {
       employeeDepartmentsToAdd.push({
         id: randomUUID(),
         employeeId: emp.id,
         departmentId: otherDept.id,
+        jobTitle: "員工",
       });
     }
   }

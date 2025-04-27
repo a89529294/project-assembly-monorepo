@@ -39,7 +39,7 @@ function RouteComponent() {
     <SidebarProvider>
       <AppSidebar user={user!} />
       <main className="grow">
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col h-screen">
           {/* Navbar */}
           <nav className="bg-gray-800 text-white p-4 sticky top-0">
             <div className="container mx-auto flex justify-between items-center">
@@ -68,8 +68,10 @@ function RouteComponent() {
           </nav>
 
           {/* Main content */}
-          <div className="container mx-auto p-4 flex-grow flex flex-col">
-            <Outlet />
+          <div className="container relative mx-auto flex-grow flex flex-col">
+            <div className="absolute inset-0 p-4">
+              <Outlet />
+            </div>
           </div>
         </div>
       </main>
