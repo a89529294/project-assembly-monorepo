@@ -1,11 +1,19 @@
-import { Home, Inbox, RefreshCcw, Delete, User } from "lucide-react";
+import { Home, Inbox, RefreshCcw, Delete, LucideUser } from "lucide-react";
 
 import { CollapsibleSidebarMenu } from "@/components/app-sidebar/collapsible-sidebar-menu";
 import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
 
 import { isAllowed } from "@/lib/utils";
-import { TrpcTypes } from "../../../../backend/src/trpc/router";
+import { User } from "../../../../backend/src/trpc/router";
+import { roleNameEnum } from "../../../../backend/src/db/schema";
 
+const basicInfoRoutes = [
+  {
+    title: "公司資料",
+    url: "/basic-info/company-info",
+    icon: Home,
+  },
+];
 const productionRoutes = [
   {
     title: "Create",
@@ -28,7 +36,7 @@ const productionRoutes = [
     icon: Delete,
   },
 ];
-const personnelRoutes = [
+const customerRoutes = [
   {
     title: "Create",
     url: "/personnel/create",
@@ -52,31 +60,10 @@ const personnelRoutes = [
   {
     title: "App Users",
     url: "/personnel/app-users",
-    icon: User,
+    icon: LucideUser,
   },
 ];
-const basicInfoRoutes = [
-  {
-    title: "Create",
-    url: "/basic-info/create",
-    icon: Home,
-  },
-  {
-    title: "Read",
-    url: "/basic-info/read",
-    icon: Inbox,
-  },
-  {
-    title: "Update",
-    url: "/basic-info/update",
-    icon: RefreshCcw,
-  },
-  {
-    title: "Delete",
-    url: "/basic-info/delete",
-    icon: Delete,
-  },
-];
+
 const storageRoutes = [
   {
     title: "Create",
@@ -100,38 +87,43 @@ const storageRoutes = [
   },
 ];
 
-export function AppSidebar({ user }: { user: TrpcTypes["User"] }) {
+export function AppSidebar({ user }: { user: User }) {
   return (
     <Sidebar>
       <SidebarContent>
         <CollapsibleSidebarMenu
           show={isAllowed(
-            ["ProductionManagement", "AdminManagement"],
+            [roleNameEnum.enumValues[0], roleNameEnum.enumValues[1]],
+            user.roles
+          )}
+          label={"設定"}
+          items={basicInfoRoutes}
+        />
+
+        <CollapsibleSidebarMenu
+          show={isAllowed(
+            [roleNameEnum.enumValues[0], roleNameEnum.enumValues[2]],
+            user.roles
+          )}
+          label={"客戶管理"}
+          items={customerRoutes}
+        />
+
+        <CollapsibleSidebarMenu
+          show={isAllowed(
+            [roleNameEnum.enumValues[0], roleNameEnum.enumValues[3]],
+            user.roles
+          )}
+          label={"倉庫管理"}
+          items={storageRoutes}
+        />
+        <CollapsibleSidebarMenu
+          show={isAllowed(
+            [roleNameEnum.enumValues[0], roleNameEnum.enumValues[4]],
             user.roles
           )}
           label={"生產管理"}
           items={productionRoutes}
-        />
-        <CollapsibleSidebarMenu
-          show={isAllowed(
-            ["PersonnelPermissionManagement", "AdminManagement"],
-            user.roles
-          )}
-          label={"人事權限"}
-          items={personnelRoutes}
-        />
-        <CollapsibleSidebarMenu
-          show={isAllowed(
-            ["BasicInfoManagement", "AdminManagement"],
-            user.roles
-          )}
-          label={"基本資料"}
-          items={basicInfoRoutes}
-        />
-        <CollapsibleSidebarMenu
-          show={isAllowed(["StorageManagement", "AdminManagement"], user.roles)}
-          label={"倉庫管理"}
-          items={storageRoutes}
         />
       </SidebarContent>
     </Sidebar>

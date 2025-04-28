@@ -1,19 +1,18 @@
-import * as React from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/trpc";
-import { Button } from "@/components/ui/button";
-import { AppUser } from "../../../backend/src/trpc/router";
 import { DataTable } from "@/features/app-users/data-table";
 import { columns } from "@/features/app-users/data-table/columns";
+import { trpc } from "@/trpc";
+import { useQuery } from "@tanstack/react-query";
+import * as React from "react";
 
 export const DialogAddAppUser = () => {
   const { data } = useQuery(
@@ -23,9 +22,9 @@ export const DialogAddAppUser = () => {
   console.log("from dialog ", data);
 
   // State for selected user
-  const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
-    null
-  );
+  // const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
+  //   null
+  // );
 
   return (
     <Dialog>

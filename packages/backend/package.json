@@ -10,6 +10,8 @@
     "db:push:prod": "NODE_ENV=prod pnpm drizzle-kit push",
     "db:seed:dev": "NODE_ENV=dev pnpm tsx src/db/seed.ts",
     "db:seed:prod": "NODE_ENV=prod pnpm tsx src/db/seed.ts",
+    "db:rps:dev": "pnpm run db:reset:dev && pnpm run db:push:dev && pnpm run db:seed:dev",
+    "db:rps:prod": "pnpm run db:reset:prod && pnpm run db:push:prod && pnpm run db:seed:prod",
     "dev": "NODE_ENV=dev tsx watch src/index.ts",
     "build": "tsup src/index.ts --format esm --dts --outDir dist",
     "start": "NODE_ENV=prod node dist/index.js",

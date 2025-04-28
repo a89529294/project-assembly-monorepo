@@ -5,10 +5,10 @@ import { useMutation } from "@tanstack/react-query";
 import { trpc } from "@/trpc";
 import { router } from "@/router";
 import { sessionTokenKey, userKey } from "@/constants";
-import { TrpcTypes } from "../../../backend/src/trpc/router";
+import { User } from "../../../backend/src/trpc/router";
 
 type StoredAuth = {
-  user: TrpcTypes["User"];
+  user: User;
   sessionToken: string;
 };
 
@@ -18,13 +18,14 @@ function getStoredAuth() {
     !localStorage.getItem(sessionTokenKey)
   ) {
     localStorage.removeItem(userKey);
+    console.log("removing sessionToken 2");
     localStorage.removeItem(sessionTokenKey);
     return null;
   }
 
   const userFromLocalStorage = JSON.parse(
     localStorage.getItem(userKey)!
-  ) as TrpcTypes["User"];
+  ) as User;
 
   return {
     user: userFromLocalStorage,
@@ -38,6 +39,7 @@ function setStoredAuth(storedAuth: StoredAuth | null) {
     localStorage.setItem(sessionTokenKey, storedAuth.sessionToken);
   } else {
     localStorage.removeItem(userKey);
+    console.log("removing sessionToken 1");
     localStorage.removeItem(sessionTokenKey);
   }
 }

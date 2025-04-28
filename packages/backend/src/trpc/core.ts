@@ -13,10 +13,8 @@ export const router = t.router;
 
 const ARTIFICIAL_DELAY_MS = process.env.NODE_ENV === "dev" ? 1000 : 0;
 
-const delay = () => new Promise((res) => setTimeout(res, ARTIFICIAL_DELAY_MS));
-
 export const delayMiddleware = t.middleware(async ({ ctx, next }) => {
-  await delay();
+  await new Promise((res) => setTimeout(res, ARTIFICIAL_DELAY_MS));
   return next({ ctx });
 });
 
@@ -54,6 +52,9 @@ export const authMiddleware = (permission: string) =>
 
     // Admins always allowed
     if (isUserAdmin) return next(obj);
+
+    // just need the user, no need for permission check
+    if (permission === "") return next(obj);
 
     // Standard permission check
     const allowed = await hasPermission(user.id, roles, permission);

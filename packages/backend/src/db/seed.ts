@@ -18,6 +18,7 @@ import {
   appUsersTable,
   appUserPermissions,
   appUserRefreshTokensTable,
+  roleNameEnum,
 } from "./schema.js";
 import { db } from "./index.js";
 import { randomUUID } from "crypto";
@@ -49,36 +50,41 @@ async function main() {
 
   // Create roles with predefined IDs
   const adminRoleId = randomUUID();
-  const productionManagementRoleId = randomUUID();
-  const personnelPermissionManagementRoleId = randomUUID();
+  //設定
   const basicInfoManagementRoleId = randomUUID();
+  //客戶管理
+  const customerManagementRoleId = randomUUID();
+  //倉庫管理
   const storageManagementRoleId = randomUUID();
+
+  const productionManagementRoleId = randomUUID();
 
   const roles = [
     {
       id: adminRoleId,
-      name: "AdminManagement", // important this is used to identify admin role
+      name: roleNameEnum.enumValues[0], // important if you change this you have to update frontend
       chinese_name: "管理員",
     },
     {
-      id: productionManagementRoleId,
-      name: "ProductionManagement", // important this is used to identify production role
-      chinese_name: "生產管理",
-    },
-    {
-      id: personnelPermissionManagementRoleId,
-      name: "PersonnelPermissionManagement", // important this is used to identify personnelPermission role
-      chinese_name: "人事權限",
-    },
-    {
       id: basicInfoManagementRoleId,
-      name: "BasicInfoManagement", // important this is used to identify basicInfo role
-      chinese_name: "基本資料",
+      name: roleNameEnum.enumValues[1], // important if you change this you have to update frontend
+      chinese_name: "設定",
     },
+    {
+      id: customerManagementRoleId,
+      name: roleNameEnum.enumValues[2], // important if you change this you have to update frontend
+      chinese_name: "客戶管理",
+    },
+
     {
       id: storageManagementRoleId,
-      name: "StorageManagement", // important this is used to identify storageManagement role
+      name: roleNameEnum.enumValues[3], // important this is used to identify storageManagement role
       chinese_name: "倉庫管理",
+    },
+    {
+      id: productionManagementRoleId,
+      name: roleNameEnum.enumValues[4], // important if you change this you have to update frontend
+      chinese_name: "生產管理",
     },
   ];
 
@@ -165,7 +171,7 @@ async function main() {
 
   // Create role-department associations
   const roleDepartments = [
-    // Production Management role in Engineering, Operations, and R&D departments
+    // Production Management
     {
       id: randomUUID(),
       roleId: productionManagementRoleId,
@@ -182,10 +188,10 @@ async function main() {
       departmentId: researchDeptId,
     },
 
-    // Personnel Management role in HR department
+    // Customer Management
     {
       id: randomUUID(),
-      roleId: personnelPermissionManagementRoleId,
+      roleId: customerManagementRoleId,
       departmentId: hrDeptId,
     },
 
@@ -204,6 +210,32 @@ async function main() {
       id: randomUUID(),
       roleId: basicInfoManagementRoleId,
       departmentId: productDeptId,
+    },
+
+    {
+      id: randomUUID(),
+      roleId: basicInfoManagementRoleId,
+      departmentId: financeDeptId,
+    },
+    {
+      id: randomUUID(),
+      roleId: basicInfoManagementRoleId,
+      departmentId: marketingDeptId,
+    },
+    {
+      id: randomUUID(),
+      roleId: basicInfoManagementRoleId,
+      departmentId: salesDeptId,
+    },
+    {
+      id: randomUUID(),
+      roleId: basicInfoManagementRoleId,
+      departmentId: customerServiceDeptId,
+    },
+    {
+      id: randomUUID(),
+      roleId: basicInfoManagementRoleId,
+      departmentId: legalDeptId,
     },
 
     // Storage Management role in Operations department
@@ -245,42 +277,22 @@ async function main() {
     {
       id: randomUUID(),
       name: "personnelPermission:create",
-      roleId: personnelPermissionManagementRoleId,
+      roleId: customerManagementRoleId,
     },
     {
       id: randomUUID(),
       name: "personnelPermission:read",
-      roleId: personnelPermissionManagementRoleId,
+      roleId: customerManagementRoleId,
     },
     {
       id: randomUUID(),
       name: "personnelPermission:update",
-      roleId: personnelPermissionManagementRoleId,
+      roleId: customerManagementRoleId,
     },
     {
       id: randomUUID(),
       name: "personnelPermission:delete",
-      roleId: personnelPermissionManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "appUser:read",
-      roleId: personnelPermissionManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "appUser:update",
-      roleId: personnelPermissionManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "appUser:create",
-      roleId: personnelPermissionManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "appUser:delete",
-      roleId: personnelPermissionManagementRoleId,
+      roleId: customerManagementRoleId,
     },
 
     // Basic Info Management permissions
@@ -302,6 +314,41 @@ async function main() {
     {
       id: randomUUID(),
       name: "employee:delete",
+      roleId: basicInfoManagementRoleId,
+    },
+    {
+      id: randomUUID(),
+      name: "company-info:create",
+      roleId: basicInfoManagementRoleId,
+    },
+    {
+      id: randomUUID(),
+      name: "company-info:read",
+      roleId: basicInfoManagementRoleId,
+    },
+    {
+      id: randomUUID(),
+      name: "company-info:update",
+      roleId: basicInfoManagementRoleId,
+    },
+    {
+      id: randomUUID(),
+      name: "appUser:create",
+      roleId: basicInfoManagementRoleId,
+    },
+    {
+      id: randomUUID(),
+      name: "appUser:read",
+      roleId: basicInfoManagementRoleId,
+    },
+    {
+      id: randomUUID(),
+      name: "appUser:update",
+      roleId: basicInfoManagementRoleId,
+    },
+    {
+      id: randomUUID(),
+      name: "appUser:delete",
       roleId: basicInfoManagementRoleId,
     },
 

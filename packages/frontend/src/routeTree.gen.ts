@@ -26,10 +26,7 @@ import { Route as DashboardPersonnelUpdateImport } from './routes/_dashboard/per
 import { Route as DashboardPersonnelReadImport } from './routes/_dashboard/personnel/read'
 import { Route as DashboardPersonnelDeleteImport } from './routes/_dashboard/personnel/delete'
 import { Route as DashboardPersonnelCreateImport } from './routes/_dashboard/personnel/create'
-import { Route as DashboardBasicInfoUpdateImport } from './routes/_dashboard/basic-info/update'
-import { Route as DashboardBasicInfoReadImport } from './routes/_dashboard/basic-info/read'
-import { Route as DashboardBasicInfoDeleteImport } from './routes/_dashboard/basic-info/delete'
-import { Route as DashboardBasicInfoCreateImport } from './routes/_dashboard/basic-info/create'
+import { Route as DashboardBasicInfoCompanyInfoImport } from './routes/_dashboard/basic-info/company-info'
 import { Route as DashboardPersonnelAppUsersIndexImport } from './routes/_dashboard/personnel/app-users/index'
 
 // Create/Update Routes
@@ -123,29 +120,12 @@ const DashboardPersonnelCreateRoute = DashboardPersonnelCreateImport.update({
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 
-const DashboardBasicInfoUpdateRoute = DashboardBasicInfoUpdateImport.update({
-  id: '/basic-info/update',
-  path: '/basic-info/update',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-
-const DashboardBasicInfoReadRoute = DashboardBasicInfoReadImport.update({
-  id: '/basic-info/read',
-  path: '/basic-info/read',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-
-const DashboardBasicInfoDeleteRoute = DashboardBasicInfoDeleteImport.update({
-  id: '/basic-info/delete',
-  path: '/basic-info/delete',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-
-const DashboardBasicInfoCreateRoute = DashboardBasicInfoCreateImport.update({
-  id: '/basic-info/create',
-  path: '/basic-info/create',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
+const DashboardBasicInfoCompanyInfoRoute =
+  DashboardBasicInfoCompanyInfoImport.update({
+    id: '/basic-info/company-info',
+    path: '/basic-info/company-info',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 
 const DashboardPersonnelAppUsersIndexRoute =
   DashboardPersonnelAppUsersIndexImport.update({
@@ -179,32 +159,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexImport
       parentRoute: typeof DashboardRouteImport
     }
-    '/_dashboard/basic-info/create': {
-      id: '/_dashboard/basic-info/create'
-      path: '/basic-info/create'
-      fullPath: '/basic-info/create'
-      preLoaderRoute: typeof DashboardBasicInfoCreateImport
-      parentRoute: typeof DashboardRouteImport
-    }
-    '/_dashboard/basic-info/delete': {
-      id: '/_dashboard/basic-info/delete'
-      path: '/basic-info/delete'
-      fullPath: '/basic-info/delete'
-      preLoaderRoute: typeof DashboardBasicInfoDeleteImport
-      parentRoute: typeof DashboardRouteImport
-    }
-    '/_dashboard/basic-info/read': {
-      id: '/_dashboard/basic-info/read'
-      path: '/basic-info/read'
-      fullPath: '/basic-info/read'
-      preLoaderRoute: typeof DashboardBasicInfoReadImport
-      parentRoute: typeof DashboardRouteImport
-    }
-    '/_dashboard/basic-info/update': {
-      id: '/_dashboard/basic-info/update'
-      path: '/basic-info/update'
-      fullPath: '/basic-info/update'
-      preLoaderRoute: typeof DashboardBasicInfoUpdateImport
+    '/_dashboard/basic-info/company-info': {
+      id: '/_dashboard/basic-info/company-info'
+      path: '/basic-info/company-info'
+      fullPath: '/basic-info/company-info'
+      preLoaderRoute: typeof DashboardBasicInfoCompanyInfoImport
       parentRoute: typeof DashboardRouteImport
     }
     '/_dashboard/personnel/create': {
@@ -305,10 +264,7 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
-  DashboardBasicInfoCreateRoute: typeof DashboardBasicInfoCreateRoute
-  DashboardBasicInfoDeleteRoute: typeof DashboardBasicInfoDeleteRoute
-  DashboardBasicInfoReadRoute: typeof DashboardBasicInfoReadRoute
-  DashboardBasicInfoUpdateRoute: typeof DashboardBasicInfoUpdateRoute
+  DashboardBasicInfoCompanyInfoRoute: typeof DashboardBasicInfoCompanyInfoRoute
   DashboardPersonnelCreateRoute: typeof DashboardPersonnelCreateRoute
   DashboardPersonnelDeleteRoute: typeof DashboardPersonnelDeleteRoute
   DashboardPersonnelReadRoute: typeof DashboardPersonnelReadRoute
@@ -326,10 +282,7 @@ interface DashboardRouteRouteChildren {
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
-  DashboardBasicInfoCreateRoute: DashboardBasicInfoCreateRoute,
-  DashboardBasicInfoDeleteRoute: DashboardBasicInfoDeleteRoute,
-  DashboardBasicInfoReadRoute: DashboardBasicInfoReadRoute,
-  DashboardBasicInfoUpdateRoute: DashboardBasicInfoUpdateRoute,
+  DashboardBasicInfoCompanyInfoRoute: DashboardBasicInfoCompanyInfoRoute,
   DashboardPersonnelCreateRoute: DashboardPersonnelCreateRoute,
   DashboardPersonnelDeleteRoute: DashboardPersonnelDeleteRoute,
   DashboardPersonnelReadRoute: DashboardPersonnelReadRoute,
@@ -353,10 +306,7 @@ export interface FileRoutesByFullPath {
   '': typeof DashboardRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/': typeof DashboardIndexRoute
-  '/basic-info/create': typeof DashboardBasicInfoCreateRoute
-  '/basic-info/delete': typeof DashboardBasicInfoDeleteRoute
-  '/basic-info/read': typeof DashboardBasicInfoReadRoute
-  '/basic-info/update': typeof DashboardBasicInfoUpdateRoute
+  '/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/personnel/create': typeof DashboardPersonnelCreateRoute
   '/personnel/delete': typeof DashboardPersonnelDeleteRoute
   '/personnel/read': typeof DashboardPersonnelReadRoute
@@ -375,10 +325,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof DashboardIndexRoute
-  '/basic-info/create': typeof DashboardBasicInfoCreateRoute
-  '/basic-info/delete': typeof DashboardBasicInfoDeleteRoute
-  '/basic-info/read': typeof DashboardBasicInfoReadRoute
-  '/basic-info/update': typeof DashboardBasicInfoUpdateRoute
+  '/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/personnel/create': typeof DashboardPersonnelCreateRoute
   '/personnel/delete': typeof DashboardPersonnelDeleteRoute
   '/personnel/read': typeof DashboardPersonnelReadRoute
@@ -399,10 +346,7 @@ export interface FileRoutesById {
   '/_dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/_dashboard/': typeof DashboardIndexRoute
-  '/_dashboard/basic-info/create': typeof DashboardBasicInfoCreateRoute
-  '/_dashboard/basic-info/delete': typeof DashboardBasicInfoDeleteRoute
-  '/_dashboard/basic-info/read': typeof DashboardBasicInfoReadRoute
-  '/_dashboard/basic-info/update': typeof DashboardBasicInfoUpdateRoute
+  '/_dashboard/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/_dashboard/personnel/create': typeof DashboardPersonnelCreateRoute
   '/_dashboard/personnel/delete': typeof DashboardPersonnelDeleteRoute
   '/_dashboard/personnel/read': typeof DashboardPersonnelReadRoute
@@ -424,10 +368,7 @@ export interface FileRouteTypes {
     | ''
     | '/login'
     | '/'
-    | '/basic-info/create'
-    | '/basic-info/delete'
-    | '/basic-info/read'
-    | '/basic-info/update'
+    | '/basic-info/company-info'
     | '/personnel/create'
     | '/personnel/delete'
     | '/personnel/read'
@@ -445,10 +386,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/'
-    | '/basic-info/create'
-    | '/basic-info/delete'
-    | '/basic-info/read'
-    | '/basic-info/update'
+    | '/basic-info/company-info'
     | '/personnel/create'
     | '/personnel/delete'
     | '/personnel/read'
@@ -467,10 +405,7 @@ export interface FileRouteTypes {
     | '/_dashboard'
     | '/login'
     | '/_dashboard/'
-    | '/_dashboard/basic-info/create'
-    | '/_dashboard/basic-info/delete'
-    | '/_dashboard/basic-info/read'
-    | '/_dashboard/basic-info/update'
+    | '/_dashboard/basic-info/company-info'
     | '/_dashboard/personnel/create'
     | '/_dashboard/personnel/delete'
     | '/_dashboard/personnel/read'
@@ -515,10 +450,7 @@ export const routeTree = rootRoute
       "filePath": "_dashboard/route.tsx",
       "children": [
         "/_dashboard/",
-        "/_dashboard/basic-info/create",
-        "/_dashboard/basic-info/delete",
-        "/_dashboard/basic-info/read",
-        "/_dashboard/basic-info/update",
+        "/_dashboard/basic-info/company-info",
         "/_dashboard/personnel/create",
         "/_dashboard/personnel/delete",
         "/_dashboard/personnel/read",
@@ -541,20 +473,8 @@ export const routeTree = rootRoute
       "filePath": "_dashboard/index.tsx",
       "parent": "/_dashboard"
     },
-    "/_dashboard/basic-info/create": {
-      "filePath": "_dashboard/basic-info/create.tsx",
-      "parent": "/_dashboard"
-    },
-    "/_dashboard/basic-info/delete": {
-      "filePath": "_dashboard/basic-info/delete.tsx",
-      "parent": "/_dashboard"
-    },
-    "/_dashboard/basic-info/read": {
-      "filePath": "_dashboard/basic-info/read.tsx",
-      "parent": "/_dashboard"
-    },
-    "/_dashboard/basic-info/update": {
-      "filePath": "_dashboard/basic-info/update.tsx",
+    "/_dashboard/basic-info/company-info": {
+      "filePath": "_dashboard/basic-info/company-info.tsx",
       "parent": "/_dashboard"
     },
     "/_dashboard/personnel/create": {

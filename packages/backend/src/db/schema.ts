@@ -1,6 +1,14 @@
 import { relations } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
-import { pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  pgEnum,
+  pgTable,
+  timestamp,
+  uuid,
+  varchar,
+  serial,
+  integer,
+} from "drizzle-orm/pg-core";
 
 // Enums
 export const projectStatusEnum = pgEnum("project_status", [
@@ -14,6 +22,15 @@ export const appPermissionEnum = pgEnum("app_permission", [
   "man-production", // production management
   "ctr-gdstd", // GD-STD operations
   "monitor-weight", // real-time monitoring
+]);
+
+// Define enum for management types
+export const roleNameEnum = pgEnum("role_name", [
+  "AdminManagement",
+  "BasicInfoManagement",
+  "CustomerManagement",
+  "StorageManagement",
+  "ProductionManagement",
 ]);
 
 const timestamps = {
@@ -32,7 +49,7 @@ const timestampsWithDeletedAt = {
 
 export const rolesTable = pgTable("roles", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar({ length: 100 }).notNull().unique(),
+  name: roleNameEnum().notNull().unique(),
   chinese_name: varchar({ length: 255 }),
   ...timestamps,
 });
@@ -209,6 +226,19 @@ export const projectContactsTable = pgTable("project_contacts", {
   ...timestamps,
 });
 
+export const companyInfoTable = pgTable("company_info", {
+  id: integer("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  county: varchar("county", { length: 100 }).notNull(),
+  district: varchar("district", { length: 100 }).notNull(),
+  address: varchar("address", { length: 255 }).notNull(),
+  fax: varchar("fax", { length: 50 }).notNull(),
+  taxId: varchar("tax_id", { length: 50 }).notNull(),
+  logoLink: varchar("logo_link", { length: 255 }),
+});
+
 export const customersRelations = relations(customersTable, ({ many }) => ({
   projects: many(projectsTable),
   contacts: many(contactsTable),
@@ -372,3 +402,4 @@ export type EmployeeFromDb = InferSelectModel<typeof employeesTable>;
 export type AppUserRefreshTokenFromDb = InferSelectModel<
   typeof appUserRefreshTokensTable
 >;
+export type CompanyInfoFromDb = InferSelectModel<typeof companyInfoTable>;
