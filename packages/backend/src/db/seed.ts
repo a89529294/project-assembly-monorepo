@@ -414,7 +414,8 @@ async function main() {
       id: randomUUID(),
       account: employeesFromDB[i].idNumber,
       employeeId: employeesFromDB[i].id,
-      passwordHash: DEFAULT_PASSWORD_HASH,
+      passwordHash:
+        "$argon2id$v=19$m=19456,t=2,p=1$7plTOkhlpe84tk5lqAZoQw$qoWYFqavEmYzpzdOOzQyIgnURp/wwqL0kohWCER4x84",
     });
   }
 
