@@ -318,11 +318,6 @@ async function main() {
     },
     {
       id: randomUUID(),
-      name: "company-info:create",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
       name: "company-info:read",
       roleId: basicInfoManagementRoleId,
     },
