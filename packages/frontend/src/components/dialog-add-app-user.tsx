@@ -12,7 +12,6 @@ import { DataTable } from "@/features/app-users/data-table";
 import { columns } from "@/features/app-users/data-table/columns";
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
-import * as React from "react";
 
 export const DialogAddAppUser = () => {
   const { data } = useQuery(

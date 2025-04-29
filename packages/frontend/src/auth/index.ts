@@ -1,10 +1,10 @@
 import React from "react";
-import { TrpcTypes } from "../../../backend/src/trpc/router";
+import { User } from "../../../backend/src/trpc/router";
 
 export interface AuthContext {
   isAuthenticated: boolean;
   sessionToken: string | null;
-  user: TrpcTypes["User"] | null;
+  user: User | null;
   logout: (onSuccess: () => void, onError?: () => void) => Promise<void>;
   login: (
     account: string,

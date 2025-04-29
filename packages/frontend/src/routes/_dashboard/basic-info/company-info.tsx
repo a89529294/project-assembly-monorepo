@@ -111,7 +111,7 @@ function CompanyInfoPage() {
     if (logo) {
       uploadCompanyLogo.mutate(logo, {
         onSuccess: (c) => {
-          mutateCompanyInfo(c.logoURL);
+          mutateCompanyInfo(c);
         },
         onError: () => {
           toast.error("上傳logo失敗");

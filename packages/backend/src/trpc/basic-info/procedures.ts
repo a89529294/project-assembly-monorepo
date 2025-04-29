@@ -1,16 +1,8 @@
-import {
-  DeleteObjectCommand,
-  ListObjectsV2Command,
-  PutObjectCommand,
-} from "@aws-sdk/client-s3";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
-import { fileTypeFromBuffer } from "file-type";
-import { File } from "node:buffer";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { companyInfoTable, employeesTable } from "../../db/schema.js";
-import { s3Client } from "../../s3.js";
 import { protectedProcedure, publicProcedure } from "../core.js";
 
 export const getEmployeesProcedure = publicProcedure.query(async () => {
@@ -46,7 +38,7 @@ export const createCompanyInfoProcedure = protectedProcedure(
       logoURL: z.string().min(1).optional(),
     })
   )
-  .mutation(async ({ ctx, input }) => {
+  .mutation(async ({ input }) => {
     // Only allow insert if no row exists
     const existing = await db.select().from(companyInfoTable).limit(1);
     if (existing.length > 0) {

@@ -7,7 +7,8 @@
     "dev": "NODE_ENV=development vite --debug hmr",
     "build": "NODE_ENV=production tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "upload:s3": "sh ./upload-to-s3.sh"
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.3",
