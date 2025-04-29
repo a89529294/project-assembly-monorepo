@@ -99,6 +99,9 @@ function CompanyInfoPage() {
           });
 
           toast.success(isNewCompany ? "成功新增公司資訊" : "成功更新公司資訊");
+          queryClient.invalidateQueries({
+            queryKey: trpc.basicInfo.readCompanyInfo.queryOptions().queryKey,
+          });
         },
         onError: () =>
           toast.error(isNewCompany ? "無法新增公司資訊" : "無法更新公司資訊"),
