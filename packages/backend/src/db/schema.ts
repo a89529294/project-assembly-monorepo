@@ -236,7 +236,7 @@ export const companyInfoTable = pgTable("company_info", {
   address: varchar("address", { length: 255 }).notNull(),
   fax: varchar("fax", { length: 50 }).notNull(),
   taxId: varchar("tax_id", { length: 50 }).notNull(),
-  logoLink: varchar("logo_link", { length: 255 }),
+  logoURL: varchar("logo_link", { length: 255 }),
 });
 
 export const customersRelations = relations(customersTable, ({ many }) => ({

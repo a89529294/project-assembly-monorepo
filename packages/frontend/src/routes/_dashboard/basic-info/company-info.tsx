@@ -1,13 +1,13 @@
-import React, { useRef, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { z } from "zod";
-import { trpc } from "@/trpc";
-import { queryClient } from "@/query-client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TRPCClientError } from "@trpc/client";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useCompanyInfo } from "@/hooks/use-company-info";
 import { cn } from "@/lib/utils";
+import { queryClient } from "@/query-client";
+import { trpc } from "@/trpc";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { TRPCClientError } from "@trpc/client";
+import React, { useRef, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 export const Route = createFileRoute("/_dashboard/basic-info/company-info")({
   validateSearch: z.object({
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_dashboard/basic-info/company-info")({
   }),
   async loader() {
     try {
-      queryClient.ensureQueryData(
+      await queryClient.ensureQueryData(
         trpc.basicInfo.readCompanyInfo.queryOptions()
       );
       return false;
@@ -32,25 +32,26 @@ export const Route = createFileRoute("/_dashboard/basic-info/company-info")({
 
 function CompanyInfoPage() {
   const isNewCompany = Route.useLoaderData();
-  const [logoPreview, setLogoPreview] = useState<string | undefined>(undefined);
-  const [logo, setLogo] = useState<File | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const search = Route.useSearch();
   const navigate = useNavigate();
   const mode = search.mode ?? "read";
-  const { data: formState } = useSuspenseQuery(
-    trpc.basicInfo.readCompanyInfo.queryOptions()
+  const {
+    data: formState,
+    createCompanyInfo,
+    updateCompanyInfo,
+    uploadCompanyLogo,
+  } = useCompanyInfo(isNewCompany);
+
+  const [logoPreview, setLogoPreview] = useState<string | undefined>(
+    formState?.logoURL ?? undefined
   );
-  const { mutate: createCompanyInfo, isPending: isPendingCreate } = useMutation(
-    trpc.basicInfo.createCompanyInfo.mutationOptions()
-  );
-  const { mutate: updateCompanyInfo, isPending: isPendingUpdate } = useMutation(
-    trpc.basicInfo.updateCompanyInfo.mutationOptions()
-  );
-  const { mutateAsync: uploadCompanyLogo } = useMutation(
-    trpc.basicInfo.uploadCompanyLogo.mutationOptions()
-  );
-  const isPendingMutate = isPendingCreate || isPendingUpdate;
+  const [logo, setLogo] = useState<File | null>(null);
+  const isPendingMutate =
+    createCompanyInfo.isPending ||
+    updateCompanyInfo.isPending ||
+    uploadCompanyLogo.isPending;
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -74,53 +75,53 @@ function CompanyInfoPage() {
   const handleSaveClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const formData = new FormData(e.currentTarget);
+    const formEle = e.currentTarget;
+    const formData = new FormData(formEle);
 
+    const mutateCompanyInfo = (logoURL?: string) => {
+      const payload: Parameters<(typeof createCompanyInfo)["mutate"]>[0] = {
+        name: formData.get("name") as string,
+        phone: formData.get("phone") as string,
+        email: formData.get("email") as string,
+        fax: formData.get("fax") as string,
+        taxId: formData.get("taxId") as string,
+        county: formData.get("county") as string,
+        district: formData.get("district") as string,
+        address: formData.get("address") as string,
+        logoURL,
+      };
+
+      const config = {
+        onSuccess: () => {
+          navigate({
+            from: "/basic-info/company-info",
+            search: { mode: "read" },
+          });
+
+          toast.success(isNewCompany ? "成功新增公司資訊" : "成功更新公司資訊");
+        },
+        onError: () =>
+          toast.error(isNewCompany ? "無法新增公司資訊" : "無法更新公司資訊"),
+      };
+
+      if (isNewCompany) {
+        createCompanyInfo.mutate(payload, config);
+      } else updateCompanyInfo.mutate(payload, config);
+    };
     if (logo) {
-      console.log("File to upload:", logo);
-      console.log("File size:", logo.size);
-      console.log("File type:", logo.type);
-
-      const obj = await uploadCompanyLogo(logo);
-      console.log(obj);
+      uploadCompanyLogo.mutate(logo, {
+        onSuccess: (c) => {
+          mutateCompanyInfo(c.logoURL);
+        },
+        onError: () => toast.error("上傳logo失敗"),
+      });
+      // prevent uploading the same logo
+      setLogo(null);
+    } else {
+      mutateCompanyInfo();
     }
-
-    // if (logo){
-    //   uploadCompanyLogo({
-    //     file:{
-    //       type:
-    //     }
-    //   })
-    // }
-
-    const payload = {
-      name: formData.get("name") as string,
-      phone: formData.get("phone") as string,
-      email: formData.get("email") as string,
-      fax: formData.get("fax") as string,
-      taxId: formData.get("taxId") as string,
-      county: formData.get("county") as string,
-      district: formData.get("district") as string,
-      address: formData.get("address") as string,
-    };
-
-    const config = {
-      onSuccess: () => {
-        navigate({
-          from: "/basic-info/company-info",
-          search: { mode: "read" },
-        });
-
-        toast.success(isNewCompany ? "成功新增公司資訊" : "成功更新公司資訊");
-      },
-    };
-
-    if (isNewCompany) {
-      createCompanyInfo(payload, config);
-    } else updateCompanyInfo(payload, config);
   };
 
-  // Render fields as read-only or editable based on mode
   const isReadMode = mode === "read";
   const disableInputs = isReadMode || isPendingMutate;
 
@@ -273,8 +274,8 @@ function CompanyInfoPage() {
               disabled={disableInputs}
             />
 
-            {logo && (
-              <div className="absolute inset-0 ">
+            {logoPreview && (
+              <div className="absolute inset-0 flex justify-center items-center">
                 <img
                   src={logoPreview}
                   alt="Logo Preview"

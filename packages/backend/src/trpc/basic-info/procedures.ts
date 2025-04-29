@@ -13,11 +13,24 @@ import {
 } from "@aws-sdk/client-s3";
 import { s3Client } from "../../s3.js";
 import { octetInputParser } from "@trpc/server/http";
-import { detectMimeType, streamToBuffer } from "../helpers.js";
+import { streamToBuffer } from "../helpers.js";
 import { fileTypeFromBuffer } from "file-type";
 
 export const getEmployeesProcedure = publicProcedure.query(async () => {
   return db.select().from(employeesTable);
+});
+
+export const getCompanyInfoProcedure = protectedProcedure(
+  "company-info:read"
+).query(async () => {
+  const result = await db.select().from(companyInfoTable).limit(1);
+  if (result.length === 0) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Company info not found.",
+    });
+  }
+  return result[0];
 });
 
 export const createCompanyInfoProcedure = protectedProcedure(
@@ -28,11 +41,12 @@ export const createCompanyInfoProcedure = protectedProcedure(
       name: z.string().min(1),
       phone: z.string().min(1),
       email: z.string().min(1),
+      fax: z.string().min(1),
+      taxId: z.string().min(1),
       county: z.string().min(1),
       district: z.string().min(1),
       address: z.string().min(1),
-      fax: z.string().min(1),
-      taxId: z.string().min(1),
+      logoURL: z.string().min(1).optional(),
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -51,21 +65,6 @@ export const createCompanyInfoProcedure = protectedProcedure(
     return { success: true };
   });
 
-// --- Company Info Procedures ---
-
-export const getCompanyInfoProcedure = protectedProcedure(
-  "company-info:read"
-).query(async () => {
-  const result = await db.select().from(companyInfoTable).limit(1);
-  if (result.length === 0) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Company info not found.",
-    });
-  }
-  return result[0];
-});
-
 export const updateCompanyInfoProcedure = protectedProcedure(
   "company-info:update"
 )
@@ -79,6 +78,7 @@ export const updateCompanyInfoProcedure = protectedProcedure(
       address: z.string().min(1).optional(),
       fax: z.string().min(1).optional(),
       taxId: z.string().min(1).optional(),
+      logoURL: z.string().min(1).optional(),
     })
   )
   .mutation(async ({ input }) => {
@@ -110,7 +110,7 @@ export const uploadCompanyLogoProcedure = protectedProcedure(
 
     // Detect mime type
     const mimeType = await fileTypeFromBuffer(fileBuffer);
-    console.log(mimeType);
+
     if (!mimeType) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -169,10 +169,7 @@ export const uploadCompanyLogoProcedure = protectedProcedure(
       const objectUrl = `${baseUrl}/${key}`;
 
       return {
-        key,
-        url: objectUrl,
-        fileType: mimeType,
-        fileExtension,
+        logoURL: objectUrl,
       };
     } catch (error) {
       console.error("S3 upload error:", error);
