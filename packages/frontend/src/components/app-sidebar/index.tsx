@@ -1,17 +1,29 @@
-import { Home, Inbox, RefreshCcw, Delete, LucideUser } from "lucide-react";
+import {
+  Delete,
+  Home,
+  Inbox,
+  LucideUser,
+  LucideUserRoundCog,
+  RefreshCcw,
+} from "lucide-react";
 
 import { CollapsibleSidebarMenu } from "@/components/app-sidebar/collapsible-sidebar-menu";
 import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
 
 import { isAllowed } from "@/lib/utils";
-import { User } from "../../../../backend/src/trpc/router";
 import { roleNameEnum } from "../../../../backend/src/db/schema";
+import { User } from "../../../../backend/src/trpc/router";
 
 const basicInfoRoutes = [
   {
     title: "公司資料",
     url: "/basic-info/company-info",
     icon: Home,
+  },
+  {
+    title: "員工資料",
+    url: "/basic-info/employees",
+    icon: LucideUserRoundCog,
   },
 ];
 const productionRoutes = [

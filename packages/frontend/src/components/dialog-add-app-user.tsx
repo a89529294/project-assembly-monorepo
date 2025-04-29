@@ -1,3 +1,4 @@
+import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,8 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DataTable } from "@/features/app-users/data-table";
-import { columns } from "@/features/app-users/data-table/columns";
+
+import { appUsersColumns } from "@/features/app-users/data-table/columns";
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
 
@@ -45,7 +46,7 @@ export const DialogAddAppUser = () => {
           }}
         >
           {data && data.length > 0 ? (
-            <DataTable columns={columns} data={data} />
+            <DataTable columns={appUsersColumns} data={data} />
           ) : (
             <div className="text-gray-500 p-4">No users found.</div>
           )}

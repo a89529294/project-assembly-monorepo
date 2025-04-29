@@ -1,10 +1,11 @@
 // import { trpcApiClient } from "@/common/trpc-api";
 
+import { DataTable } from "@/components/data-table";
 import { DialogAddAppUser } from "@/components/dialog-add-app-user";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DataTable } from "@/features/app-users/data-table";
-import { columns } from "@/features/app-users/data-table/columns";
+
+import { appUsersColumns } from "@/features/app-users/data-table/columns";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
@@ -67,18 +68,10 @@ export function RouteComponent() {
             <Skeleton className="h-full" />
           ) : (
             <ScrollArea className="rounded-md border p-0 h-full">
-              {/* {Array(10)
-                .fill(data)
-                .flat()
-                ?.map((user) => (
-                  <li
-                    key={user.id}
-                    className="py-2 border-b border-gray-100 last:border-b-0"
-                  >
-                    {user.account}
-                  </li>
-                ))} */}
-              <DataTable columns={columns} data={Array(10).fill(data).flat()} />
+              <DataTable
+                columns={appUsersColumns}
+                data={Array(1).fill(data).flat()}
+              />
             </ScrollArea>
           )}
         </div>

@@ -5,7 +5,7 @@ import { AppUser } from "../../../../../backend/src/trpc/router";
 
 const columnHelper = createColumnHelper<AppUser>();
 
-export const columns = [
+export const appUsersColumns = [
   columnHelper.accessor("account", {
     header: "員工編號",
     cell: (info) => info.getValue(),

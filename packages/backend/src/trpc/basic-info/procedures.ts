@@ -6,7 +6,12 @@ import { companyInfoTable, employeesTable } from "../../db/schema.js";
 import { protectedProcedure, publicProcedure } from "../core.js";
 
 export const getEmployeesProcedure = publicProcedure.query(async () => {
-  return db.select().from(employeesTable);
+  const employees = await db.select().from(employeesTable);
+
+  return employees.map((e) => {
+    const { updated_at, created_at, ...rest } = e;
+    return rest;
+  });
 });
 
 export const getCompanyInfoProcedure = protectedProcedure(
