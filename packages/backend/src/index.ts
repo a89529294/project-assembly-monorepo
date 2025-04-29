@@ -6,6 +6,7 @@ import * as dotenv from "dotenv";
 
 import appRoutes from "./app/index.js";
 import { appRouter } from "./trpc/router.js";
+import fileRoutes from "./file/index.js";
 
 const envPath = `.env.${process.env.NODE_ENV}`;
 dotenv.config({ path: envPath });
@@ -17,8 +18,8 @@ app.get("/", (c) => {
   return c.json({ success: true });
 });
 
-// Mount /app routes
 app.route("/app", appRoutes);
+app.route("/file", fileRoutes);
 
 // Mount tRPC
 app.use(

@@ -1,6 +1,7 @@
 // use-company-info.ts
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { privateFetch } from "@/lib/utils";
 import { trpc } from "@/trpc";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export function useCompanyInfo(isNewCompany: boolean) {
   const companyQuery = useQuery({
@@ -14,9 +15,23 @@ export function useCompanyInfo(isNewCompany: boolean) {
   const updateCompanyInfo = useMutation(
     trpc.basicInfo.updateCompanyInfo.mutationOptions()
   );
-  const uploadCompanyLogo = useMutation(
-    trpc.basicInfo.uploadCompanyLogo.mutationOptions()
-  );
+
+  async function uploadCompanyLogoFn(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await privateFetch("/file/upload-company-logo", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+    return data.logoURL;
+  }
+
+  const uploadCompanyLogo = useMutation({
+    mutationFn: uploadCompanyLogoFn,
+  });
 
   return {
     ...companyQuery,

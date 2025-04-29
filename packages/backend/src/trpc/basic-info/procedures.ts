@@ -1,20 +1,17 @@
-import { publicProcedure } from "../core.js";
-import { protectedProcedure } from "../core.js";
-import { db } from "../../db/index.js";
-import { employeesTable } from "../../db/schema.js";
-import { companyInfoTable } from "../../db/schema.js";
-import { z } from "zod";
-import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
 import {
   DeleteObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
-import { s3Client } from "../../s3.js";
-import { octetInputParser } from "@trpc/server/http";
-import { streamToBuffer } from "../helpers.js";
+import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
 import { fileTypeFromBuffer } from "file-type";
+import { File } from "node:buffer";
+import { z } from "zod";
+import { db } from "../../db/index.js";
+import { companyInfoTable, employeesTable } from "../../db/schema.js";
+import { s3Client } from "../../s3.js";
+import { protectedProcedure, publicProcedure } from "../core.js";
 
 export const getEmployeesProcedure = publicProcedure.query(async () => {
   return db.select().from(employeesTable);
@@ -101,81 +98,10 @@ export const updateCompanyInfoProcedure = protectedProcedure(
     return { success: true };
   });
 
-export const uploadCompanyLogoProcedure = protectedProcedure(
-  "company-info:create"
-)
-  .input(octetInputParser)
-  .mutation(async ({ input, ctx }) => {
-    const fileBuffer = await streamToBuffer(input);
+// export const uploadCompanyLogoProcedure = protectedProcedure(
+//   "company-info:create"
+// )
+//   .input(z.instanceof(File))
+//   .mutation(async ({ input, ctx }) => {
 
-    // Detect mime type
-    const mimeType = await fileTypeFromBuffer(fileBuffer);
-
-    if (!mimeType) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Invalid file type or could not determine file type",
-      });
-    }
-
-    // Validate file type
-    const validMimeTypes = ["image/jpeg", "image/png", "image/svg+xml"];
-    if (!validMimeTypes.includes(mimeType.mime)) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Invalid file type. Only JPEG, PNG, and SVG are allowed.",
-      });
-    }
-
-    const BUCKET_NAME = process.env.S3_BUCKET_NAME;
-    const fileExtension = mimeType.ext;
-    const folderPath = `company-logo/`;
-    const key = `${folderPath}logo.${fileExtension}`;
-
-    try {
-      // First, list objects in the company logo folder to check if anything exists
-      const listCommand = new ListObjectsV2Command({
-        Bucket: BUCKET_NAME,
-        Prefix: folderPath,
-      });
-
-      const listedObjects = await s3Client.send(listCommand);
-
-      // Delete any existing objects in the folder
-      if (listedObjects.Contents && listedObjects.Contents.length > 0) {
-        for (const object of listedObjects.Contents) {
-          if (object.Key) {
-            const deleteCommand = new DeleteObjectCommand({
-              Bucket: BUCKET_NAME,
-              Key: object.Key,
-            });
-            await s3Client.send(deleteCommand);
-          }
-        }
-      }
-
-      // Upload the new logo
-      const uploadCommand = new PutObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-        Body: fileBuffer,
-        ContentType: mimeType.mime,
-      });
-
-      await s3Client.send(uploadCommand);
-
-      // Construct the regular S3 URL for storage in DB
-      const baseUrl = `https://${BUCKET_NAME}.s3.amazonaws.com`;
-      const objectUrl = `${baseUrl}/${key}`;
-
-      return {
-        logoURL: objectUrl,
-      };
-    } catch (error) {
-      console.error("S3 upload error:", error);
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to upload company logo.",
-      });
-    }
-  });
+//   });

@@ -113,7 +113,10 @@ function CompanyInfoPage() {
         onSuccess: (c) => {
           mutateCompanyInfo(c.logoURL);
         },
-        onError: () => toast.error("上傳logo失敗"),
+        onError: () => {
+          toast.error("上傳logo失敗");
+          setLogoPreview(undefined);
+        },
       });
       // prevent uploading the same logo
       setLogo(null);

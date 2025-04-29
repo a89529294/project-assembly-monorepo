@@ -1,37 +1,18 @@
-import {
-  createTRPCClient,
-  httpBatchLink,
-  httpLink,
-  isNonJsonSerializable,
-  splitLink,
-} from "@trpc/client";
-import type { AppRouter } from "../../backend/src/trpc/router";
+import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
-
-import { sessionTokenKey } from "@/constants";
-// import { QueryClient } from "@tanstack/react-query";
-import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+import type { AppRouter } from "../../backend/src/trpc/router";
+import { baseURL, generateHeaders } from "@/constants";
 import { queryClient } from "@/query-client";
+import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 const config = {
-  url: import.meta.env.PROD
-    ? "https://awstesthonobe.zapto.org/trpc"
-    : "http://localhost:3000/trpc",
+  url: baseURL + "/trpc",
   transformer: superjson,
-  headers: () => {
-    const token = localStorage.getItem(sessionTokenKey);
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  },
+  headers: generateHeaders,
 };
 
 const trpcClient = createTRPCClient<AppRouter>({
-  links: [
-    splitLink({
-      condition: (op) => isNonJsonSerializable(op.input),
-      true: httpLink(config),
-      false: httpBatchLink(config),
-    }),
-  ],
+  links: [httpBatchLink(config)],
 });
 export const trpc = createTRPCOptionsProxy<AppRouter>({
   client: trpcClient,

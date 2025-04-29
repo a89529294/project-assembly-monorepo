@@ -3,7 +3,7 @@ import {
   getCompanyInfoProcedure,
   getEmployeesProcedure,
   updateCompanyInfoProcedure,
-  uploadCompanyLogoProcedure,
+  // uploadCompanyLogoProcedure,
 } from "./procedures.js";
 import { router } from "../core.js";
 
@@ -12,5 +12,5 @@ export const basicInfoRouter = router({
   readCompanyInfo: getCompanyInfoProcedure,
   createCompanyInfo: createCompanyInfoProcedure,
   updateCompanyInfo: updateCompanyInfoProcedure,
-  uploadCompanyLogo: uploadCompanyLogoProcedure,
+  // uploadCompanyLogo: uploadCompanyLogoProcedure,
 });
