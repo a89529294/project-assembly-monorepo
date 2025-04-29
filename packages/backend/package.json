@@ -6,16 +6,22 @@
   "scripts": {
     "db:reset:dev": "NODE_ENV=dev pnpm tsx src/db/reset.ts",
     "db:reset:prod": "NODE_ENV=prod pnpm tsx src/db/reset.ts",
+    "db:reset:localprod": "NODE_ENV=localprod pnpm tsx src/db/reset.ts",
     "db:push:dev": "NODE_ENV=dev pnpm drizzle-kit push",
     "db:push:prod": "NODE_ENV=prod pnpm drizzle-kit push",
+    "db:push:localprod": "NODE_ENV=localprod pnpm drizzle-kit push",
     "db:seed:dev": "NODE_ENV=dev pnpm tsx src/db/seed.ts",
     "db:seed:prod": "NODE_ENV=prod pnpm tsx src/db/seed.ts",
+    "db:seed:localprod": "NODE_ENV=localprod pnpm tsx src/db/seed.ts",
     "db:rps:dev": "pnpm run db:reset:dev && pnpm run db:push:dev && pnpm run db:seed:dev",
     "db:rps:prod": "pnpm run db:reset:prod && pnpm run db:push:prod && pnpm run db:seed:prod",
+    "db:rps:localprod": "pnpm run db:reset:localprod && pnpm run db:push:localprod && pnpm run db:seed:localprod",
     "dev": "NODE_ENV=dev tsx watch src/index.ts",
     "build": "tsup src/index.ts --format esm --dts --outDir dist",
     "start": "NODE_ENV=prod node dist/index.js",
-    "prod": "pnpm run build && pnpm run start"
+    "start:localprod": "NODE_ENV=localprod node dist/index.js",
+    "prod": "pnpm run build && pnpm run start",
+    "localprod": "pnpm run build && pnpm run start:localprod"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.797.0",
