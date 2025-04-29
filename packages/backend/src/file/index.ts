@@ -8,12 +8,13 @@ import {
 } from "@aws-sdk/client-s3";
 import { fileTypeFromBuffer } from "file-type";
 import { honoAuthMiddleware } from "../trpc/core.js";
+import { PERMISSION_NAMES } from "../db/permissions.js";
 
 const fileRoutes = new Hono();
 
 fileRoutes.post(
   "/upload-company-logo",
-  honoAuthMiddleware("company-info-logo:create"),
+  honoAuthMiddleware(PERMISSION_NAMES.COMPANY_INFO_LOGO_CREATE),
   async (c) => {
     const body = await c.req.parseBody();
     console.log(body["file"]); // File | string

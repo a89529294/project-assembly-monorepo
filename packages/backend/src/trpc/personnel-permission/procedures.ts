@@ -18,6 +18,7 @@ import {
 import { generatePassword } from "../../helpers/auth.js";
 import { protectedProcedure } from "../../trpc/core.js";
 import { appUsersWithEmployeeAndDepartmentsQuery } from "./helpers.js";
+import { PERMISSION_NAMES } from "../../db/permissions.js";
 
 export const createUserForEmployeeProcedure = protectedProcedure("")
   .input(
@@ -112,7 +113,7 @@ export const createUserWithRolesProcedure = protectedProcedure("")
   });
 
 export const getAppUsersByPermissionProcedure = protectedProcedure(
-  "appUser:read"
+  PERMISSION_NAMES.APPUSER_READ
 )
   .input(
     z

@@ -23,6 +23,8 @@ import {
 import { db } from "./index.js";
 import { randomUUID } from "crypto";
 import { seedEmployees, DepartmentConfig } from "./employee-seed.js";
+import { syncPermissionsToDB } from "./permissions.js";
+import { roleIds } from "./roles.js";
 
 // const envPath = `.env.${process.env.NODE_ENV}`;
 // dotenv.config({ path: envPath });
@@ -42,22 +44,19 @@ async function main() {
   await db.delete(appUsersTable);
   await db.delete(employeesTable);
   await db.delete(departmentsTable);
-  await db.delete(permissionsTable);
   await db.delete(rolesTable);
   await db.delete(projectsTable);
   await db.delete(contactsTable);
   await db.delete(customersTable);
 
-  // Create roles with predefined IDs
-  const adminRoleId = randomUUID();
-  //設定
-  const basicInfoManagementRoleId = randomUUID();
-  //客戶管理
-  const customerManagementRoleId = randomUUID();
-  //倉庫管理
-  const storageManagementRoleId = randomUUID();
-
-  const productionManagementRoleId = randomUUID();
+  // Set role IDs for permissions.ts
+  const {
+    adminRoleId,
+    basicInfoManagementRoleId,
+    customerManagementRoleId,
+    storageManagementRoleId,
+    productionManagementRoleId,
+  } = roleIds;
 
   const roles = [
     {
@@ -90,6 +89,9 @@ async function main() {
 
   await db.insert(rolesTable).values(roles);
   console.log("Roles created!");
+
+  // Sync permissions from code to DB
+  await syncPermissionsToDB();
 
   // Create departments
   const hrDeptId = randomUUID();
@@ -248,140 +250,6 @@ async function main() {
 
   await db.insert(roleDepartmentsTable).values(roleDepartments);
   console.log("Role-Department associations created!");
-
-  // Create permissions with roleId (now a one-to-many relationship)
-  const permissions = [
-    // Production Management permissions
-    {
-      id: randomUUID(),
-      name: "production:create",
-      roleId: productionManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "production:read",
-      roleId: productionManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "production:update",
-      roleId: productionManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "production:delete",
-      roleId: productionManagementRoleId,
-    },
-
-    // Personnel Permission Management permissions
-    {
-      id: randomUUID(),
-      name: "personnelPermission:create",
-      roleId: customerManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "personnelPermission:read",
-      roleId: customerManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "personnelPermission:update",
-      roleId: customerManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "personnelPermission:delete",
-      roleId: customerManagementRoleId,
-    },
-
-    // Basic Info Management permissions
-    {
-      id: randomUUID(),
-      name: "employee:create",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "employee:read",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "employee:update",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "employee:delete",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "company-info:read",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "company-info:update",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "company-info:create",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "company-info-logo:create",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "appUser:create",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "appUser:read",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "appUser:update",
-      roleId: basicInfoManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "appUser:delete",
-      roleId: basicInfoManagementRoleId,
-    },
-
-    // Storage Management permissions
-    {
-      id: randomUUID(),
-      name: "storage:create",
-      roleId: storageManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "storage:read",
-      roleId: storageManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "storage:update",
-      roleId: storageManagementRoleId,
-    },
-    {
-      id: randomUUID(),
-      name: "storage:delete",
-      roleId: storageManagementRoleId,
-    },
-  ];
-
-  await db.insert(permissionsTable).values(permissions);
-  console.log("Permissions created!");
 
   // --- Bulk create employees, users, and appUsers ---
   const NUM_USERS = 30;

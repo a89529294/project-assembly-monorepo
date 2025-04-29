@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "../../db/index.js";
 import { companyInfoTable, employeesTable } from "../../db/schema.js";
 import { protectedProcedure, publicProcedure } from "../core.js";
+import { PERMISSION_NAMES } from "../../db/permissions.js";
 
 export const getEmployeesProcedure = publicProcedure.query(async () => {
   const employees = await db.select().from(employeesTable);
@@ -15,7 +16,7 @@ export const getEmployeesProcedure = publicProcedure.query(async () => {
 });
 
 export const getCompanyInfoProcedure = protectedProcedure(
-  "company-info:read"
+  PERMISSION_NAMES.COMPANY_INFO_READ
 ).query(async () => {
   const result = await db.select().from(companyInfoTable).limit(1);
   if (result.length === 0) {
@@ -28,7 +29,7 @@ export const getCompanyInfoProcedure = protectedProcedure(
 });
 
 export const createCompanyInfoProcedure = protectedProcedure(
-  "company-info:create"
+  PERMISSION_NAMES.COMPANY_INFO_CREATE
 )
   .input(
     z.object({
@@ -60,7 +61,7 @@ export const createCompanyInfoProcedure = protectedProcedure(
   });
 
 export const updateCompanyInfoProcedure = protectedProcedure(
-  "company-info:update"
+  PERMISSION_NAMES.COMPANY_INFO_UPDATE
 )
   .input(
     z.object({
@@ -96,7 +97,7 @@ export const updateCompanyInfoProcedure = protectedProcedure(
   });
 
 // export const uploadCompanyLogoProcedure = protectedProcedure(
-//   "company-info:create"
+//   PERMISSION_NAMES.COMPANY_INFO_CREATE
 // )
 //   .input(z.instanceof(File))
 //   .mutation(async ({ input, ctx }) => {
