@@ -13,6 +13,7 @@
     "upload:s3": "sh ./upload-to-s3.sh"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-collapsible": "^1.1.3",
     "@radix-ui/react-dialog": "^1.1.10",
     "@radix-ui/react-scroll-area": "^1.2.6",
@@ -33,12 +34,14 @@
     "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.56.1",
     "sonner": "^2.0.3",
     "superjson": "*",
     "tailwind-merge": "^3.2.0",
     "tailwindcss": "^4.1.4",
     "tw-animate-css": "^1.2.5",
-    "zod": "*"
+    "zod": "*",
+    "@myapp/shared": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",

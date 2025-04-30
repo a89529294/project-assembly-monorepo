@@ -2,18 +2,9 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
-import { companyInfoTable, employeesTable } from "../../db/schema.js";
-import { protectedProcedure, publicProcedure } from "../core.js";
 import { PERMISSION_NAMES } from "../../db/permissions.js";
-
-export const getEmployeesProcedure = publicProcedure.query(async () => {
-  const employees = await db.select().from(employeesTable);
-
-  return employees.map((e) => {
-    const { updated_at, created_at, ...rest } = e;
-    return rest;
-  });
-});
+import { companyInfoTable } from "../../db/schema.js";
+import { protectedProcedure } from "../core.js";
 
 export const getCompanyInfoProcedure = protectedProcedure(
   PERMISSION_NAMES.COMPANY_INFO_READ
@@ -95,11 +86,3 @@ export const updateCompanyInfoProcedure = protectedProcedure(
       .where(eq(companyInfoTable.id, 1));
     return { success: true };
   });
-
-// export const uploadCompanyLogoProcedure = protectedProcedure(
-//   PERMISSION_NAMES.COMPANY_INFO_CREATE
-// )
-//   .input(z.instanceof(File))
-//   .mutation(async ({ input, ctx }) => {
-
-//   });

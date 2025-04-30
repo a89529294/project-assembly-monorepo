@@ -1,7 +1,8 @@
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { Employee } from "../../../../../backend/src/trpc/router";
+import { Employees } from "../../../../../backend/src/trpc/router";
+import { Link } from "@tanstack/react-router";
 
-const columnHelper = createColumnHelper<Employee>();
+const columnHelper = createColumnHelper<Employees>();
 
 export const employeeColumns = [
   columnHelper.accessor("idNumber", {
@@ -45,4 +46,15 @@ export const employeeColumns = [
     header: "學歷",
     cell: (info) => info.getValue() || "-",
   }),
-] as ColumnDef<Employee>[];
+  columnHelper.display({
+    id: "employee-detail-link",
+    cell: (props) => (
+      <Link
+        to="/basic-info/employees/$employeeId"
+        params={{ employeeId: props.row.original.id }}
+      >
+        員工細節
+      </Link>
+    ),
+  }),
+] as ColumnDef<Employees>[];

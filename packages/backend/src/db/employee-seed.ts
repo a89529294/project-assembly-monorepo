@@ -31,8 +31,19 @@ export async function seedEmployees(departments: DepartmentConfig[]) {
           id,
           idNumber: `${dept.enPrefix}${String(i + 1).padStart(3, "0")}`,
           chName: `${dept.chPrefix || "員工"}${i + 1}`,
+          enName: `John Doe ${i + 1}`,
+          birthday: new Date(Math.floor(Math.random() * 40 * 365 * 24 * 60 * 60 * 1000) + 946684800000),
           gender: globalIndex % 2 === 0 ? "male" : "female",
+          marital_status: ["single", "married", "divorced"][Math.floor(Math.random() * 3)],
+          education: ["high school", "bachelor", "master", "phd"][Math.floor(Math.random() * 4)],
           phone1: `09${Math.floor(100000000 + Math.random() * 899999999)}`,
+          email: `john.doe.${i + 1}@example.com`,
+          residenceCounty: ["台北市", "新北市", "桃園市"][Math.floor(Math.random() * 3)],
+          residenceDistrict: ["中正區", "信義區", "大安區"][Math.floor(Math.random() * 3)],
+          residenceAddress: `台北市中正區${Math.floor(Math.random() * 100)}號`,
+          mailingCounty: ["台北市", "新北市", "桃園市"][Math.floor(Math.random() * 3)],
+          mailingDistrict: ["中正區", "信義區", "大安區"][Math.floor(Math.random() * 3)],
+          mailingAddress: `台北市中正區${Math.floor(Math.random() * 100)}號`,
         })
         .returning();
 

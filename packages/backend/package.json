@@ -38,7 +38,8 @@
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.14.1",
     "superjson": "*",
-    "zod": "*"
+    "zod": "*",
+    "@myapp/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.9",

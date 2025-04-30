@@ -29,6 +29,7 @@ import { Route as DashboardPersonnelCreateImport } from './routes/_dashboard/per
 import { Route as DashboardBasicInfoCompanyInfoImport } from './routes/_dashboard/basic-info/company-info'
 import { Route as DashboardPersonnelAppUsersIndexImport } from './routes/_dashboard/personnel/app-users/index'
 import { Route as DashboardBasicInfoEmployeesIndexImport } from './routes/_dashboard/basic-info/employees/index'
+import { Route as DashboardBasicInfoEmployeesEmployeeIdIndexImport } from './routes/_dashboard/basic-info/employees/$employeeId/index'
 
 // Create/Update Routes
 
@@ -139,6 +140,13 @@ const DashboardBasicInfoEmployeesIndexRoute =
   DashboardBasicInfoEmployeesIndexImport.update({
     id: '/basic-info/employees/',
     path: '/basic-info/employees/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+
+const DashboardBasicInfoEmployeesEmployeeIdIndexRoute =
+  DashboardBasicInfoEmployeesEmployeeIdIndexImport.update({
+    id: '/basic-info/employees/$employeeId/',
+    path: '/basic-info/employees/$employeeId/',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
 
@@ -272,6 +280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPersonnelAppUsersIndexImport
       parentRoute: typeof DashboardRouteImport
     }
+    '/_dashboard/basic-info/employees/$employeeId/': {
+      id: '/_dashboard/basic-info/employees/$employeeId/'
+      path: '/basic-info/employees/$employeeId'
+      fullPath: '/basic-info/employees/$employeeId'
+      preLoaderRoute: typeof DashboardBasicInfoEmployeesEmployeeIdIndexImport
+      parentRoute: typeof DashboardRouteImport
+    }
   }
 }
 
@@ -294,6 +309,7 @@ interface DashboardRouteRouteChildren {
   DashboardStorageUpdateRoute: typeof DashboardStorageUpdateRoute
   DashboardBasicInfoEmployeesIndexRoute: typeof DashboardBasicInfoEmployeesIndexRoute
   DashboardPersonnelAppUsersIndexRoute: typeof DashboardPersonnelAppUsersIndexRoute
+  DashboardBasicInfoEmployeesEmployeeIdIndexRoute: typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
@@ -313,6 +329,8 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardStorageUpdateRoute: DashboardStorageUpdateRoute,
   DashboardBasicInfoEmployeesIndexRoute: DashboardBasicInfoEmployeesIndexRoute,
   DashboardPersonnelAppUsersIndexRoute: DashboardPersonnelAppUsersIndexRoute,
+  DashboardBasicInfoEmployeesEmployeeIdIndexRoute:
+    DashboardBasicInfoEmployeesEmployeeIdIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
@@ -338,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/storage/update': typeof DashboardStorageUpdateRoute
   '/basic-info/employees': typeof DashboardBasicInfoEmployeesIndexRoute
   '/personnel/app-users': typeof DashboardPersonnelAppUsersIndexRoute
+  '/basic-info/employees/$employeeId': typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
 }
 
 export interface FileRoutesByTo {
@@ -358,6 +377,7 @@ export interface FileRoutesByTo {
   '/storage/update': typeof DashboardStorageUpdateRoute
   '/basic-info/employees': typeof DashboardBasicInfoEmployeesIndexRoute
   '/personnel/app-users': typeof DashboardPersonnelAppUsersIndexRoute
+  '/basic-info/employees/$employeeId': typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
 }
 
 export interface FileRoutesById {
@@ -380,6 +400,7 @@ export interface FileRoutesById {
   '/_dashboard/storage/update': typeof DashboardStorageUpdateRoute
   '/_dashboard/basic-info/employees/': typeof DashboardBasicInfoEmployeesIndexRoute
   '/_dashboard/personnel/app-users/': typeof DashboardPersonnelAppUsersIndexRoute
+  '/_dashboard/basic-info/employees/$employeeId/': typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -403,6 +424,7 @@ export interface FileRouteTypes {
     | '/storage/update'
     | '/basic-info/employees'
     | '/personnel/app-users'
+    | '/basic-info/employees/$employeeId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -422,6 +444,7 @@ export interface FileRouteTypes {
     | '/storage/update'
     | '/basic-info/employees'
     | '/personnel/app-users'
+    | '/basic-info/employees/$employeeId'
   id:
     | '__root__'
     | '/_dashboard'
@@ -442,6 +465,7 @@ export interface FileRouteTypes {
     | '/_dashboard/storage/update'
     | '/_dashboard/basic-info/employees/'
     | '/_dashboard/personnel/app-users/'
+    | '/_dashboard/basic-info/employees/$employeeId/'
   fileRoutesById: FileRoutesById
 }
 
@@ -487,7 +511,8 @@ export const routeTree = rootRoute
         "/_dashboard/storage/read",
         "/_dashboard/storage/update",
         "/_dashboard/basic-info/employees/",
-        "/_dashboard/personnel/app-users/"
+        "/_dashboard/personnel/app-users/",
+        "/_dashboard/basic-info/employees/$employeeId/"
       ]
     },
     "/login": {
@@ -555,6 +580,10 @@ export const routeTree = rootRoute
     },
     "/_dashboard/personnel/app-users/": {
       "filePath": "_dashboard/personnel/app-users/index.tsx",
+      "parent": "/_dashboard"
+    },
+    "/_dashboard/basic-info/employees/$employeeId/": {
+      "filePath": "_dashboard/basic-info/employees/$employeeId/index.tsx",
       "parent": "/_dashboard"
     }
   }

@@ -1,0 +1,22 @@
+{
+  "name": "@myapp/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --outDir dist"
+  },
+  "dependencies": {
+    "zod": "*"
+  },
+  "devDependencies": {
+    "tsup": "^8.4.0"
+  }
+}
