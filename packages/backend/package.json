@@ -17,7 +17,7 @@
     "db:rps:prod": "pnpm run db:reset:prod && pnpm run db:push:prod && pnpm run db:seed:prod",
     "db:rps:localprod": "pnpm run db:reset:localprod && pnpm run db:push:localprod && pnpm run db:seed:localprod",
     "dev": "NODE_ENV=dev tsx watch src/index.ts",
-    "build": "tsup src/index.ts --format esm --dts --outDir dist",
+    "build": "pnpm --filter @myapp/shared build && tsup src/index.ts --format esm --dts --outDir dist",
     "start": "NODE_ENV=prod node dist/index.js",
     "start:localprod": "NODE_ENV=localprod node dist/index.js",
     "prod": "pnpm run build && pnpm run start",

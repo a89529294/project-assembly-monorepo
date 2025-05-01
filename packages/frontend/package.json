@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --debug hmr",
-    "build": "tsc -b && vite build",
-    "build:localprod": "tsc -b && vite build --mode localprod",
+    "build": "pnpm --filter @myapp/shared build && tsc -b && vite build",
+    "build:localprod": "pnpm --filter @myapp/shared build && tsc -b && vite build --mode localprod",
     "lint": "eslint .",
     "preview": "vite preview",
     "localprod": "pnpm run build:localprod && pnpm run preview",

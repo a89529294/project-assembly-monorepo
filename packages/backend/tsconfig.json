@@ -25,10 +25,6 @@
     "skipLibCheck": true,
     "moduleResolution": "node16",
     "outDir": "dist",
-    "baseUrl": ".",
-    "paths": {
-      "@myapp/shared": ["../shared/src"],
-      "@myapp/shared/*": ["../shared/src/*"]
-    }
+    "baseUrl": "."
   }
 }

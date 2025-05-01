@@ -1,4 +1,3 @@
-import { employeeSelectSchema } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -10,6 +9,7 @@ import {
   employeesTable,
 } from "../../db/schema.js";
 import { protectedProcedure } from "../core.js";
+import { employeeSelectSchema } from "@myapp/shared";
 
 export const getEmployeesProcedure = protectedProcedure(
   PERMISSION_NAMES.EMPLOYEE_READ
