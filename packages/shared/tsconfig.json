@@ -1,13 +1,4 @@
 {
-  "compilerOptions": {
-    "target": "esnext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "esModuleInterop": true,
-    "strict": true,
-    "outDir": "./dist",
-    "declaration": true,
-    "skipLibCheck": true
-  },
+  "extends": ["@tsconfig/node20/tsconfig.json", "../../tsconfig.base.json"],
   "include": ["src/**/*"]
 }

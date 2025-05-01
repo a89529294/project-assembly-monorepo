@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { CreateInsertSchema, createSelectSchema } from "drizzle-zod";
-import { employeesTable } from "./schema.js";
+import { createSelectSchema } from "drizzle-zod";
+import { employeesTable } from "./schema";
 
 // export const baseEmployeeSelectSchema = z.object({
 //   id: z.string().uuid(),
@@ -21,35 +21,39 @@ import { employeesTable } from "./schema.js";
 //   mailingAddress: z.string().nullable(),
 // });
 
-const baseEmployeeSelectSchema1 = createSelectSchema(employeesTable).pick({
-  id: true,
-  idNumber: true,
-  // chName: true,
-  // enName: true,
-  birthday: true,
-  // gender: true,
-  // marital_status: true,
-  // education: true,
-  // phone1: true,
-  // email: true,
-  // residenceCounty: true,
-  // residenceDistrict: true,
-  // residenceAddress: true,
-  // mailingCounty: true,
-  // mailingDistrict: true,
-  // mailingAddress: true,
+// const baseEmployeeSelectSchema = createSelectSchema(employeesTable).pick({
+//   id: true,
+//   idNumber: true,
+//   chName: true,
+//   enName: true,
+//   birthday: true,
+//   gender: true,
+//   marital_status: true,
+//   education: true,
+//   phone1: true,
+//   email: true,
+//   residenceCounty: true,
+//   residenceDistrict: true,
+//   residenceAddress: true,
+//   mailingCounty: true,
+//   mailingDistrict: true,
+//   mailingAddress: true,
+// });
+const baseEmployeeSelectSchema = createSelectSchema(employeesTable).omit({
+  updated_at: true,
+  created_at: true,
 });
 
-export const employeeSelectSchema = baseEmployeeSelectSchema1.extend({
-  //   departments: z.array(
-  //     z.object({
-  //       departmentName: z.string().min(1),
-  //       departmentId: z.string().min(1),
-  //       jobTitle: z.string().min(1),
-  //     })
-  //   ),
+export const employeeSelectSchema = baseEmployeeSelectSchema.extend({
+  departments: z.array(
+    z.object({
+      departmentName: z.string().min(1),
+      departmentId: z.string().min(1),
+      jobTitle: z.string().min(1),
+    })
+  ),
 });
 
 export type EmployeeSelect = z.infer<typeof employeeSelectSchema>;
 
-export * from "./schema.js";
+export * from "./schema";

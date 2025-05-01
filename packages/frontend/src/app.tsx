@@ -1,6 +1,6 @@
 import { RouterProvider } from "@tanstack/react-router";
 
-import { router } from "@/router";
+import { router } from "./router";
 import { useAuth } from "@/auth/use-auth";
 import { queryClient } from "@/query-client";
 

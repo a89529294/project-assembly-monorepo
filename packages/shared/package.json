@@ -1,18 +1,18 @@
 {
   "name": "@myapp/shared",
   "version": "1.0.0",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "dev": "pnpm build --watch",
-    "build": "tsup src/index.ts --format esm --dts --outDir dist"
+    "build": "tsup"
   },
   "dependencies": {
     "drizzle-orm": "^0.41.0",
@@ -20,6 +20,8 @@
     "zod": "*"
   },
   "devDependencies": {
-    "tsup": "^8.4.0"
+    "tsup": "^8.4.0",
+    "@tsconfig/node20": "20.1.4",
+    "@types/node": "20.14.1"
   }
 }
