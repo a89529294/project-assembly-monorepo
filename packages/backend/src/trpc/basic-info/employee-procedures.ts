@@ -79,27 +79,26 @@ export const updateEmployeeByIdProceedure = protectedProcedure(
     })
   )
   .mutation(async ({ input }) => {
-    console.log(input);
-    // return db.transaction(async (tx) => {
-    //   const { departments, ...employeeData } = input.payload;
-    //   // Update employee
-    //   await tx
-    //     .update(employeesTable)
-    //     .set(employeeData)
-    //     .where(eq(employeesTable.id, input.id));
-    //   // Update department associations
-    //   await tx
-    //     .delete(employeeDepartmentsTable)
-    //     .where(eq(employeeDepartmentsTable.employeeId, input.id));
-    //   if (input.payload.departments?.length) {
-    //     await tx.insert(employeeDepartmentsTable).values(
-    //       input.payload.departments.map((d) => ({
-    //         employeeId: input.id,
-    //         departmentId: d.departmentId,
-    //         jobTitle: d.jobTitle,
-    //       }))
-    //     );
-    //   }
-    //   return { success: true };
-    // });
+    return db.transaction(async (tx) => {
+      const { departments, ...employeeData } = input.payload;
+      // Update employee
+      await tx
+        .update(employeesTable)
+        .set(employeeData)
+        .where(eq(employeesTable.id, input.id));
+      // Update department associations
+      await tx
+        .delete(employeeDepartmentsTable)
+        .where(eq(employeeDepartmentsTable.employeeId, input.id));
+      if (input.payload.departments?.length) {
+        await tx.insert(employeeDepartmentsTable).values(
+          input.payload.departments.map((d) => ({
+            employeeId: input.id,
+            departmentId: d.departmentId,
+            jobTitle: d.jobTitle,
+          }))
+        );
+      }
+      return { success: true };
+    });
   });

@@ -56,6 +56,22 @@ const PERMISSIONS = {
     name: "employee:delete",
     roleId: roleIds.basicInfoManagementRoleId,
   },
+  DEPARTMENT_CREATE: {
+    name: "department:create",
+    roleId: roleIds.basicInfoManagementRoleId,
+  },
+  DEPARTMENT_READ: {
+    name: "department:read",
+    roleId: roleIds.basicInfoManagementRoleId,
+  },
+  DEPARTMENT_UPDATE: {
+    name: "department:update",
+    roleId: roleIds.basicInfoManagementRoleId,
+  },
+  DEPARTMENT_DELETE: {
+    name: "department:delete",
+    roleId: roleIds.basicInfoManagementRoleId,
+  },
   COMPANY_INFO_READ: {
     name: "company-info:read",
     roleId: roleIds.basicInfoManagementRoleId,

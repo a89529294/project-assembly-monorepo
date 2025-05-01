@@ -1,9 +1,11 @@
 import type { InferSelectModel } from "drizzle-orm";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
+  check,
   integer,
   pgEnum,
   pgTable,
+  PgVarcharBuilder,
   timestamp,
   uuid,
   varchar,

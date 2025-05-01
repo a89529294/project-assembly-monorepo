@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_dashboard/basic-info/employees/")({
     );
   },
   component: RouteComponent,
-  pendingComponent: () => <Skeleton className="h-full m-6" />,
+  pendingComponent: () => <Skeleton className="absolute inset-6" />,
 });
 
 function RouteComponent() {
