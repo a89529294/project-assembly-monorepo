@@ -32,7 +32,8 @@ export const appUsersColumns = [
   }),
   columnHelper.accessor("employee.birthday", {
     header: "生日",
-    cell: (info) => info.getValue(),
+    cell: (info) =>
+      info.getValue() ? info.getValue()?.toLocaleDateString() : "",
   }),
   columnHelper.accessor("employee.email", {
     header: "電子信箱",

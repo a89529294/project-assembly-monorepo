@@ -1,5 +1,6 @@
-import { ChevronDown, LucideProps } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
+import { NavigationProps } from "@/components/app-sidebar/paths";
 import {
   Collapsible,
   CollapsibleContent,
@@ -13,26 +14,36 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 export function CollapsibleSidebarMenu({
   show,
   label,
   items,
-}: {
-  show: boolean;
-  label: string;
-  items: Array<{
-    title: string;
-    url: string;
-    icon: React.ForwardRefExoticComponent<
-      Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
-    >;
-  }>;
-}) {
+}: NavigationProps) {
+  const [open, setOpen] = useState(false);
+  const { location } = useRouterState({ select: (s) => s });
+
+  // collapse or expand menu depending on current location
+  useEffect(() => {
+    const x = !!items.find((item) =>
+      location.pathname.startsWith(item.linkOptions.to)
+    );
+
+    if (x) setOpen(true);
+    else setOpen(false);
+  }, [location]);
+
   return (
     show && (
-      <Collapsible className="group/collapsible">
+      <Collapsible
+        open={open}
+        onOpenChange={(s) => {
+          setOpen(s);
+        }}
+        className="group/collapsible"
+      >
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger>
@@ -40,13 +51,16 @@ export function CollapsibleSidebarMenu({
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
-          <CollapsibleContent>
+          <CollapsibleContent className="data-[state=open]:animate-slideDown data-[state=closed]:animate-slideUp overflow-hidden">
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <Link to={item.url} className="[&.active]:font-bold">
+                      <Link
+                        to={item.linkOptions.to}
+                        className="[&.active]:font-bold"
+                      >
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
