@@ -32,13 +32,11 @@ export function YearMonthDatePicker(
     <div>
       <Calendar
         mode="single"
-        selected={props.selected || undefined}
-        onSelect={(date) => {
-          if (date) {
-            props.onChange(date);
-          } else {
-            props.onChange(null);
-          }
+        selected={props.value}
+        onSelect={(date1, date2, m, e) => {
+          // No idea what this works
+          if (m.selected) props.onChange(null);
+          else props.onChange(date1);
         }}
         defaultMonth={props.selected}
         className="rounded-md border p-2"

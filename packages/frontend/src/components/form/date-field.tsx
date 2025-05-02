@@ -65,8 +65,11 @@ export function DateField<T extends FieldValues>({
               <PopoverContent className="w-auto p-0" align="start">
                 <YearMonthDatePicker
                   mode="single"
-                  value={field.value}
-                  onChange={field.onChange}
+                  // No idea what this works
+                  value={form.getValues(name)}
+                  onChange={(s) => form.setValue(name, s)}
+                  //selected={field.value}
+                  // onSelect={field.onChange}
                   // disabled={(date) =>
                   //   date > new Date() || date < new Date("1900-01-01")
                   // }
