@@ -17,9 +17,10 @@ function getStoredAuth() {
     !localStorage.getItem(userKey) ||
     !localStorage.getItem(sessionTokenKey)
   ) {
-    localStorage.removeItem(userKey);
-    console.log("removing sessionToken 2");
-    localStorage.removeItem(sessionTokenKey);
+    if (import.meta.env.PROD) {
+      localStorage.removeItem(userKey);
+      localStorage.removeItem(sessionTokenKey);
+    }
     return null;
   }
 
@@ -38,9 +39,10 @@ function setStoredAuth(storedAuth: StoredAuth | null) {
     localStorage.setItem(userKey, JSON.stringify(storedAuth.user));
     localStorage.setItem(sessionTokenKey, storedAuth.sessionToken);
   } else {
-    localStorage.removeItem(userKey);
-    console.log("removing sessionToken 1");
-    localStorage.removeItem(sessionTokenKey);
+    if (import.meta.env.PROD) {
+      localStorage.removeItem(userKey);
+      localStorage.removeItem(sessionTokenKey);
+    }
   }
 }
 
