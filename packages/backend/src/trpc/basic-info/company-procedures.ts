@@ -6,7 +6,7 @@ import { PERMISSION_NAMES } from "../../db/permissions.js";
 import { companyInfoTable } from "../../db/schema.js";
 import { protectedProcedure } from "../core.js";
 
-export const getCompanyInfoProcedure = protectedProcedure(
+export const readCompanyInfoProcedure = protectedProcedure(
   PERMISSION_NAMES.COMPANY_INFO_READ
 ).query(async () => {
   const result = await db.select().from(companyInfoTable).limit(1);

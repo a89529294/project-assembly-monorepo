@@ -15,7 +15,6 @@ import { useState } from "react";
 export const Route = createFileRoute("/_dashboard/personnel/app-users/")({
   component: RouteComponent,
   loader: async () => {
-    console.log("??");
     await queryClient.ensureQueryData(
       trpc.personnelPermission.getAppUserByPermission.queryOptions({
         permission: "man-production",
@@ -39,8 +38,6 @@ export function RouteComponent() {
       permission: activeTab,
     })
   );
-
-  console.log(data);
 
   return (
     <div className="p-6 bg-white flex flex-col rounded-lg shadow-lg h-full">

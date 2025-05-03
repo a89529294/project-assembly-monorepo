@@ -15,6 +15,6 @@ export type User =
 export type AppUser =
   AppRouter["personnelPermission"]["getAppUserByPermission"]["_def"]["$types"]["output"][number];
 export type Employees =
-  AppRouter["basicInfo"]["getEmployees"]["_def"]["$types"]["output"][number];
+  AppRouter["basicInfo"]["readEmployees"]["_def"]["$types"]["output"]["data"][number];
 export type Employee =
-  AppRouter["basicInfo"]["getEmployeeById"]["_def"]["$types"]["output"];
+  AppRouter["basicInfo"]["readEmployeeById"]["_def"]["$types"]["output"];

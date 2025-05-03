@@ -29,6 +29,7 @@ import { Route as DashboardPersonnelCreateImport } from './routes/_dashboard/per
 import { Route as DashboardBasicInfoCompanyInfoImport } from './routes/_dashboard/basic-info/company-info'
 import { Route as DashboardPersonnelAppUsersIndexImport } from './routes/_dashboard/personnel/app-users/index'
 import { Route as DashboardBasicInfoEmployeesIndexImport } from './routes/_dashboard/basic-info/employees/index'
+import { Route as DashboardBasicInfoEmployeesCreateImport } from './routes/_dashboard/basic-info/employees/create'
 import { Route as DashboardBasicInfoEmployeesEmployeeIdIndexImport } from './routes/_dashboard/basic-info/employees/$employeeId/index'
 
 // Create/Update Routes
@@ -140,6 +141,13 @@ const DashboardBasicInfoEmployeesIndexRoute =
   DashboardBasicInfoEmployeesIndexImport.update({
     id: '/basic-info/employees/',
     path: '/basic-info/employees/',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+
+const DashboardBasicInfoEmployeesCreateRoute =
+  DashboardBasicInfoEmployeesCreateImport.update({
+    id: '/basic-info/employees/create',
+    path: '/basic-info/employees/create',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
 
@@ -266,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStorageUpdateImport
       parentRoute: typeof DashboardRouteImport
     }
+    '/_dashboard/basic-info/employees/create': {
+      id: '/_dashboard/basic-info/employees/create'
+      path: '/basic-info/employees/create'
+      fullPath: '/basic-info/employees/create'
+      preLoaderRoute: typeof DashboardBasicInfoEmployeesCreateImport
+      parentRoute: typeof DashboardRouteImport
+    }
     '/_dashboard/basic-info/employees/': {
       id: '/_dashboard/basic-info/employees/'
       path: '/basic-info/employees'
@@ -307,6 +322,7 @@ interface DashboardRouteRouteChildren {
   DashboardStorageDeleteRoute: typeof DashboardStorageDeleteRoute
   DashboardStorageReadRoute: typeof DashboardStorageReadRoute
   DashboardStorageUpdateRoute: typeof DashboardStorageUpdateRoute
+  DashboardBasicInfoEmployeesCreateRoute: typeof DashboardBasicInfoEmployeesCreateRoute
   DashboardBasicInfoEmployeesIndexRoute: typeof DashboardBasicInfoEmployeesIndexRoute
   DashboardPersonnelAppUsersIndexRoute: typeof DashboardPersonnelAppUsersIndexRoute
   DashboardBasicInfoEmployeesEmployeeIdIndexRoute: typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
@@ -327,6 +343,8 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardStorageDeleteRoute: DashboardStorageDeleteRoute,
   DashboardStorageReadRoute: DashboardStorageReadRoute,
   DashboardStorageUpdateRoute: DashboardStorageUpdateRoute,
+  DashboardBasicInfoEmployeesCreateRoute:
+    DashboardBasicInfoEmployeesCreateRoute,
   DashboardBasicInfoEmployeesIndexRoute: DashboardBasicInfoEmployeesIndexRoute,
   DashboardPersonnelAppUsersIndexRoute: DashboardPersonnelAppUsersIndexRoute,
   DashboardBasicInfoEmployeesEmployeeIdIndexRoute:
@@ -354,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/storage/delete': typeof DashboardStorageDeleteRoute
   '/storage/read': typeof DashboardStorageReadRoute
   '/storage/update': typeof DashboardStorageUpdateRoute
+  '/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
   '/basic-info/employees': typeof DashboardBasicInfoEmployeesIndexRoute
   '/personnel/app-users': typeof DashboardPersonnelAppUsersIndexRoute
   '/basic-info/employees/$employeeId': typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
@@ -375,6 +394,7 @@ export interface FileRoutesByTo {
   '/storage/delete': typeof DashboardStorageDeleteRoute
   '/storage/read': typeof DashboardStorageReadRoute
   '/storage/update': typeof DashboardStorageUpdateRoute
+  '/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
   '/basic-info/employees': typeof DashboardBasicInfoEmployeesIndexRoute
   '/personnel/app-users': typeof DashboardPersonnelAppUsersIndexRoute
   '/basic-info/employees/$employeeId': typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
@@ -398,6 +418,7 @@ export interface FileRoutesById {
   '/_dashboard/storage/delete': typeof DashboardStorageDeleteRoute
   '/_dashboard/storage/read': typeof DashboardStorageReadRoute
   '/_dashboard/storage/update': typeof DashboardStorageUpdateRoute
+  '/_dashboard/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
   '/_dashboard/basic-info/employees/': typeof DashboardBasicInfoEmployeesIndexRoute
   '/_dashboard/personnel/app-users/': typeof DashboardPersonnelAppUsersIndexRoute
   '/_dashboard/basic-info/employees/$employeeId/': typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
@@ -422,6 +443,7 @@ export interface FileRouteTypes {
     | '/storage/delete'
     | '/storage/read'
     | '/storage/update'
+    | '/basic-info/employees/create'
     | '/basic-info/employees'
     | '/personnel/app-users'
     | '/basic-info/employees/$employeeId'
@@ -442,6 +464,7 @@ export interface FileRouteTypes {
     | '/storage/delete'
     | '/storage/read'
     | '/storage/update'
+    | '/basic-info/employees/create'
     | '/basic-info/employees'
     | '/personnel/app-users'
     | '/basic-info/employees/$employeeId'
@@ -463,6 +486,7 @@ export interface FileRouteTypes {
     | '/_dashboard/storage/delete'
     | '/_dashboard/storage/read'
     | '/_dashboard/storage/update'
+    | '/_dashboard/basic-info/employees/create'
     | '/_dashboard/basic-info/employees/'
     | '/_dashboard/personnel/app-users/'
     | '/_dashboard/basic-info/employees/$employeeId/'
@@ -510,6 +534,7 @@ export const routeTree = rootRoute
         "/_dashboard/storage/delete",
         "/_dashboard/storage/read",
         "/_dashboard/storage/update",
+        "/_dashboard/basic-info/employees/create",
         "/_dashboard/basic-info/employees/",
         "/_dashboard/personnel/app-users/",
         "/_dashboard/basic-info/employees/$employeeId/"
@@ -572,6 +597,10 @@ export const routeTree = rootRoute
     },
     "/_dashboard/storage/update": {
       "filePath": "_dashboard/storage/update.tsx",
+      "parent": "/_dashboard"
+    },
+    "/_dashboard/basic-info/employees/create": {
+      "filePath": "_dashboard/basic-info/employees/create.tsx",
       "parent": "/_dashboard"
     },
     "/_dashboard/basic-info/employees/": {

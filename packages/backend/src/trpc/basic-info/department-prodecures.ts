@@ -3,7 +3,7 @@ import { db } from "../../db";
 import { PERMISSION_NAMES } from "../../db/permissions";
 import { protectedProcedure } from "../core";
 
-export const getDepartmentsProcedure = protectedProcedure(
+export const readDepartmentsProcedure = protectedProcedure(
   PERMISSION_NAMES.DEPARTMENT_READ
 ).query(async () => {
   const departments = await db.select().from(departmentsTable);

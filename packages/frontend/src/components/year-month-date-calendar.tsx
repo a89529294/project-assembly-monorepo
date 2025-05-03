@@ -1,5 +1,5 @@
-import { ComponentProps, useState } from "react";
-import { DropdownNavProps, DropdownProps, PropsSingle } from "react-day-picker";
+import { DropdownNavProps, DropdownProps } from "react-day-picker";
+import { zhTW } from "react-day-picker/locale";
 
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -10,12 +10,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function YearMonthDatePicker(
-  props: PropsSingle & {
-    value: Date | undefined;
-    onChange: (...args: any[]) => void;
-  }
-) {
+export function YearMonthDateCalendar(props: {
+  value: Date | undefined;
+  onChange: (...args: any[]) => void;
+}) {
   const handleCalendarChange = (
     _value: string | number,
     _e: React.ChangeEventHandler<HTMLSelectElement>
@@ -33,12 +31,11 @@ export function YearMonthDatePicker(
       <Calendar
         mode="single"
         selected={props.value}
-        onSelect={(date1, date2, m, e) => {
-          // No idea what this works
+        onSelect={(date1, _, m, __) => {
           if (m.selected) props.onChange(null);
           else props.onChange(date1);
         }}
-        defaultMonth={props.selected}
+        defaultMonth={props.value}
         className="rounded-md border p-2"
         classNames={{
           month_caption: "mx-0",
@@ -81,6 +78,8 @@ export function YearMonthDatePicker(
             );
           },
         }}
+        locale={zhTW}
+        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
       />
     </div>
   );

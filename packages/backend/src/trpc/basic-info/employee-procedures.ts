@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { PERMISSION_NAMES } from "../../db/permissions.js";
@@ -11,18 +11,48 @@ import {
 import { protectedProcedure } from "../core.js";
 import { employeeSelectSchema } from "@myapp/shared";
 
-export const getEmployeesProcedure = protectedProcedure(
+export const readEmployeesProcedure = protectedProcedure(
   PERMISSION_NAMES.EMPLOYEE_READ
-).query(async () => {
-  const employees = await db.select().from(employeesTable);
+)
+  .input(
+    z.object({
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(100).default(10),
+    })
+  )
+  .query(async ({ input }) => {
+    const { page, pageSize } = input;
+    const offset = (page - 1) * pageSize;
 
-  return employees.map((e) => {
-    const { updated_at, created_at, ...rest } = e;
-    return rest;
+    // Get total count
+    const [{ count: total }] = await db
+      .select({ count: count() })
+      .from(employeesTable);
+
+    // Get paginated data
+    const employees = await db
+      .select()
+      .from(employeesTable)
+      .limit(pageSize)
+      .offset(offset);
+
+    const data = employees.map((e) => {
+      const { updated_at, created_at, ...rest } = e;
+      return rest;
+    });
+
+    const totalPages = Math.ceil(total / pageSize);
+
+    return {
+      page,
+      pageSize,
+      total,
+      totalPages,
+      data,
+    };
   });
-});
 
-export const getEmployeeByIdProcedure = protectedProcedure(
+export const readEmployeeByIdProcedure = protectedProcedure(
   PERMISSION_NAMES.EMPLOYEE_READ
 )
   .input(z.string())
@@ -31,11 +61,11 @@ export const getEmployeeByIdProcedure = protectedProcedure(
     const employees = await db
       .select()
       .from(employeesTable)
-      .innerJoin(
+      .leftJoin(
         employeeDepartmentsTable,
         eq(employeeDepartmentsTable.employeeId, employeesTable.id)
       )
-      .innerJoin(
+      .leftJoin(
         departmentsTable,
         eq(departmentsTable.id, employeeDepartmentsTable.departmentId)
       )
@@ -58,18 +88,20 @@ export const getEmployeeByIdProcedure = protectedProcedure(
         jobTitle: string;
       }[],
     };
+
     employees.forEach((e) => {
-      employee.departments.push({
-        departmentId: e.departments.id,
-        departmentName: e.departments.name,
-        jobTitle: e.employee_departments.jobTitle ?? "",
-      });
+      if (e.departments && e.employee_departments)
+        employee.departments.push({
+          departmentId: e.departments.id,
+          departmentName: e.departments.name,
+          jobTitle: e.employee_departments.jobTitle ?? "",
+        });
     });
 
     return employee;
   });
 
-export const updateEmployeeByIdProceedure = protectedProcedure(
+export const updateEmployeeByIdProcedure = protectedProcedure(
   PERMISSION_NAMES.EMPLOYEE_UPDATE
 )
   .input(
@@ -100,5 +132,35 @@ export const updateEmployeeByIdProceedure = protectedProcedure(
         );
       }
       return { success: true };
+    });
+  });
+
+export const createEmployeeProcedure = protectedProcedure(
+  PERMISSION_NAMES.EMPLOYEE_CREATE
+)
+  .input(
+    z.object({
+      payload: employeeSelectSchema,
+    })
+  )
+  .mutation(async ({ input }) => {
+    return db.transaction(async (tx) => {
+      const { departments, ...rest } = input.payload;
+
+      const [employee] = await tx
+        .insert(employeesTable)
+        .values(rest)
+        .returning();
+
+      if (departments.length) {
+        await tx.insert(employeeDepartmentsTable).values(
+          departments.map((d: { departmentId: string; jobTitle: string }) => ({
+            employeeId: employee.id,
+            departmentId: d.departmentId,
+            jobTitle: d.jobTitle,
+          }))
+        );
+      }
+      return { success: true, id: employee.id };
     });
   });

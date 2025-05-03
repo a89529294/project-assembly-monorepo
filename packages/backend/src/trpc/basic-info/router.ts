@@ -1,22 +1,24 @@
 import {
   createCompanyInfoProcedure,
-  getCompanyInfoProcedure,
+  readCompanyInfoProcedure,
   updateCompanyInfoProcedure,
 } from "./company-procedures.js";
 import {
-  getEmployeeByIdProcedure,
-  getEmployeesProcedure,
-  updateEmployeeByIdProceedure,
+  createEmployeeProcedure,
+  readEmployeeByIdProcedure,
+  readEmployeesProcedure,
+  updateEmployeeByIdProcedure,
 } from "./employee-procedures.js";
 import { router } from "../core.js";
-import { getDepartmentsProcedure } from "./department-prodecures.js";
+import { readDepartmentsProcedure } from "./department-prodecures.js";
 
 export const basicInfoRouter = router({
-  getEmployees: getEmployeesProcedure,
-  getEmployeeById: getEmployeeByIdProcedure,
-  updateEmployeeById: updateEmployeeByIdProceedure,
-  getDepartments: getDepartmentsProcedure,
-  readCompanyInfo: getCompanyInfoProcedure,
+  readEmployees: readEmployeesProcedure,
+  readEmployeeById: readEmployeeByIdProcedure,
+  updateEmployeeById: updateEmployeeByIdProcedure,
+  createEmployee: createEmployeeProcedure,
+  readDepartments: readDepartmentsProcedure,
+  readCompanyInfo: readCompanyInfoProcedure,
   createCompanyInfo: createCompanyInfoProcedure,
   updateCompanyInfo: updateCompanyInfoProcedure,
 });

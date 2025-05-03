@@ -261,7 +261,7 @@ async function main() {
   const allDepartments = await db.select().from(departmentsTable);
   const departmentConfigs: DepartmentConfig[] = allDepartments.map((dept) => ({
     departmentId: dept.id,
-    count: Math.floor(Math.random() * 10) + 1, // 1 to 10 employees
+    count: Math.floor(Math.random() * 100) + 1, // 1 to 100 employees
     chPrefix: dept.zh_prefix,
     enPrefix: dept.en_prefix,
   }));

@@ -19,8 +19,6 @@ export const DialogAddAppUser = () => {
     trpc.personnelPermission.getAppUserByPermission.queryOptions()
   );
 
-  console.log("from dialog ", data);
-
   // State for selected user
   // const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
   //   null

@@ -30,7 +30,7 @@ export const employeeColumns = [
     header: "生日",
     cell: (info) => info.getValue()?.toLocaleDateString() || "-",
   }),
-  columnHelper.accessor("phone1", {
+  columnHelper.accessor("phone", {
     header: "電話",
     cell: (info) => info.getValue(),
   }),

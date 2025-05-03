@@ -3,7 +3,7 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 
 export function useEmployee(id: string) {
   const employeeQuery = useSuspenseQuery({
-    ...trpc.basicInfo.getEmployeeById.queryOptions(id),
+    ...trpc.basicInfo.readEmployeeById.queryOptions(id),
   });
   const updateEmployee = useMutation(
     trpc.basicInfo.updateEmployeeById.mutationOptions()

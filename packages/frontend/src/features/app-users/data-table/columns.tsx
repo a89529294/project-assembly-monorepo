@@ -39,7 +39,7 @@ export const appUsersColumns = [
     header: "電子信箱",
     cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor("employee.phone1", {
+  columnHelper.accessor("employee.phone", {
     header: "電話",
     cell: (info) => info.getValue(),
   }),

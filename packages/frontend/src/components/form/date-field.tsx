@@ -1,7 +1,6 @@
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 
-import { YearMonthDatePicker } from "@/components/comp-497";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
@@ -15,8 +14,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { YearMonthDateCalendar } from "@/components/year-month-date-calendar";
 import { cn } from "@/lib/utils";
-import { useReducer } from "react";
 import { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 
 export function DateField<T extends FieldValues>({
@@ -30,31 +29,30 @@ export function DateField<T extends FieldValues>({
   required: boolean;
   label?: string;
 }) {
-  const [_, rerender] = useReducer(() => ({}), {});
-
-  console.log(form.getValues(name));
-
   return (
     <FormField
       control={form.control}
       name={name}
       render={({ field }) => {
-        console.log(field.value);
         return (
           <FormItem className="flex flex-col">
-            <FormLabel>{label ?? name}</FormLabel>
+            <FormLabel>
+              {label ?? name}{" "}
+              {required && <span className="text-red-400"> *</span>}
+            </FormLabel>
             <Popover>
               <PopoverTrigger asChild>
                 <FormControl>
                   <Button
                     variant={"outline"}
                     className={cn(
-                      "pl-3 text-left font-normal",
+                      "pl-3 text-left font-normal disabled:opacity-50",
                       !field.value && "text-muted-foreground"
                     )}
+                    disabled={field.disabled}
                   >
                     {field.value ? (
-                      format(field.value, "PPP")
+                      format(field.value, "yyyy年MM月dd日")
                     ) : (
                       <span>選一個日期</span>
                     )}
@@ -63,16 +61,9 @@ export function DateField<T extends FieldValues>({
                 </FormControl>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <YearMonthDatePicker
-                  mode="single"
-                  // No idea what this works
+                <YearMonthDateCalendar
                   value={form.getValues(name)}
                   onChange={(s) => form.setValue(name, s)}
-                  //selected={field.value}
-                  // onSelect={field.onChange}
-                  // disabled={(date) =>
-                  //   date > new Date() || date < new Date("1900-01-01")
-                  // }
                 />
               </PopoverContent>
             </Popover>

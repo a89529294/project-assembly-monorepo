@@ -3,6 +3,7 @@ import { createSelectSchema } from "drizzle-zod";
 import { employeesTable } from "./schema";
 
 const baseSchema = createSelectSchema(employeesTable).omit({
+  id: true,
   updated_at: true,
   created_at: true,
 });

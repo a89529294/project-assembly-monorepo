@@ -19,11 +19,13 @@ export function SelectField<T extends FieldValues>({
   name,
   required,
   label,
+  options,
 }: {
   form: UseFormReturn<T>;
   name: FieldPath<T>;
   required: boolean;
   label?: string;
+  options: { value: string; label: string }[];
 }) {
   return (
     <FormField
@@ -35,15 +37,22 @@ export function SelectField<T extends FieldValues>({
             {label ?? name}{" "}
             {required && <span className="text-red-400"> *</span>}
           </FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <Select
+            disabled={field.disabled}
+            onValueChange={field.onChange}
+            value={field.value}
+          >
             <FormControl>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a verified email to display" />
+                <SelectValue placeholder="" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="male">男</SelectItem>
-              <SelectItem value="female">女</SelectItem>
+              {options.map((op) => (
+                <SelectItem key={op.value} value={op.value}>
+                  {op.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <FormMessage />
