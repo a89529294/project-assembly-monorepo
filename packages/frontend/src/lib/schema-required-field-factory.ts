@@ -1,4 +1,4 @@
-import { employeeSelectSchema } from "@myapp/shared";
+import { employeeDetailedSchema } from "@myapp/shared";
 import { z } from "zod";
 
 export function isFieldRequired<T extends z.ZodRawShape>(
@@ -9,7 +9,7 @@ export function isFieldRequired<T extends z.ZodRawShape>(
 }
 
 export function isEmployeeFieldRequired(
-  x: keyof (typeof employeeSelectSchema)["_type"]
+  x: keyof (typeof employeeDetailedSchema)["_type"]
 ) {
-  return isFieldRequired(employeeSelectSchema, x);
+  return isFieldRequired(employeeDetailedSchema, x);
 }

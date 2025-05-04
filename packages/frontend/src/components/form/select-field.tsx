@@ -13,6 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
+import { Spinner } from "@/components/spinner";
 
 export function SelectField<T extends FieldValues>({
   form,
@@ -20,12 +21,16 @@ export function SelectField<T extends FieldValues>({
   required,
   label,
   options,
+  loading,
+  onSelect,
 }: {
   form: UseFormReturn<T>;
   name: FieldPath<T>;
   required: boolean;
   label?: string;
-  options: { value: string; label: string }[];
+  loading?: boolean;
+  options: { value: string; label: string }[] | undefined;
+  onSelect?: () => void;
 }) {
   return (
     <FormField
@@ -39,7 +44,10 @@ export function SelectField<T extends FieldValues>({
           </FormLabel>
           <Select
             disabled={field.disabled}
-            onValueChange={field.onChange}
+            onValueChange={(...args) => {
+              field.onChange(...args);
+              onSelect && onSelect();
+            }}
             value={field.value}
           >
             <FormControl>
@@ -48,11 +56,26 @@ export function SelectField<T extends FieldValues>({
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {options.map((op) => (
-                <SelectItem key={op.value} value={op.value}>
-                  {op.label}
+              {loading ? (
+                <SelectItem
+                  className="flex justify-center"
+                  key="loading"
+                  value="loading"
+                  disabled
+                >
+                  <Spinner className="mx-0 text-black relative left-3" />
                 </SelectItem>
-              ))}
+              ) : options ? (
+                options.map((op) => (
+                  <SelectItem key={op.value} value={op.value}>
+                    {op.label}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem key="no-options" value="no-options" disabled>
+                  無選項
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
           <FormMessage />

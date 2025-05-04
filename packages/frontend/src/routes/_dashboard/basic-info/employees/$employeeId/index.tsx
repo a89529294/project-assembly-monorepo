@@ -7,7 +7,7 @@ import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 
 import { EmployeeForm } from "@/components/employee-form";
-import { EmployeeSelect, employeeSelectSchema } from "@myapp/shared";
+import { EmployeeDetail, employeeDetailedSchema } from "@myapp/shared";
 import { toast } from "sonner";
 
 export const Route = createFileRoute(
@@ -35,7 +35,7 @@ function RouteComponent() {
   const mode = search.mode;
   const { data: employee, updateEmployee } = useEmployee(employeeId);
 
-  async function onSubmit(data: z.infer<typeof employeeSelectSchema>) {
+  async function onSubmit(data: z.infer<typeof employeeDetailedSchema>) {
     await updateEmployee.mutateAsync({
       id: employeeId,
       payload: data,
@@ -53,9 +53,9 @@ function RouteComponent() {
     <div className="absolute inset-6 flex flex-col">
       <EmployeeForm
         initialData={employee}
-        disabled={mode === "read"}
+        disabled={mode === "read" || updateEmployee.isPending}
         onSubmit={onSubmit}
-        ActionButtons={({ form }: { form: UseFormReturn<EmployeeSelect> }) => (
+        ActionButtons={({ form }: { form: UseFormReturn<EmployeeDetail> }) => (
           <ActionButtons
             form={form}
             mode={mode}
@@ -72,7 +72,7 @@ function ActionButtons({
   mode,
   isPending,
 }: {
-  form: UseFormReturn<EmployeeSelect>;
+  form: UseFormReturn<EmployeeDetail>;
   mode: string;
   isPending: boolean;
 }) {

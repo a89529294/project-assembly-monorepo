@@ -10,11 +10,8 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
+// TODO maybe move all following types to shared
 export type User =
   AppRouter["auth"]["login"]["_def"]["$types"]["output"]["user"];
 export type AppUser =
   AppRouter["personnelPermission"]["getAppUserByPermission"]["_def"]["$types"]["output"][number];
-export type Employees =
-  AppRouter["basicInfo"]["readEmployees"]["_def"]["$types"]["output"]["data"][number];
-export type Employee =
-  AppRouter["basicInfo"]["readEmployeeById"]["_def"]["$types"]["output"];

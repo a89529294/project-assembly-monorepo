@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { EmployeeForm } from "@/components/employee-form";
-import { employeeSelectSchema } from "@myapp/shared";
+import { employeeDetailedSchema } from "@myapp/shared";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -21,7 +21,7 @@ function RouteComponent() {
     trpc.basicInfo.createEmployee.mutationOptions()
   );
 
-  async function onSubmit(data: z.infer<typeof employeeSelectSchema>) {
+  async function onSubmit(data: z.infer<typeof employeeDetailedSchema>) {
     await createEmployee.mutateAsync({
       payload: data,
     });
@@ -36,7 +36,7 @@ function RouteComponent() {
   return (
     <div className="absolute inset-6 flex flex-col">
       <EmployeeForm
-        disabled={false}
+        disabled={createEmployee.isPending}
         onSubmit={onSubmit}
         ActionButtons={() => (
           <ActionButtons isPending={createEmployee.isPending} />

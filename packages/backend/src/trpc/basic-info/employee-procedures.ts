@@ -9,7 +9,10 @@ import {
   employeesTable,
 } from "../../db/schema.js";
 import { protectedProcedure } from "../core.js";
-import { employeeSelectSchema } from "@myapp/shared";
+import {
+  employeeDetailedSchema,
+  paginatedEmployeeSummarySchema,
+} from "@myapp/shared";
 
 export const readEmployeesProcedure = protectedProcedure(
   PERMISSION_NAMES.EMPLOYEE_READ
@@ -20,6 +23,7 @@ export const readEmployeesProcedure = protectedProcedure(
       pageSize: z.number().int().min(1).max(100).default(10),
     })
   )
+  .output(paginatedEmployeeSummarySchema)
   .query(async ({ input }) => {
     const { page, pageSize } = input;
     const offset = (page - 1) * pageSize;
@@ -56,7 +60,7 @@ export const readEmployeeByIdProcedure = protectedProcedure(
   PERMISSION_NAMES.EMPLOYEE_READ
 )
   .input(z.string())
-  .output(employeeSelectSchema)
+  .output(employeeDetailedSchema)
   .query(async ({ input }) => {
     const employees = await db
       .select()
@@ -107,7 +111,7 @@ export const updateEmployeeByIdProcedure = protectedProcedure(
   .input(
     z.object({
       id: z.string().min(1),
-      payload: employeeSelectSchema,
+      payload: employeeDetailedSchema,
     })
   )
   .mutation(async ({ input }) => {
@@ -122,9 +126,9 @@ export const updateEmployeeByIdProcedure = protectedProcedure(
       await tx
         .delete(employeeDepartmentsTable)
         .where(eq(employeeDepartmentsTable.employeeId, input.id));
-      if (input.payload.departments?.length) {
+      if (departments.length) {
         await tx.insert(employeeDepartmentsTable).values(
-          input.payload.departments.map((d) => ({
+          departments.map((d) => ({
             employeeId: input.id,
             departmentId: d.departmentId,
             jobTitle: d.jobTitle,
@@ -140,7 +144,7 @@ export const createEmployeeProcedure = protectedProcedure(
 )
   .input(
     z.object({
-      payload: employeeSelectSchema,
+      payload: employeeDetailedSchema,
     })
   )
   .mutation(async ({ input }) => {

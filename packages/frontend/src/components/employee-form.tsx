@@ -4,20 +4,21 @@ import { TextField } from "@/components/form/text-field";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useCounties } from "@/hooks/use-counties";
+import { useTowns } from "@/hooks/use-towns";
 import { trpc } from "@/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EmployeeSelect, employeeSelectSchema } from "@myapp/shared";
+import { EmployeeDetail, employeeDetailedSchema } from "@myapp/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
 type EmployeeFormProps = {
   disabled: boolean;
-  initialData?: EmployeeSelect;
-  onSubmit: (data: EmployeeSelect) => Promise<void>;
-  ActionButtons: React.FC<{ form: UseFormReturn<EmployeeSelect> }>;
+  initialData?: EmployeeDetail;
+  onSubmit: (data: EmployeeDetail) => Promise<void>;
+  ActionButtons: React.FC<{ form: UseFormReturn<EmployeeDetail> }>;
 };
 
 export function EmployeeForm({
@@ -29,7 +30,13 @@ export function EmployeeForm({
   const { data: departments } = useQuery(
     trpc.basicInfo.readDepartments.queryOptions()
   );
-  const defaultValues: EmployeeSelect = {
+  const {
+    data: counties,
+    isLoading: isLoadingCounties,
+    nameToCode,
+    codeToName,
+  } = useCounties();
+  const defaultValues: EmployeeDetail = {
     idNumber: "",
     chName: "",
     enName: "",
@@ -47,22 +54,44 @@ export function EmployeeForm({
     mailingDistrict: "",
     mailingAddress: "",
   };
-  const form = useForm<z.infer<typeof employeeSelectSchema>>({
-    resolver: zodResolver(employeeSelectSchema),
-    defaultValues: initialData ?? defaultValues,
+  const form = useForm<EmployeeDetail>({
+    resolver: zodResolver(employeeDetailedSchema),
+    defaultValues: initialData
+      ? {
+          ...initialData,
+          residenceCounty: initialData.residenceCounty
+            ? nameToCode[initialData.residenceCounty]
+            : initialData.residenceCounty,
+          mailingCounty: initialData.mailingCounty
+            ? nameToCode[initialData.mailingCounty]
+            : initialData.mailingCounty,
+        }
+      : defaultValues,
     disabled: disabled,
   });
+  const { data: townsForResidence, isLoading: isLoadingResidenceTown } =
+    useTowns(form.watch("residenceCounty"));
+  const { data: townsForMailing, isLoading: isLoadingMailingTown } = useTowns(
+    form.watch("mailingCounty")
+  );
+
   const { control } = form;
   const { fields, append, remove } = useFieldArray({
     control,
     name: "departments",
   });
 
-  const handleFormSubmit = async (
-    data: z.infer<typeof employeeSelectSchema>
-  ) => {
+  const handleFormSubmit = async (data: EmployeeDetail) => {
     try {
-      await onSubmit(data);
+      await onSubmit({
+        ...data,
+        residenceCounty: data.residenceCounty
+          ? codeToName[data.residenceCounty]
+          : data.residenceCounty,
+        mailingCounty: data.mailingCounty
+          ? codeToName[data.mailingCounty]
+          : data.mailingCounty,
+      });
     } catch (error) {
       console.error(error);
       toast.error(initialData ? "無法更新員工" : "無法創造員工");
@@ -82,7 +111,6 @@ export function EmployeeForm({
       <div className="flex-1 relative">
         <div className="absolute inset-0">
           <ScrollArea className="h-full">
-            {" "}
             <Form {...form}>
               <form
                 id="employee-form"
@@ -99,34 +127,40 @@ export function EmployeeForm({
                       form={form}
                       name="idNumber"
                       required={
-                        !employeeSelectSchema.shape.idNumber.isNullable()
+                        !employeeDetailedSchema.shape.idNumber.isNullable()
                       }
                     />
 
                     <TextField
                       form={form}
                       name="chName"
-                      required={!employeeSelectSchema.shape.chName.isNullable()}
+                      required={
+                        !employeeDetailedSchema.shape.chName.isNullable()
+                      }
                     />
 
                     <TextField
                       form={form}
                       name="enName"
-                      required={!employeeSelectSchema.shape.enName.isNullable()}
+                      required={
+                        !employeeDetailedSchema.shape.enName.isNullable()
+                      }
                     />
 
                     <DateField
                       form={form}
                       name="birthday"
                       required={
-                        !employeeSelectSchema.shape.birthday.isNullable()
+                        !employeeDetailedSchema.shape.birthday.isNullable()
                       }
                     />
 
                     <SelectField
                       form={form}
                       name="gender"
-                      required={!employeeSelectSchema.shape.gender.isNullable()}
+                      required={
+                        !employeeDetailedSchema.shape.gender.isNullable()
+                      }
                       options={[
                         { value: "male", label: "男" },
                         { value: "female", label: "女" },
@@ -137,7 +171,7 @@ export function EmployeeForm({
                       form={form}
                       name="marital_status"
                       required={
-                        !employeeSelectSchema.shape.marital_status.isNullable()
+                        !employeeDetailedSchema.shape.marital_status.isNullable()
                       }
                     />
 
@@ -145,7 +179,7 @@ export function EmployeeForm({
                       form={form}
                       name="education"
                       required={
-                        !employeeSelectSchema.shape.education.isNullable()
+                        !employeeDetailedSchema.shape.education.isNullable()
                       }
                     />
                   </div>
@@ -159,13 +193,17 @@ export function EmployeeForm({
                     <TextField
                       form={form}
                       name="phone"
-                      required={!employeeSelectSchema.shape.phone.isNullable()}
+                      required={
+                        !employeeDetailedSchema.shape.phone.isNullable()
+                      }
                     />
 
                     <TextField
                       form={form}
                       name="email"
-                      required={!employeeSelectSchema.shape.email.isNullable()}
+                      required={
+                        !employeeDetailedSchema.shape.email.isNullable()
+                      }
                     />
                   </div>
 
@@ -198,7 +236,11 @@ export function EmployeeForm({
                           form={form}
                           name={`departments.${index}.departmentId`}
                           label="部門"
-                          // TODO deal with async deprtments
+                          // TODO
+                          // deal
+                          // with
+                          // async
+                          // deprtments
                           options={
                             departments?.map((d) => ({
                               value: d.id,
@@ -206,7 +248,7 @@ export function EmployeeForm({
                             })) ?? []
                           }
                           required={
-                            !employeeSelectSchema.shape.departments.element.shape.departmentId.isNullable()
+                            !employeeDetailedSchema.shape.departments.element.shape.departmentId.isNullable()
                           }
                         />
                         <TextField
@@ -214,7 +256,7 @@ export function EmployeeForm({
                           name={`departments.${index}.jobTitle`}
                           label="職位"
                           required={
-                            !employeeSelectSchema.shape.departments.element.shape.jobTitle.isNullable()
+                            !employeeDetailedSchema.shape.departments.element.shape.jobTitle.isNullable()
                           }
                         />
                         <Button
@@ -237,27 +279,34 @@ export function EmployeeForm({
                         Residence Address
                       </h3>
 
-                      <TextField
+                      <SelectField
                         form={form}
                         name="residenceCounty"
                         required={
-                          !employeeSelectSchema.shape.residenceCounty.isNullable()
+                          !employeeDetailedSchema.shape.residenceCounty.isNullable()
+                        }
+                        loading={isLoadingCounties}
+                        options={counties}
+                        onSelect={() =>
+                          form.setValue("residenceDistrict", null)
                         }
                       />
 
-                      <TextField
+                      <SelectField
                         form={form}
                         name="residenceDistrict"
                         required={
-                          !employeeSelectSchema.shape.residenceDistrict.isNullable()
+                          !employeeDetailedSchema.shape.residenceDistrict.isNullable()
                         }
+                        loading={isLoadingResidenceTown}
+                        options={townsForResidence}
                       />
 
                       <TextField
                         form={form}
                         name="residenceAddress"
                         required={
-                          !employeeSelectSchema.shape.residenceAddress.isNullable()
+                          !employeeDetailedSchema.shape.residenceAddress.isNullable()
                         }
                       />
                     </div>
@@ -267,27 +316,31 @@ export function EmployeeForm({
                         Mailing Address
                       </h3>
 
-                      <TextField
+                      <SelectField
                         form={form}
                         name="mailingCounty"
                         required={
-                          !employeeSelectSchema.shape.mailingCounty.isNullable()
+                          !employeeDetailedSchema.shape.mailingCounty.isNullable()
                         }
+                        loading={isLoadingCounties}
+                        options={counties}
                       />
 
-                      <TextField
+                      <SelectField
                         form={form}
                         name="mailingDistrict"
                         required={
-                          !employeeSelectSchema.shape.mailingDistrict.isNullable()
+                          !employeeDetailedSchema.shape.mailingDistrict.isNullable()
                         }
+                        loading={isLoadingMailingTown}
+                        options={townsForMailing}
                       />
 
                       <TextField
                         form={form}
                         name="mailingAddress"
                         required={
-                          !employeeSelectSchema.shape.mailingAddress.isNullable()
+                          !employeeDetailedSchema.shape.mailingAddress.isNullable()
                         }
                       />
                     </div>

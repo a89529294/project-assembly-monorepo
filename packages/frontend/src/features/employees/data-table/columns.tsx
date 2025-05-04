@@ -1,8 +1,9 @@
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { Employees } from "../../../../../backend/src/trpc/router";
-import { Link } from "@tanstack/react-router";
 
-const columnHelper = createColumnHelper<Employees>();
+import { Link } from "@tanstack/react-router";
+import { EmployeeSummary } from "@myapp/shared";
+
+const columnHelper = createColumnHelper<EmployeeSummary>();
 
 export const employeeColumns = [
   columnHelper.accessor("idNumber", {
@@ -57,4 +58,4 @@ export const employeeColumns = [
       </Link>
     ),
   }),
-] as ColumnDef<Employees>[];
+] as ColumnDef<EmployeeSummary>[];

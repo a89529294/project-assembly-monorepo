@@ -41,7 +41,7 @@ function RouteComponent() {
       <main className="grow">
         <div className="flex flex-col h-screen">
           {/* Navbar */}
-          <nav className="bg-gray-800 text-white p-4 sticky top-0">
+          <nav className="bg-gray-800 text-white p-4">
             <div className="container mx-auto flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <SidebarTrigger className="text-white cursor-pointer" />
