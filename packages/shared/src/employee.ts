@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createSelectSchema } from "drizzle-zod";
 import { employeesTable } from "./schema";
-import { paginatedSchemaGenerator } from "./utils";
+import { OrderDirection, paginatedSchemaGenerator } from "./utils";
 
 export const employeeSummarySchema = createSelectSchema(employeesTable).omit({
   updated_at: true,
@@ -42,3 +42,21 @@ export const employeeDetailedSchema = employeeSummarySchema
   });
 
 export type EmployeeDetail = z.infer<typeof employeeDetailedSchema>;
+
+export type EmployeeSummaryKey = keyof EmployeeSummary;
+
+export const employeesSummaryQueryInputSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(20),
+  orderBy: z
+    .enum(
+      Object.keys(employeeSummarySchema.shape) as [
+        EmployeeSummaryKey,
+        ...EmployeeSummaryKey[],
+      ]
+    )
+    .default("idNumber"),
+  orderDirection: z
+    .enum(["DESC", "ASC"] as [OrderDirection, ...OrderDirection[]])
+    .default("DESC"),
+});

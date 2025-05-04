@@ -67,10 +67,16 @@ function CompanyInfoPage() {
   };
 
   const handleEditClick = () => {
-    navigate({ from: "/basic-info/company-info", search: { mode: "edit" } });
+    navigate({
+      from: "/basic-info/company-info",
+      search: { mode: "edit" },
+    });
   };
   const handleCancelClick = () => {
-    navigate({ from: "/basic-info/company-info", search: { mode: "read" } });
+    navigate({
+      from: "/basic-info/company-info",
+      search: { mode: "read" },
+    });
   };
   const handleSaveClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

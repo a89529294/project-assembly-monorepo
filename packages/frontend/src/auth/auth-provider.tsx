@@ -1,10 +1,9 @@
 import * as React from "react";
 import { AuthContext } from ".";
 
-import { useMutation } from "@tanstack/react-query";
-import { trpc } from "@/trpc";
-import { router } from "@/router";
 import { sessionTokenKey, userKey } from "@/constants";
+import { trpc } from "@/trpc";
+import { useMutation } from "@tanstack/react-query";
 import { User } from "../../../backend/src/trpc/router";
 
 type StoredAuth = {
@@ -100,15 +99,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const me = React.useCallback(async () => {
+    let currentUser = {} as User | null;
     try {
-      await fetchUserInfo();
+      currentUser = await fetchUserInfo();
     } catch (e) {
       console.error(e);
+
       setStoredAuth(null);
       setAuth(null);
 
-      router.navigate({ to: "/login" });
+      currentUser = null;
     }
+
+    return currentUser;
   }, [fetchUserInfo]);
 
   return (

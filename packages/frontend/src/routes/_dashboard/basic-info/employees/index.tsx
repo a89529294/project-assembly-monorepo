@@ -1,28 +1,32 @@
 import { DataTable } from "@/components/data-table";
+import { SmartPagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { employeeColumns } from "@/features/employees/data-table/columns";
+import { genEmployeeColumns } from "@/features/employees/data-table/columns";
+import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
+import { employeesSummaryQueryInputSchema } from "@myapp/shared";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { z } from "zod";
-import { SmartPagination } from "@/components/pagination";
 import { useDeferredValue } from "react";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_dashboard/basic-info/employees/")({
-  validateSearch: z.object({
-    page: z.number().int().catch(1),
-    pageSize: z.number().int().catch(20),
+  validateSearch: employeesSummaryQueryInputSchema,
+  loaderDeps: ({ search: { page, pageSize, orderBy, orderDirection } }) => ({
+    page,
+    pageSize,
+    orderBy,
+    orderDirection,
   }),
-  loaderDeps: ({ search: { page, pageSize } }) => ({ page, pageSize }),
-  async loader({ deps: { page, pageSize } }) {
+  async loader({ deps: { page, pageSize, orderBy, orderDirection } }) {
     queryClient.ensureQueryData(
       trpc.basicInfo.readEmployees.queryOptions({
         page,
         pageSize,
+        orderBy,
+        orderDirection,
       })
     );
   },
@@ -31,12 +35,22 @@ export const Route = createFileRoute("/_dashboard/basic-info/employees/")({
 });
 
 function RouteComponent() {
-  const { page, pageSize } = Route.useSearch();
+  const { page, pageSize, orderBy, orderDirection } = Route.useSearch();
   const deferredPage = useDeferredValue(page);
-  const loading = page !== deferredPage;
+  const deferredOrderBy = useDeferredValue(orderBy);
+  const deferredOrderDirection = useDeferredValue(orderDirection);
+  const loading =
+    page !== deferredPage ||
+    orderBy !== deferredOrderBy ||
+    orderDirection !== deferredOrderDirection;
   const navigate = Route.useNavigate();
   const { data: employees } = useSuspenseQuery(
-    trpc.basicInfo.readEmployees.queryOptions({ page: deferredPage, pageSize })
+    trpc.basicInfo.readEmployees.queryOptions({
+      page: deferredPage,
+      pageSize,
+      orderBy: deferredOrderBy,
+      orderDirection: deferredOrderDirection,
+    })
   );
 
   return (
@@ -55,7 +69,10 @@ function RouteComponent() {
               loading && "opacity-50"
             )}
           >
-            <DataTable columns={employeeColumns} data={employees.data} />
+            <DataTable
+              columns={genEmployeeColumns(navigate, orderBy, orderDirection)}
+              data={employees.data}
+            />
           </ScrollArea>
         </div>
         <SmartPagination
@@ -63,7 +80,9 @@ function RouteComponent() {
           totalPages={employees.totalPages}
           currentPage={deferredPage}
           onPageChange={(newPage) =>
-            navigate({ search: { page: newPage, pageSize } })
+            navigate({
+              search: { page: newPage, pageSize, orderBy, orderDirection },
+            })
           }
         />
       </div>

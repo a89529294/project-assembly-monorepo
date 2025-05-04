@@ -25,3 +25,5 @@ export const paginatedSchemaGenerator = <T extends z.ZodRawShape>(
     totalPages: z.number(),
     data: z.array(t),
   });
+
+export type OrderDirection = "ASC" | "DESC";

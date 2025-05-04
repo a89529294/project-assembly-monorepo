@@ -9,14 +9,19 @@ import { useAuth } from "../../auth/use-auth";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 
+// TODO understand the flow more, not sure if this is the best solution
 export const Route = createFileRoute("/_dashboard")({
   beforeLoad: async ({ context, location, cause }) => {
     // only verify session/user authenticity on mount
+
+    let user = context.auth.user;
+
     if (cause === "enter") {
-      await context.auth.me();
+      console.log(context.auth);
+      user = await context.auth.me();
     }
 
-    if (!context.auth.isAuthenticated) {
+    if (!user) {
       throw redirect({
         to: "/login",
         search: {

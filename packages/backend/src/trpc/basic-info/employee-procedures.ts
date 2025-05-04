@@ -1,5 +1,11 @@
+import {
+  EmployeeFromDb,
+  employeeDetailedSchema,
+  employeesSummaryQueryInputSchema,
+  paginatedEmployeeSummarySchema,
+} from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
-import { eq, count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { PERMISSION_NAMES } from "../../db/permissions.js";
@@ -9,23 +15,15 @@ import {
   employeesTable,
 } from "../../db/schema.js";
 import { protectedProcedure } from "../core.js";
-import {
-  employeeDetailedSchema,
-  paginatedEmployeeSummarySchema,
-} from "@myapp/shared";
+import { orderDirectionFn } from "../helpers.js";
 
 export const readEmployeesProcedure = protectedProcedure(
   PERMISSION_NAMES.EMPLOYEE_READ
 )
-  .input(
-    z.object({
-      page: z.number().int().min(1).default(1),
-      pageSize: z.number().int().min(1).max(100).default(10),
-    })
-  )
+  .input(employeesSummaryQueryInputSchema)
   .output(paginatedEmployeeSummarySchema)
   .query(async ({ input }) => {
-    const { page, pageSize } = input;
+    const { page, pageSize, orderBy, orderDirection } = input;
     const offset = (page - 1) * pageSize;
 
     // Get total count
@@ -34,11 +32,18 @@ export const readEmployeesProcedure = protectedProcedure(
       .from(employeesTable);
 
     // Get paginated data
-    const employees = await db
-      .select()
-      .from(employeesTable)
-      .limit(pageSize)
-      .offset(offset);
+    const employeesBaseQuery = db.select().from(employeesTable).$dynamic();
+
+    let employees: EmployeeFromDb[] = [];
+
+    if (orderBy) {
+      employees = await employeesBaseQuery
+        .orderBy(orderDirectionFn(orderDirection)(employeesTable[orderBy]))
+        .limit(pageSize)
+        .offset(offset);
+    } else {
+      employees = await employeesBaseQuery.limit(pageSize).offset(offset);
+    }
 
     const data = employees.map((e) => {
       const { updated_at, created_at, ...rest } = e;
