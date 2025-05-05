@@ -72,16 +72,17 @@ export const logoutProcedure = protectedProcedure("").mutation(
   }
 );
 
-export const meProcedure = protectedProcedure("").mutation(async ({ ctx }) => {
-  const user = ctx.user;
-  const roles = await getUserRoles(user.id);
-  const isAdminUser = await isAdmin(user.id);
+// TODO not used anymore, maybe remove
+// export const meProcedure = protectedProcedure("").mutation(async ({ ctx }) => {
+//   const user = ctx.user;
+//   const roles = await getUserRoles(user.id);
+//   const isAdminUser = await isAdmin(user.id);
 
-  return {
-    account: user.account,
-    id: user.id,
-    name: user.name,
-    isAdmin: isAdminUser,
-    roles: roles,
-  };
-});
+//   return {
+//     account: user.account,
+//     id: user.id,
+//     name: user.name,
+//     isAdmin: isAdminUser,
+//     roles: roles,
+//   };
+// });

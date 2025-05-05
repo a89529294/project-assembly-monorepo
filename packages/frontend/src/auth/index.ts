@@ -12,7 +12,7 @@ export interface AuthContext {
     onSuccess: () => void,
     onError?: () => void
   ) => Promise<void>;
-  me: () => Promise<User | null>;
+  clearAuth: () => void;
 }
 
 export const AuthContext = React.createContext<AuthContext | null>(null);

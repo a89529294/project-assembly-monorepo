@@ -16,10 +16,10 @@ function getStoredAuth() {
     !localStorage.getItem(userKey) ||
     !localStorage.getItem(sessionTokenKey)
   ) {
-    if (import.meta.env.PROD) {
-      localStorage.removeItem(userKey);
-      localStorage.removeItem(sessionTokenKey);
-    }
+    // if (import.meta.env.PROD) {
+    localStorage.removeItem(userKey);
+    localStorage.removeItem(sessionTokenKey);
+    // }
     return null;
   }
 
@@ -38,10 +38,10 @@ function setStoredAuth(storedAuth: StoredAuth | null) {
     localStorage.setItem(userKey, JSON.stringify(storedAuth.user));
     localStorage.setItem(sessionTokenKey, storedAuth.sessionToken);
   } else {
-    if (import.meta.env.PROD) {
-      localStorage.removeItem(userKey);
-      localStorage.removeItem(sessionTokenKey);
-    }
+    // if (import.meta.env.PROD) {
+    localStorage.removeItem(userKey);
+    localStorage.removeItem(sessionTokenKey);
+    // }
   }
 }
 
@@ -54,24 +54,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     trpc.auth.login.mutationOptions()
   );
 
-  const { mutateAsync: fetchUserInfo } = useMutation(
-    trpc.auth.me.mutationOptions()
-  );
-
   const { mutateAsync: trpcLogout } = useMutation(
     trpc.auth.logout.mutationOptions()
   );
 
+  const clearAuth = React.useCallback(() => {
+    setStoredAuth(null);
+    setAuth(null);
+  }, []);
+
   const logout = React.useCallback(
-    async (onSuccess: () => void, onError?: () => void) => {
+    async (cb: () => void) => {
       try {
         await trpcLogout();
+      } finally {
         setStoredAuth(null);
         setAuth(null);
-        onSuccess();
-      } catch (e) {
-        console.error(e);
-        if (onError) onError();
+        cb();
       }
     },
     [trpcLogout]
@@ -98,22 +97,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [trcpLogin]
   );
 
-  const me = React.useCallback(async () => {
-    let currentUser = {} as User | null;
-    try {
-      currentUser = await fetchUserInfo();
-    } catch (e) {
-      console.error(e);
-
-      setStoredAuth(null);
-      setAuth(null);
-
-      currentUser = null;
-    }
-
-    return currentUser;
-  }, [fetchUserInfo]);
-
   return (
     <AuthContext.Provider
       value={{
@@ -122,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user: auth?.user ?? null,
         login,
         logout,
-        me,
+        clearAuth,
       }}
     >
       {children}

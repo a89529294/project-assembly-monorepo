@@ -27,3 +27,26 @@ export const paginatedSchemaGenerator = <T extends z.ZodRawShape>(
   });
 
 export type OrderDirection = "ASC" | "DESC";
+
+type NoUndefined<T> = T extends undefined ? never : T;
+
+export const summaryQueryInputSchemaGenrator = <T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>,
+  defaultOrderBy: NoUndefined<Extract<keyof T, string>>
+) =>
+  z.object({
+    page: z.number().int().min(1).default(1),
+    pageSize: z.number().int().min(1).max(100).default(20),
+    orderBy: z
+      .enum(
+        Object.keys(schema.shape) as [
+          Extract<keyof T, string>,
+          ...Extract<keyof T, string>[],
+        ]
+      )
+      .default(defaultOrderBy),
+    orderDirection: z
+      .enum(["DESC", "ASC"] as [OrderDirection, ...OrderDirection[]])
+      .default("DESC"),
+    searchTerm: z.string().optional(),
+  });

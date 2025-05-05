@@ -51,7 +51,6 @@ async function checkAuthCore(c: Context, permission: string) {
   if (!allowed) {
     throw new TRPCError({
       code: "FORBIDDEN",
-      message: "Insufficient permissions",
     });
   }
 

@@ -208,37 +208,6 @@ async function main() {
       roleId: basicInfoManagementRoleId,
       departmentId: operationsDeptId,
     },
-    {
-      id: randomUUID(),
-      roleId: basicInfoManagementRoleId,
-      departmentId: productDeptId,
-    },
-
-    {
-      id: randomUUID(),
-      roleId: basicInfoManagementRoleId,
-      departmentId: financeDeptId,
-    },
-    {
-      id: randomUUID(),
-      roleId: basicInfoManagementRoleId,
-      departmentId: marketingDeptId,
-    },
-    {
-      id: randomUUID(),
-      roleId: basicInfoManagementRoleId,
-      departmentId: salesDeptId,
-    },
-    {
-      id: randomUUID(),
-      roleId: basicInfoManagementRoleId,
-      departmentId: customerServiceDeptId,
-    },
-    {
-      id: randomUUID(),
-      roleId: basicInfoManagementRoleId,
-      departmentId: legalDeptId,
-    },
 
     // Storage Management role in Operations department
     {
@@ -315,15 +284,16 @@ async function main() {
 
   // 3. Create regular users, each linked to a unique employee
   const availableEmployees = employeesFromDB.length;
-  const numRegularUsers = Math.min(28, availableEmployees);
+  const numRegularUsers = Math.floor(availableEmployees / 10);
   const numAppUsers = Math.min(20, availableEmployees);
 
   for (let i = 0; i < numRegularUsers; i++) {
+    const idx = i * 10;
     await db.insert(usersTable).values({
       id: randomUUID(),
-      account: employeesFromDB[i].idNumber,
-      name: employeesFromDB[i].chName,
-      employeeId: employeesFromDB[i].id,
+      account: employeesFromDB[idx].idNumber,
+      name: employeesFromDB[idx].chName,
+      employeeId: employeesFromDB[idx].id,
       passwordHash: DEFAULT_PASSWORD_HASH,
     });
   }

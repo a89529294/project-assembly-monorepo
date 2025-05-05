@@ -1,42 +1,36 @@
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 
-import { Link, UseNavigateResult } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import {
-  EmployeeSummaryKey,
   EmployeeSummary,
+  EmployeeSummaryKey,
   OrderDirection,
 } from "@myapp/shared";
-import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
 const columnHelper = createColumnHelper<EmployeeSummary>();
 
-export const genEmployeeColumns = (
-  navigate: UseNavigateResult<"/basic-info/employees">,
-  orderBy: EmployeeSummaryKey,
-  orderDirection: OrderDirection
-) => {
+export const genEmployeeColumns = ({
+  orderBy,
+  orderDirection,
+  clickOnCurrentHeader,
+  clickOnOtherHeader,
+}: {
+  orderBy: EmployeeSummaryKey;
+  orderDirection: OrderDirection;
+  clickOnCurrentHeader: (s: EmployeeSummaryKey) => void;
+  clickOnOtherHeader: (s: EmployeeSummaryKey) => void;
+}) => {
   const genHeader = (columnId: EmployeeSummaryKey, headerText: string) => {
     return (
       <Button
         variant="ghost"
         onClick={() => {
-          if (orderBy !== columnId)
-            navigate({
-              search: {
-                page: 1,
-                orderBy: columnId,
-                orderDirection: "DESC",
-              },
-            });
-          else {
-            navigate({
-              search: {
-                page: 1,
-                orderBy: columnId,
-                orderDirection: orderDirection === "DESC" ? "ASC" : "DESC",
-              },
-            });
+          if (orderBy !== columnId) {
+            clickOnCurrentHeader(columnId);
+          } else {
+            clickOnOtherHeader(columnId);
           }
         }}
       >

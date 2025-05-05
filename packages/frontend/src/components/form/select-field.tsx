@@ -46,7 +46,7 @@ export function SelectField<T extends FieldValues>({
             disabled={field.disabled}
             onValueChange={(...args) => {
               field.onChange(...args);
-              onSelect && onSelect();
+              if (onSelect) onSelect();
             }}
             value={field.value}
           >

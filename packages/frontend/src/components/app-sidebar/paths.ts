@@ -3,6 +3,7 @@ import {
   Home,
   Inbox,
   LucideUser,
+  LucideUserLock,
   LucideUserRoundCog,
   RefreshCcw,
 } from "lucide-react";
@@ -39,6 +40,13 @@ export const paths = {
         to: "/basic-info/employees",
       },
       icon: LucideUserRoundCog,
+    },
+    {
+      title: "人事權限",
+      linkOptions: {
+        to: "/basic-info/erp-permissions/users",
+      },
+      icon: LucideUserLock,
     },
   ],
   productionRoutes: [

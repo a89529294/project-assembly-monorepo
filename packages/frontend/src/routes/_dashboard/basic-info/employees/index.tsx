@@ -14,19 +14,25 @@ import { useDeferredValue } from "react";
 
 export const Route = createFileRoute("/_dashboard/basic-info/employees/")({
   validateSearch: employeesSummaryQueryInputSchema,
-  loaderDeps: ({ search: { page, pageSize, orderBy, orderDirection } }) => ({
+  loaderDeps: ({
+    search: { page, pageSize, orderBy, orderDirection, searchTerm },
+  }) => ({
     page,
     pageSize,
     orderBy,
     orderDirection,
+    searchTerm,
   }),
-  async loader({ deps: { page, pageSize, orderBy, orderDirection } }) {
+  async loader({
+    deps: { page, pageSize, orderBy, orderDirection, searchTerm },
+  }) {
     queryClient.ensureQueryData(
       trpc.basicInfo.readEmployees.queryOptions({
         page,
         pageSize,
         orderBy,
         orderDirection,
+        searchTerm,
       })
     );
   },
@@ -35,7 +41,8 @@ export const Route = createFileRoute("/_dashboard/basic-info/employees/")({
 });
 
 function RouteComponent() {
-  const { page, pageSize, orderBy, orderDirection } = Route.useSearch();
+  const { page, pageSize, orderBy, orderDirection, searchTerm } =
+    Route.useSearch();
   const deferredPage = useDeferredValue(page);
   const deferredOrderBy = useDeferredValue(orderBy);
   const deferredOrderDirection = useDeferredValue(orderDirection);
@@ -50,6 +57,7 @@ function RouteComponent() {
       pageSize,
       orderBy: deferredOrderBy,
       orderDirection: deferredOrderDirection,
+      searchTerm,
     })
   );
 
@@ -70,7 +78,29 @@ function RouteComponent() {
             )}
           >
             <DataTable
-              columns={genEmployeeColumns(navigate, orderBy, orderDirection)}
+              columns={genEmployeeColumns({
+                orderBy,
+                orderDirection,
+                clickOnCurrentHeader: (columnId) => {
+                  navigate({
+                    search: {
+                      page: 1,
+                      orderBy: columnId,
+                      orderDirection:
+                        orderDirection === "DESC" ? "ASC" : "DESC",
+                    },
+                  });
+                },
+                clickOnOtherHeader: (columnId) => {
+                  navigate({
+                    search: {
+                      page: 1,
+                      orderBy: columnId,
+                      orderDirection: "DESC",
+                    },
+                  });
+                },
+              })}
               data={employees.data}
             />
           </ScrollArea>
@@ -81,6 +111,7 @@ function RouteComponent() {
           currentPage={deferredPage}
           onPageChange={(newPage) =>
             navigate({
+              to: "/basic-info/employees",
               search: { page: newPage, pageSize, orderBy, orderDirection },
             })
           }

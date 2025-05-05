@@ -1,7 +1,10 @@
-import { z } from "zod";
 import { createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 import { employeesTable } from "./schema";
-import { OrderDirection, paginatedSchemaGenerator } from "./utils";
+import {
+  paginatedSchemaGenerator,
+  summaryQueryInputSchemaGenrator,
+} from "./utils";
 
 export const employeeSummarySchema = createSelectSchema(employeesTable).omit({
   updated_at: true,
@@ -12,6 +15,13 @@ export type EmployeeSummary = z.infer<typeof employeeSummarySchema>;
 
 export const paginatedEmployeeSummarySchema = paginatedSchemaGenerator(
   employeeSummarySchema
+);
+
+export type EmployeeSummaryKey = keyof EmployeeSummary;
+
+export const employeesSummaryQueryInputSchema = summaryQueryInputSchemaGenrator(
+  employeeSummarySchema,
+  "idNumber"
 );
 
 export const employeeDetailedSchema = employeeSummarySchema
@@ -43,20 +53,19 @@ export const employeeDetailedSchema = employeeSummarySchema
 
 export type EmployeeDetail = z.infer<typeof employeeDetailedSchema>;
 
-export type EmployeeSummaryKey = keyof EmployeeSummary;
-
-export const employeesSummaryQueryInputSchema = z.object({
-  page: z.number().int().min(1).default(1),
-  pageSize: z.number().int().min(1).max(100).default(20),
-  orderBy: z
-    .enum(
-      Object.keys(employeeSummarySchema.shape) as [
-        EmployeeSummaryKey,
-        ...EmployeeSummaryKey[],
-      ]
-    )
-    .default("idNumber"),
-  orderDirection: z
-    .enum(["DESC", "ASC"] as [OrderDirection, ...OrderDirection[]])
-    .default("DESC"),
-});
+// export const employeesSummaryQueryInputSchema = z.object({
+//   page: z.number().int().min(1).default(1),
+//   pageSize: z.number().int().min(1).max(100).default(20),
+//   orderBy: z
+//     .enum(
+//       Object.keys(employeeSummarySchema.shape) as [
+//         EmployeeSummaryKey,
+//         ...EmployeeSummaryKey[],
+//       ]
+//     )
+//     .default("idNumber"),
+//   orderDirection: z
+//     .enum(["DESC", "ASC"] as [OrderDirection, ...OrderDirection[]])
+//     .default("DESC"),
+//   searchTerm: z.string().optional(),
+// });

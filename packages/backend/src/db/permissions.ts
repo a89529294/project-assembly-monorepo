@@ -104,6 +104,18 @@ const PERMISSIONS = {
     name: "appUser:delete",
     roleId: roleIds.basicInfoManagementRoleId,
   },
+  USER_CREATE: {
+    name: "user:create",
+    roleId: roleIds.basicInfoManagementRoleId,
+  },
+  USER_READ: {
+    name: "user:read",
+    roleId: roleIds.basicInfoManagementRoleId,
+  },
+  USER_DELETE: {
+    name: "user:delete",
+    roleId: roleIds.basicInfoManagementRoleId,
+  },
 
   // Storage Management permissions
   STORAGE_CREATE: {

@@ -3,25 +3,17 @@ import {
   Link,
   Outlet,
   redirect,
+  useNavigate,
   useRouter,
 } from "@tanstack/react-router";
 import { useAuth } from "../../auth/use-auth";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { TRPCClientError } from "@trpc/client";
 
-// TODO understand the flow more, not sure if this is the best solution
 export const Route = createFileRoute("/_dashboard")({
-  beforeLoad: async ({ context, location, cause }) => {
-    // only verify session/user authenticity on mount
-
-    let user = context.auth.user;
-
-    if (cause === "enter") {
-      console.log(context.auth);
-      user = await context.auth.me();
-    }
-
-    if (!user) {
+  async beforeLoad({ context, location }) {
+    if (!context.auth.isAuthenticated) {
       throw redirect({
         to: "/login",
         search: {
@@ -30,8 +22,8 @@ export const Route = createFileRoute("/_dashboard")({
       });
     }
   },
-
   component: RouteComponent,
+  errorComponent: ErrorComponent,
 });
 
 function RouteComponent() {
@@ -82,4 +74,22 @@ function RouteComponent() {
       </main>
     </SidebarProvider>
   );
+}
+
+function ErrorComponent({ error }: { error: Error }) {
+  const { clearAuth } = useAuth();
+  const navigate = useNavigate();
+
+  if (error instanceof TRPCClientError) {
+    if (error.message === "UNAUTHORIZED") {
+      clearAuth();
+      navigate({ to: "/login" });
+    }
+
+    if (error.message === "FORBIDDEN") {
+      navigate({ to: "/" });
+    }
+  }
+
+  return "error";
 }

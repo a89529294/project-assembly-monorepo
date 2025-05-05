@@ -5,7 +5,7 @@ import {
   paginatedEmployeeSummarySchema,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
-import { count, eq } from "drizzle-orm";
+import { count, eq, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { PERMISSION_NAMES } from "../../db/permissions.js";
@@ -23,27 +23,39 @@ export const readEmployeesProcedure = protectedProcedure(
   .input(employeesSummaryQueryInputSchema)
   .output(paginatedEmployeeSummarySchema)
   .query(async ({ input }) => {
-    const { page, pageSize, orderBy, orderDirection } = input;
+    const { page, pageSize, orderBy, orderDirection, searchTerm } = input;
     const offset = (page - 1) * pageSize;
 
-    // Get total count
-    const [{ count: total }] = await db
+    const countQuery = db
       .select({ count: count() })
-      .from(employeesTable);
+      .from(employeesTable)
+      .$dynamic();
 
-    // Get paginated data
     const employeesBaseQuery = db.select().from(employeesTable).$dynamic();
 
-    let employees: EmployeeFromDb[] = [];
+    if (searchTerm) {
+      const term = `%${searchTerm}%`;
+      const whereCondition = or(
+        ilike(employeesTable.chName, term),
+        ilike(employeesTable.enName, term),
+        ilike(employeesTable.email, term),
+        ilike(employeesTable.idNumber, term),
+        ilike(employeesTable.phone, term),
+        ilike(employeesTable.email, term)
+      );
 
-    if (orderBy) {
-      employees = await employeesBaseQuery
-        .orderBy(orderDirectionFn(orderDirection)(employeesTable[orderBy]))
-        .limit(pageSize)
-        .offset(offset);
-    } else {
-      employees = await employeesBaseQuery.limit(pageSize).offset(offset);
+      countQuery.where(whereCondition);
+      employeesBaseQuery.where(whereCondition);
     }
+
+    // Get total count (now properly filtered)
+    const [{ count: total }] = await countQuery;
+
+    // Get paginated data
+    const employees = await employeesBaseQuery
+      .orderBy(orderDirectionFn(orderDirection)(employeesTable[orderBy]))
+      .limit(pageSize)
+      .offset(offset);
 
     const data = employees.map((e) => {
       const { updated_at, created_at, ...rest } = e;

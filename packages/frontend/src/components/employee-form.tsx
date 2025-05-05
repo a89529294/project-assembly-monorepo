@@ -27,7 +27,7 @@ export function EmployeeForm({
   onSubmit,
   ActionButtons,
 }: EmployeeFormProps) {
-  const { data: departments } = useQuery(
+  const { data: departments, isLoading: isLoadingDepartments } = useQuery(
     trpc.basicInfo.readDepartments.queryOptions()
   );
   const {
@@ -75,7 +75,7 @@ export function EmployeeForm({
     form.watch("mailingCounty")
   );
 
-  const { control } = form;
+  const { control, formState } = form;
   const { fields, append, remove } = useFieldArray({
     control,
     name: "departments",
@@ -97,6 +97,8 @@ export function EmployeeForm({
       toast.error(initialData ? "無法更新員工" : "無法創造員工");
     }
   };
+
+  console.log(formState.errors);
 
   return (
     <>
@@ -214,14 +216,20 @@ export function EmployeeForm({
                       <Button
                         onClick={() => {
                           if (departments && departments.length > 0) {
-                            append({
-                              departmentId: departments[0].id,
-                              departmentName: departments[0].name,
-                              jobTitle: "",
-                            });
+                            append(
+                              {
+                                departmentId: departments[0].id,
+                                departmentName: departments[0].name,
+                                jobTitle: "",
+                              },
+                              {}
+                            );
                           }
                         }}
-                        disabled={form.formState.disabled}
+                        disabled={
+                          form.formState.disabled || isLoadingDepartments
+                        }
+                        type="button"
                       >
                         + 新增部門職位
                       </Button>
@@ -236,20 +244,14 @@ export function EmployeeForm({
                           form={form}
                           name={`departments.${index}.departmentId`}
                           label="部門"
-                          // TODO
-                          // deal
-                          // with
-                          // async
-                          // deprtments
-                          options={
-                            departments?.map((d) => ({
-                              value: d.id,
-                              label: d.name,
-                            })) ?? []
-                          }
+                          options={departments?.map((d) => ({
+                            value: d.id,
+                            label: d.name,
+                          }))}
                           required={
                             !employeeDetailedSchema.shape.departments.element.shape.departmentId.isNullable()
                           }
+                          loading={isLoadingDepartments}
                         />
                         <TextField
                           form={form}
