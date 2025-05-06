@@ -12,7 +12,7 @@ function Table({
   return (
     <div
       data-slot="table-container"
-      className={cn("relative w-full overflow-x-auto", outerDivClassName)}
+      className={cn("relative w-full", outerDivClassName)}
     >
       <table
         data-slot="table"
@@ -109,11 +109,11 @@ function TableCaption({
 
 export {
   Table,
-  TableHeader,
   TableBody,
+  TableCaption,
+  TableCell,
   TableFooter,
   TableHead,
+  TableHeader,
   TableRow,
-  TableCell,
-  TableCaption,
 };

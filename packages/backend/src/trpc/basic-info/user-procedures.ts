@@ -3,19 +3,21 @@ import {
   UsersSummaryQueryInputSchema,
   usersTable,
 } from "@myapp/shared";
-import { PERMISSION_NAMES } from "../../db/permissions";
-import { protectedProcedure } from "../core";
+import { count, ilike, inArray, or } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "../../db";
-import { count, eq, or, ilike } from "drizzle-orm";
+import { hashPassword } from "../../db/password";
+import { PERMISSION_NAMES } from "../../db/permissions";
+import { employeesTable } from "../../db/schema";
+import { generatePassword } from "../../helpers/auth";
+import { protectedProcedure } from "../core";
 import { orderDirectionFn } from "../helpers";
 
 export const readUsersProcedure = protectedProcedure(PERMISSION_NAMES.USER_READ)
   .input(UsersSummaryQueryInputSchema)
   .output(paginatedUserSummarySchema)
   .query(async ({ input }) => {
-    const {
-      users: { page, pageSize, orderBy, orderDirection, searchTerm },
-    } = input;
+    const { page, pageSize, orderBy, orderDirection, searchTerm } = input;
     const offset = (page - 1) * pageSize;
     console.log(page, pageSize);
 
@@ -61,4 +63,55 @@ export const readUsersProcedure = protectedProcedure(PERMISSION_NAMES.USER_READ)
       totalPages,
       data,
     };
+  });
+
+export const createUsersFromEmployeesProcedure = protectedProcedure(
+  PERMISSION_NAMES.USER_CREATE
+)
+  .input(z.object({ employeeIds: z.array(z.string().min(1)).min(1) }))
+  .output(
+    z.array(
+      z.object({
+        user: paginatedUserSummarySchema.shape.data.element,
+        plainPassword: z.string(),
+      })
+    )
+  )
+  .mutation(async ({ input }) => {
+    // Fetch employees by IDs
+    const employees = await db
+      .select()
+      .from(employeesTable)
+      .where(inArray(employeesTable.id, input.employeeIds));
+
+    if (employees.length !== input.employeeIds.length) {
+      throw new Error("One or more employee IDs not found");
+    }
+
+    // Check for existing users for these employees
+    const existingUsers = await db
+      .select()
+      .from(usersTable)
+      .where(inArray(usersTable.employeeId, input.employeeIds));
+    const existingEmployeeIds = new Set(existingUsers.map((u) => u.employeeId));
+
+    const results = [];
+    for (const emp of employees) {
+      if (existingEmployeeIds.has(emp.id)) continue; // Skip if user already exists
+      const plainPassword = generatePassword();
+      const passwordHash = await hashPassword(plainPassword);
+      const [user] = await db
+        .insert(usersTable)
+        .values({
+          account: emp.idNumber,
+          name: emp.chName,
+          employeeId: emp.id,
+          passwordHash,
+        })
+        .returning();
+      // Remove created_at, updated_at from user
+      const { created_at, updated_at, ...userSummary } = user;
+      results.push({ user: userSummary, plainPassword });
+    }
+    return results;
   });

@@ -13,19 +13,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProps<TData extends Record<"id", string>, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onRowSelect?: (id: string) => void;
+  selectedRows?: string[];
 }
 
 //Tip: If you find yourself using <DataTable /> in multiple places, this is the component you could make reusable by extracting it to components/ui/data-table.tsx.
 
 //<DataTable columns={columns} data={data} />;
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends Record<"id", string>, TValue>({
   columns,
   data,
+  onRowSelect,
+  selectedRows,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -35,7 +40,9 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="">
-      <Table outerDivClassName="overflow-visible">
+      <Table
+      //outerDivClassName="overflow-visible"
+      >
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow className="border-b-0" key={headerGroup.id}>
@@ -60,6 +67,13 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                onClick={() => {
+                  if (onRowSelect) onRowSelect(row.original.id);
+                }}
+                className={cn(
+                  selectedRows?.includes(row.original.id) &&
+                    "outline-2 outline-blue-300"
+                )}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

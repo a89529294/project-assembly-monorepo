@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table";
 import { SmartPagination } from "@/components/pagination";
+import { SearchBar } from "@/components/search-bar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,10 +47,12 @@ function RouteComponent() {
   const deferredPage = useDeferredValue(page);
   const deferredOrderBy = useDeferredValue(orderBy);
   const deferredOrderDirection = useDeferredValue(orderDirection);
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const loading =
     page !== deferredPage ||
     orderBy !== deferredOrderBy ||
-    orderDirection !== deferredOrderDirection;
+    orderDirection !== deferredOrderDirection ||
+    searchTerm !== deferredSearchTerm;
   const navigate = Route.useNavigate();
   const { data: employees } = useSuspenseQuery(
     trpc.basicInfo.readEmployees.queryOptions({
@@ -57,14 +60,17 @@ function RouteComponent() {
       pageSize,
       orderBy: deferredOrderBy,
       orderDirection: deferredOrderDirection,
-      searchTerm,
+      searchTerm: deferredSearchTerm,
     })
   );
 
   return (
     <div className="p-6 pb-0 bg-white flex flex-col rounded-lg shadow-lg h-full">
       <h2 className="text-xl font-bold mb-4 flex justify-between">
-        員工清單
+        <div className="flex gap-3 items-center">
+          員工清單
+          <SearchBar navigate={navigate} />
+        </div>
         <Button asChild>
           <Link to="/basic-info/employees/create">新增員工</Link>
         </Button>

@@ -1,11 +1,10 @@
 import { createSelectSchema } from "drizzle-zod";
-import { usersTable } from "./schema";
 import { z } from "zod";
+import { usersTable } from "./schema";
 import {
   paginatedSchemaGenerator,
   summaryQueryInputSchemaGenrator,
 } from "./utils";
-import { employeeSummarySchema } from "./employee";
 
 export const userSummarySchema = createSelectSchema(usersTable).omit({
   updated_at: true,
@@ -28,12 +27,7 @@ function makeSummaryDefault<TOrderBy extends string>(orderBy: TOrderBy) {
   };
 }
 
-export const UsersSummaryQueryInputSchema = z.object({
-  users: summaryQueryInputSchemaGenrator(userSummarySchema, "account").default(
-    makeSummaryDefault("account")
-  ),
-  employees: summaryQueryInputSchemaGenrator(
-    employeeSummarySchema,
-    "idNumber"
-  ).default(makeSummaryDefault("idNumber")),
-});
+export const UsersSummaryQueryInputSchema = summaryQueryInputSchemaGenrator(
+  userSummarySchema,
+  "account"
+).default(makeSummaryDefault("account"));

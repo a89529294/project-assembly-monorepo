@@ -1,11 +1,11 @@
 import {
-  EmployeeFromDb,
   employeeDetailedSchema,
   employeesSummaryQueryInputSchema,
   paginatedEmployeeSummarySchema,
+  usersTable,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
-import { count, eq, or, ilike } from "drizzle-orm";
+import { count, eq, ilike, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { PERMISSION_NAMES } from "../../db/permissions.js";
@@ -20,7 +20,11 @@ import { orderDirectionFn } from "../helpers.js";
 export const readEmployeesProcedure = protectedProcedure(
   PERMISSION_NAMES.EMPLOYEE_READ
 )
-  .input(employeesSummaryQueryInputSchema)
+  .input(
+    employeesSummaryQueryInputSchema.extend({
+      notAssociatedWithAUser: z.boolean().optional(),
+    })
+  )
   .output(paginatedEmployeeSummarySchema)
   .query(async ({ input }) => {
     const { page, pageSize, orderBy, orderDirection, searchTerm } = input;
@@ -31,7 +35,12 @@ export const readEmployeesProcedure = protectedProcedure(
       .from(employeesTable)
       .$dynamic();
 
-    const employeesBaseQuery = db.select().from(employeesTable).$dynamic();
+    const employeesBaseQuery = db
+      .select({
+        employees: employeesTable,
+      })
+      .from(employeesTable)
+      .$dynamic();
 
     if (searchTerm) {
       const term = `%${searchTerm}%`;
@@ -48,17 +57,24 @@ export const readEmployeesProcedure = protectedProcedure(
       employeesBaseQuery.where(whereCondition);
     }
 
-    // Get total count (now properly filtered)
+    if (input.notAssociatedWithAUser) {
+      employeesBaseQuery
+        .leftJoin(usersTable, eq(employeesTable.id, usersTable.employeeId))
+        .where(isNull(usersTable.id));
+      countQuery
+        .leftJoin(usersTable, eq(employeesTable.id, usersTable.employeeId))
+        .where(isNull(usersTable.id));
+    }
+
     const [{ count: total }] = await countQuery;
 
-    // Get paginated data
     const employees = await employeesBaseQuery
       .orderBy(orderDirectionFn(orderDirection)(employeesTable[orderBy]))
       .limit(pageSize)
       .offset(offset);
 
-    const data = employees.map((e) => {
-      const { updated_at, created_at, ...rest } = e;
+    const data = employees.map((row) => {
+      const { updated_at, created_at, ...rest } = row.employees;
       return rest;
     });
 

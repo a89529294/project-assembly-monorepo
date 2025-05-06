@@ -16,18 +16,20 @@ export const genEmployeeColumns = ({
   orderDirection,
   clickOnCurrentHeader,
   clickOnOtherHeader,
+  hiddenColumns,
 }: {
   orderBy: EmployeeSummaryKey;
   orderDirection: OrderDirection;
   clickOnCurrentHeader: (s: EmployeeSummaryKey) => void;
   clickOnOtherHeader: (s: EmployeeSummaryKey) => void;
+  hiddenColumns?: string[];
 }) => {
   const genHeader = (columnId: EmployeeSummaryKey, headerText: string) => {
     return (
       <Button
         variant="ghost"
         onClick={() => {
-          if (orderBy !== columnId) {
+          if (orderBy === columnId) {
             clickOnCurrentHeader(columnId);
           } else {
             clickOnOtherHeader(columnId);
@@ -90,16 +92,20 @@ export const genEmployeeColumns = ({
       header: "學歷",
       cell: (info) => info.getValue() || "-",
     }),
-    columnHelper.display({
-      id: "employee-detail-link",
-      cell: (props) => (
-        <Link
-          to="/basic-info/employees/$employeeId"
-          params={{ employeeId: props.row.original.id }}
-        >
-          員工細節
-        </Link>
-      ),
-    }),
+    ...(hiddenColumns?.includes("employee-detail-link")
+      ? []
+      : [
+          columnHelper.display({
+            id: "employee-detail-link",
+            cell: (props) => (
+              <Link
+                to="/basic-info/employees/$employeeId"
+                params={{ employeeId: props.row.original.id }}
+              >
+                員工細節
+              </Link>
+            ),
+          }),
+        ]),
   ] as ColumnDef<EmployeeSummary>[];
 };
