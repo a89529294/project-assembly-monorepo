@@ -18,9 +18,10 @@ import {
 import { generatePassword } from "../../helpers/auth.js";
 import { protectedProcedure } from "../../trpc/core.js";
 import { appUsersWithEmployeeAndDepartmentsQuery } from "./helpers.js";
-import { PERMISSION_NAMES } from "../../db/permissions.js";
 
-export const createUserForEmployeeProcedure = protectedProcedure("")
+export const createUserFromEmployeeProcedure = protectedProcedure([
+  "PersonnelPermissionManagement",
+])
   .input(
     z.object({
       employeeId: z.string().uuid(),
@@ -68,7 +69,9 @@ export const createUserForEmployeeProcedure = protectedProcedure("")
     return user[0];
   });
 
-export const createUserWithRolesProcedure = protectedProcedure("")
+export const createUserWithRolesProcedure = protectedProcedure([
+  "PersonnelPermissionManagement",
+])
   .input(
     z.object({
       account: z.string().min(1),
@@ -112,9 +115,9 @@ export const createUserWithRolesProcedure = protectedProcedure("")
     return user[0];
   });
 
-export const getAppUsersByPermissionProcedure = protectedProcedure(
-  PERMISSION_NAMES.APPUSER_READ
-)
+export const readAppUsersByPermissionProcedure = protectedProcedure([
+  "PersonnelPermissionManagement",
+])
   .input(
     z
       .object({

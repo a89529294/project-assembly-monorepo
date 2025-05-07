@@ -2,13 +2,12 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
-import { PERMISSION_NAMES } from "../../db/permissions.js";
 import { companyInfoTable } from "../../db/schema.js";
 import { protectedProcedure } from "../core.js";
 
-export const readCompanyInfoProcedure = protectedProcedure(
-  PERMISSION_NAMES.COMPANY_INFO_READ
-).query(async () => {
+export const readCompanyInfoProcedure = protectedProcedure([
+  "BasicInfoManagement",
+]).query(async () => {
   const result = await db.select().from(companyInfoTable).limit(1);
   if (result.length === 0) {
     throw new TRPCError({
@@ -19,9 +18,9 @@ export const readCompanyInfoProcedure = protectedProcedure(
   return result[0];
 });
 
-export const createCompanyInfoProcedure = protectedProcedure(
-  PERMISSION_NAMES.COMPANY_INFO_CREATE
-)
+export const createCompanyInfoProcedure = protectedProcedure([
+  "BasicInfoManagement",
+])
   .input(
     z.object({
       name: z.string().min(1),
@@ -51,9 +50,9 @@ export const createCompanyInfoProcedure = protectedProcedure(
     return { success: true };
   });
 
-export const updateCompanyInfoProcedure = protectedProcedure(
-  PERMISSION_NAMES.COMPANY_INFO_UPDATE
-)
+export const updateCompanyInfoProcedure = protectedProcedure([
+  "BasicInfoManagement",
+])
   .input(
     z.object({
       name: z.string().min(1).optional(),

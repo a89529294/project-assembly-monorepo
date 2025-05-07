@@ -5,10 +5,9 @@ import {
   usersTable,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
-import { count, eq, ilike, isNull, or, and, inArray } from "drizzle-orm";
+import { and, count, eq, ilike, inArray, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
-import { PERMISSION_NAMES } from "../../db/permissions.js";
 import {
   departmentsTable,
   employeeDepartmentsTable,
@@ -17,9 +16,10 @@ import {
 import { protectedProcedure } from "../core.js";
 import { orderDirectionFn } from "../helpers.js";
 
-export const readEmployeesProcedure = protectedProcedure(
-  PERMISSION_NAMES.EMPLOYEE_READ
-)
+export const readEmployeesProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
   .input(
     employeesSummaryQueryInputSchema.extend({
       notAssociatedWithAUser: z.boolean().optional(),
@@ -103,9 +103,10 @@ export const readEmployeesProcedure = protectedProcedure(
     };
   });
 
-export const readEmployeeByIdProcedure = protectedProcedure(
-  PERMISSION_NAMES.EMPLOYEE_READ
-)
+export const readEmployeeByIdProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
   .input(z.string())
   .output(employeeDetailedSchema)
   .query(async ({ input }) => {
@@ -152,9 +153,10 @@ export const readEmployeeByIdProcedure = protectedProcedure(
     return employee;
   });
 
-export const updateEmployeeByIdProcedure = protectedProcedure(
-  PERMISSION_NAMES.EMPLOYEE_UPDATE
-)
+export const updateEmployeeByIdProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
   .input(
     z.object({
       id: z.string().min(1),
@@ -186,9 +188,10 @@ export const updateEmployeeByIdProcedure = protectedProcedure(
     });
   });
 
-export const createEmployeeProcedure = protectedProcedure(
-  PERMISSION_NAMES.EMPLOYEE_CREATE
-)
+export const createEmployeeProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
   .input(
     z.object({
       payload: employeeDetailedSchema,

@@ -44,7 +44,9 @@ export const DialogAddUser = () => {
       employeeIds: checked ? selectedEmployeeIds : undefined,
     })
   );
-  const { mutate } = useMutation(trpc.basicInfo.createUsers.mutationOptions());
+  const { mutate } = useMutation(
+    trpc.personnelPermission.createUsersFromEmployees.mutationOptions()
+  );
 
   const onRowSelect = (id: string) => {
     setSelectedEmployeeIds((prev) => {
@@ -71,7 +73,7 @@ export const DialogAddUser = () => {
             queryKey: [trpc.basicInfo.readEmployees.queryKey()[0]],
           });
           queryClient.invalidateQueries({
-            queryKey: [trpc.basicInfo.readUsers.queryKey()[0]],
+            queryKey: [trpc.personnelPermission.readUsers.queryKey()[0]],
           });
           setOpen(false);
           toast.success("成功新增erp使用者");

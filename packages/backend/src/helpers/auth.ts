@@ -3,7 +3,7 @@ import { db } from "../db/index.js";
 import {
   employeeDepartmentsTable,
   employeesTable,
-  permissionsTable,
+  // permissionsTable,
   roleDepartmentsTable,
   rolesTable,
   userRolesTable,
@@ -97,36 +97,36 @@ export async function isAdmin(userId: string) {
   return userHasAdminRole.length === 1;
 }
 
+// TODO: may not be needed anymore
 /**
  * Checks if a user has a specific permission
  * @param userId - The user ID
  * @param permissionName - The permission to check for
  * @returns A boolean indicating whether the user has the permission
  */
-export async function hasPermission(
-  userId: string,
-  roles: Role[],
-  permissionName: string
-): Promise<boolean> {
-  if (await isAdmin(userId)) return true;
+// export async function hasPermission(
+//   roles: Role[],
+//   permissionName: string
+// ): Promise<boolean> {
+//   // if (await isAdmin(userId)) return true;
 
-  // Get all role IDs from the user's departments
-  const roleIds = roles.map((role) => role.id);
+//   // Get all role IDs from the user's departments
+//   const roleIds = roles.map((role) => role.id);
 
-  // Check if any of these roles have the requested permission
-  const permissionCheck = await db
-    .select()
-    .from(permissionsTable)
-    .where(
-      and(
-        inArray(permissionsTable.roleId, roleIds),
-        eq(permissionsTable.name, permissionName)
-      )
-    )
-    .limit(1);
+//   // Check if any of these roles have the requested permission
+//   const permissionCheck = await db
+//     .select()
+//     .from(permissionsTable)
+//     .where(
+//       and(
+//         inArray(permissionsTable.roleId, roleIds),
+//         eq(permissionsTable.name, permissionName)
+//       )
+//     )
+//     .limit(1);
 
-  return permissionCheck.length > 0;
-}
+//   return permissionCheck.length > 0;
+// }
 
 export function generatePassword(length = 20) {
   const chars =

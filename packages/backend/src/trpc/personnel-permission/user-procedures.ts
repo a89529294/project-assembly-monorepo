@@ -7,13 +7,14 @@ import { count, ilike, inArray, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { hashPassword } from "../../db/password";
-import { PERMISSION_NAMES } from "../../db/permissions";
 import { employeesTable } from "../../db/schema";
 import { generatePassword } from "../../helpers/auth";
 import { protectedProcedure } from "../core";
 import { orderDirectionFn } from "../helpers";
 
-export const readUsersProcedure = protectedProcedure(PERMISSION_NAMES.USER_READ)
+export const readUsersProcedure = protectedProcedure([
+  "PersonnelPermissionManagement",
+])
   .input(UsersSummaryQueryInputSchema)
   .output(paginatedUserSummarySchema)
   .query(async ({ input }) => {
@@ -65,9 +66,9 @@ export const readUsersProcedure = protectedProcedure(PERMISSION_NAMES.USER_READ)
     };
   });
 
-export const createUsersFromEmployeesProcedure = protectedProcedure(
-  PERMISSION_NAMES.USER_CREATE
-)
+export const createUsersFromEmployeesProcedure = protectedProcedure([
+  "PersonnelPermissionManagement",
+])
   .input(z.object({ employeeIds: z.array(z.string().min(1)).min(1) }))
   .output(
     z.array(

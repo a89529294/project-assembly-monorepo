@@ -16,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export const DialogAddAppUser = () => {
   const { data } = useQuery(
-    trpc.personnelPermission.getAppUserByPermission.queryOptions()
+    trpc.personnelPermission.readAppUserByPermission.queryOptions()
   );
 
   // State for selected user

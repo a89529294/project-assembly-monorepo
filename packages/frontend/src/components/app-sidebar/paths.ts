@@ -2,6 +2,8 @@ import {
   Delete,
   Home,
   Inbox,
+  LucideHandshake,
+  LucideRocket,
   LucideUser,
   LucideUserLock,
   LucideUserRoundCog,
@@ -9,11 +11,13 @@ import {
 } from "lucide-react";
 
 import { RegisteredRouter, ValidateLinkOptions } from "@tanstack/react-router";
+import { RoleName } from "@myapp/shared";
 
 export interface NavItemBase {
   title: string;
   icon: React.ComponentType;
   basePath: string;
+  roleNames: RoleName[]; // Changed from roleName to roleNames
 }
 
 // Case 1: Has linkOptions but NO subs
@@ -65,6 +69,7 @@ export const paths = {
         to: "/basic-info/company-info",
       },
       icon: Home,
+      roleNames: ["BasicInfoManagement", "AdminManagement"],
     },
     {
       title: "員工資料",
@@ -73,24 +78,26 @@ export const paths = {
         to: "/basic-info/employees",
       },
       icon: LucideUserRoundCog,
+      roleNames: ["BasicInfoManagement", "AdminManagement"],
     },
     {
       title: "人事權限",
       basePath: "/basic-info/erp-permissions",
+      roleNames: ["PersonnelPermissionManagement", "AdminManagement"],
       subs: [
         {
           title: "ERP操作權限",
           linkOptions: {
             to: "/basic-info/erp-permissions/users",
           },
-          icon: LucideUserRoundCog,
+          icon: LucideHandshake,
         },
         {
           title: "ERP功能權限",
           linkOptions: {
             to: "/basic-info/erp-permissions/roles",
           },
-          icon: LucideUserLock,
+          icon: LucideRocket,
         },
       ],
       icon: LucideUserLock,
@@ -104,6 +111,7 @@ export const paths = {
         to: "/production/create",
       },
       icon: Home,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
     {
       title: "Read",
@@ -112,6 +120,7 @@ export const paths = {
         to: "/production/read",
       },
       icon: Inbox,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
     {
       title: "Update",
@@ -120,6 +129,7 @@ export const paths = {
         to: "/production/update",
       },
       icon: RefreshCcw,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
     {
       title: "Delete",
@@ -128,6 +138,7 @@ export const paths = {
         to: "/production/delete",
       },
       icon: Delete,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
   ],
   customerRoutes: [
@@ -138,6 +149,7 @@ export const paths = {
         to: "/personnel/create",
       },
       icon: Home,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
     {
       title: "Read",
@@ -146,6 +158,7 @@ export const paths = {
         to: "/personnel/read",
       },
       icon: Inbox,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
     {
       title: "Update",
@@ -154,6 +167,7 @@ export const paths = {
         to: "/personnel/update",
       },
       icon: RefreshCcw,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
     {
       title: "Delete",
@@ -162,6 +176,7 @@ export const paths = {
         to: "/personnel/delete",
       },
       icon: Delete,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
     {
       title: "App Users",
@@ -170,6 +185,7 @@ export const paths = {
         to: "/personnel/app-users",
       },
       icon: LucideUser,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
   ],
   storageRoutes: [
@@ -180,6 +196,7 @@ export const paths = {
         to: "/storage/create",
       },
       icon: Home,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
     {
       title: "Read",
@@ -188,6 +205,7 @@ export const paths = {
         to: "/storage/read",
       },
       icon: Inbox,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
     {
       title: "Update",
@@ -196,6 +214,7 @@ export const paths = {
         to: "/storage/update",
       },
       icon: RefreshCcw,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
     {
       title: "Delete",
@@ -204,6 +223,7 @@ export const paths = {
         to: "/storage/delete",
       },
       icon: Delete,
+      roleNames: ["ProductionManagement", "AdminManagement"],
     },
   ],
 } satisfies Record<string, NavItem[]>;

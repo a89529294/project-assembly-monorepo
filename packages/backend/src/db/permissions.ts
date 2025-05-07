@@ -24,19 +24,19 @@ const PERMISSIONS = {
   // Customer Permission Management permissions
   CUSTOMER_CREATE: {
     name: "customer:create",
-    roleId: roleIds.customerManagementRoleId,
+    roleId: roleIds.personnelPermissionManagementRoleId,
   },
   CUSTOMER_READ: {
     name: "customer:read",
-    roleId: roleIds.customerManagementRoleId,
+    roleId: roleIds.personnelPermissionManagementRoleId,
   },
   CUSTOMER_UPDATE: {
     name: "customer:update",
-    roleId: roleIds.customerManagementRoleId,
+    roleId: roleIds.personnelPermissionManagementRoleId,
   },
   CUSTOMER_DELETE: {
     name: "customer:delete",
-    roleId: roleIds.customerManagementRoleId,
+    roleId: roleIds.personnelPermissionManagementRoleId,
   },
 
   // Basic Info Management permissions

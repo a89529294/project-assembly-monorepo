@@ -28,7 +28,7 @@ export function EmployeeForm({
   ActionButtons,
 }: EmployeeFormProps) {
   const { data: departments, isLoading: isLoadingDepartments } = useQuery(
-    trpc.basicInfo.readDepartments.queryOptions()
+    trpc.personnelPermission.readDepartments.queryOptions()
   );
   const {
     data: counties,

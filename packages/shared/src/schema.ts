@@ -26,11 +26,13 @@ export const appPermissionEnum = pgEnum("app_permission", [
 // Define enum for management types
 export const roleNameEnum = pgEnum("role_name", [
   "AdminManagement",
-  "BasicInfoManagement",
-  "CustomerManagement",
-  "StorageManagement",
-  "ProductionManagement",
+  "BasicInfoManagement", // 基本資料
+  "PersonnelPermissionManagement", // 人事權限
+  "StorageManagement", // 倉管管理
+  "ProductionManagement", // 生產管理
 ]);
+
+export type RoleName = (typeof roleNameEnum.enumValues)[number];
 
 const timestamps = {
   created_at: timestamp({ withTimezone: true, mode: "date" })
@@ -53,15 +55,15 @@ export const rolesTable = pgTable("roles", {
   ...timestamps,
 });
 
-export const permissionsTable = pgTable("permissions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar({ length: 100 }).notNull().unique(),
-  // Permission string like "order:create", "order:read", etc.
-  roleId: uuid("role_id")
-    .notNull()
-    .references(() => rolesTable.id),
-  ...timestamps,
-});
+// export const permissionsTable = pgTable("permissions", {
+//   id: uuid("id").primaryKey().defaultRandom(),
+//   name: varchar({ length: 100 }).notNull().unique(),
+//   // Permission string like "order:create", "order:read", etc.
+//   roleId: uuid("role_id")
+//     .notNull()
+//     .references(() => rolesTable.id),
+//   ...timestamps,
+// });
 
 export const departmentsTable = pgTable("departments", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -274,17 +276,17 @@ export const projectContactsRelations = relations(
 );
 
 export const rolesRelations = relations(rolesTable, ({ many }) => ({
-  permissions: many(permissionsTable),
+  // permissions: many(permissionsTable),
   roleDepartments: many(roleDepartmentsTable),
   userRoles: many(userRolesTable),
 }));
 
-export const permissionsRelations = relations(permissionsTable, ({ one }) => ({
-  role: one(rolesTable, {
-    fields: [permissionsTable.roleId],
-    references: [rolesTable.id],
-  }),
-}));
+// export const permissionsRelations = relations(permissionsTable, ({ one }) => ({
+//   role: one(rolesTable, {
+//     fields: [permissionsTable.roleId],
+//     references: [rolesTable.id],
+//   }),
+// }));
 
 export const departmentsRelations = relations(departmentsTable, ({ many }) => ({
   userDepartments: many(employeeDepartmentsTable),
@@ -379,7 +381,7 @@ export const appUserRefreshTokensRelations = relations(
 
 // Type definitions for database models
 export type RoleFromDb = InferSelectModel<typeof rolesTable>;
-export type PermissionFromDb = InferSelectModel<typeof permissionsTable>;
+// export type PermissionFromDb = InferSelectModel<typeof permissionsTable>;
 export type UserFromDb = InferSelectModel<typeof usersTable>;
 export type AppUserFromDb = InferSelectModel<typeof appUsersTable>;
 export type SessionFromDb = InferSelectModel<typeof sessionsTable>;

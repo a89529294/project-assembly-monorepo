@@ -19,12 +19,15 @@ import {
 } from "@/components/ui/sidebar";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/auth/use-auth";
+import { RoleName } from "@myapp/shared";
 
 export function CollapsibleSidebarMenu({
   show,
   label,
   items,
 }: NavigationProps) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const { location } = useRouterState({ select: (s) => s });
 
@@ -37,6 +40,14 @@ export function CollapsibleSidebarMenu({
     if (x) setOpen(true);
     else setOpen(false);
   }, [location, items]);
+
+  // TODO: figure out a better way to handle this, i know user must exist but i need to tell TS
+  if (!user) return null;
+
+  const showLink = (roleNames: RoleName[]) =>
+    user.roles
+      .map((v) => v.name)
+      .find((userRoleName) => roleNames.includes(userRoleName)) !== undefined;
 
   return (
     show && (
@@ -59,39 +70,41 @@ export function CollapsibleSidebarMenu({
               <SidebarMenu>
                 {items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    {item.linkOptions ? (
-                      <SidebarMenuButton asChild>
-                        <Link
-                          to={item.linkOptions.to}
-                          className="[&.active]:font-bold"
-                        >
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    ) : (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton>
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </SidebarMenuButton>
-                        <SidebarMenuSub>
-                          {item.subs?.map((sub) => (
-                            <SidebarMenuSubItem key={sub.title}>
-                              <SidebarMenuSubButton asChild>
-                                <Link
-                                  to={sub.linkOptions.to}
-                                  className="[&.active]:font-bold"
-                                >
-                                  <sub.icon />
-                                  <span>{sub.title}</span>
-                                </Link>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </SidebarMenuItem>
-                    )}
+                    {item.linkOptions
+                      ? showLink(item.roleNames) && (
+                          <SidebarMenuButton asChild>
+                            <Link
+                              to={item.linkOptions.to}
+                              className="[&.active]:font-bold"
+                            >
+                              <item.icon />
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        )
+                      : showLink(item.roleNames) && (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton>
+                              <item.icon />
+                              <span>{item.title}</span>
+                            </SidebarMenuButton>
+                            <SidebarMenuSub>
+                              {item.subs.map((sub) => (
+                                <SidebarMenuSubItem key={sub.title}>
+                                  <SidebarMenuSubButton asChild>
+                                    <Link
+                                      to={sub.linkOptions.to}
+                                      className="[&.active]:font-bold"
+                                    >
+                                      <sub.icon />
+                                      <span>{sub.title}</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </SidebarMenuItem>
+                        )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

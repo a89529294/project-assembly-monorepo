@@ -91,7 +91,7 @@ function ErrorComponent({ error }: { error: Error }) {
         clearAuth();
         navigate({ to: "/login", search: { redirect } });
       } else if (error.message === "FORBIDDEN") {
-        navigate({ to: "/", search: { redirect } });
+        navigate({ to: "/" });
       }
     }
     console.log(error);

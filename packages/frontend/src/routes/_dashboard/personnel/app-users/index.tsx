@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_dashboard/personnel/app-users/")({
   component: RouteComponent,
   loader: async () => {
     await queryClient.ensureQueryData(
-      trpc.personnelPermission.getAppUserByPermission.queryOptions({
+      trpc.personnelPermission.readAppUserByPermission.queryOptions({
         permission: "man-production",
       })
     );
@@ -34,7 +34,7 @@ export function RouteComponent() {
   const [activeTab, setActiveTab] = useState(TABS[0].key);
 
   const { data, isLoading } = useQuery(
-    trpc.personnelPermission.getAppUserByPermission.queryOptions({
+    trpc.personnelPermission.readAppUserByPermission.queryOptions({
       permission: activeTab,
     })
   );

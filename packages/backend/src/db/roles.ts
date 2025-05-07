@@ -3,8 +3,8 @@ import { randomUUID } from "crypto";
 
 export const roleIds = {
   adminRoleId: randomUUID(),
-  productionManagementRoleId: randomUUID(),
-  customerManagementRoleId: randomUUID(),
   basicInfoManagementRoleId: randomUUID(),
+  personnelPermissionManagementRoleId: randomUUID(),
   storageManagementRoleId: randomUUID(),
+  productionManagementRoleId: randomUUID(),
 };

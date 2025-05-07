@@ -1,12 +1,24 @@
-import {
-  createUserForEmployeeProcedure,
-  createUserWithRolesProcedure,
-  getAppUsersByPermissionProcedure,
-} from "./procedures.js";
 import { router } from "../core.js";
+import {
+  readAssignedDepartmentsProcedure,
+  readDepartmentsProcedure,
+  readUnassignedDepartmentsProcedure,
+} from "./department-prodecures.js";
+import {
+  createUserWithRolesProcedure,
+  readAppUsersByPermissionProcedure,
+} from "./procedures.js";
+import {
+  createUsersFromEmployeesProcedure,
+  readUsersProcedure,
+} from "./user-procedures.js";
 
 export const personnelPermissionRouter = router({
-  createUserForEmployee: createUserForEmployeeProcedure,
   createUserWithRoles: createUserWithRolesProcedure,
-  getAppUserByPermission: getAppUsersByPermissionProcedure,
+  readUsers: readUsersProcedure,
+  createUsersFromEmployees: createUsersFromEmployeesProcedure,
+  readAppUserByPermission: readAppUsersByPermissionProcedure,
+  readDepartments: readDepartmentsProcedure,
+  readUnassignedDepartments: readUnassignedDepartmentsProcedure,
+  readAssignedDepartments: readAssignedDepartmentsProcedure,
 });

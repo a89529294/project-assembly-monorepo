@@ -4,7 +4,6 @@ import { eq } from "drizzle-orm";
 import {
   usersTable,
   rolesTable,
-  permissionsTable,
   sessionsTable,
   customersTable,
   projectsTable,
@@ -23,7 +22,7 @@ import {
 import { db } from "./index.js";
 import { randomUUID } from "crypto";
 import { seedEmployees, DepartmentConfig } from "./employee-seed.js";
-import { syncPermissionsToDB } from "./permissions.js";
+// import { syncPermissionsToDB } from "./permissions.js";
 import { roleIds } from "./roles.js";
 
 // const envPath = `.env.${process.env.NODE_ENV}`;
@@ -53,7 +52,7 @@ async function main() {
   const {
     adminRoleId,
     basicInfoManagementRoleId,
-    customerManagementRoleId,
+    personnelPermissionManagementRoleId,
     storageManagementRoleId,
     productionManagementRoleId,
   } = roleIds;
@@ -67,12 +66,12 @@ async function main() {
     {
       id: basicInfoManagementRoleId,
       name: roleNameEnum.enumValues[1], // important if you change this you have to update frontend
-      chinese_name: "設定",
+      chinese_name: "基本資料",
     },
     {
-      id: customerManagementRoleId,
+      id: personnelPermissionManagementRoleId,
       name: roleNameEnum.enumValues[2], // important if you change this you have to update frontend
-      chinese_name: "客戶管理",
+      chinese_name: "人事權限",
     },
 
     {
@@ -91,7 +90,7 @@ async function main() {
   console.log("Roles created!");
 
   // Sync permissions from code to DB
-  await syncPermissionsToDB();
+  // await syncPermissionsToDB();
 
   // Create departments
   const hrDeptId = randomUUID();
@@ -108,61 +107,61 @@ async function main() {
   const departments = [
     {
       id: hrDeptId,
-      name: "Human Resources",
+      name: "人資部",
       en_prefix: "HR",
       zh_prefix: "人資",
     },
     {
       id: financeDeptId,
-      name: "Finance",
+      name: "財務部",
       en_prefix: "FIN",
       zh_prefix: "財務",
     },
     {
       id: marketingDeptId,
-      name: "Marketing",
+      name: "行銷部",
       en_prefix: "MKT",
       zh_prefix: "行銷",
     },
     {
       id: salesDeptId,
-      name: "Sales",
+      name: "銷售部",
       en_prefix: "SAL",
       zh_prefix: "銷售",
     },
     {
       id: engineeringDeptId,
-      name: "Engineering",
+      name: "工程部",
       en_prefix: "ENG",
       zh_prefix: "工程",
     },
     {
       id: productDeptId,
-      name: "Product",
+      name: "產品部",
       en_prefix: "PRD",
       zh_prefix: "產品",
     },
     {
       id: operationsDeptId,
-      name: "Operations",
+      name: "營運部",
       en_prefix: "OPS",
       zh_prefix: "營運",
     },
     {
       id: customerServiceDeptId,
-      name: "Customer Service",
+      name: "客服部",
       en_prefix: "CS",
       zh_prefix: "客服",
     },
     {
       id: researchDeptId,
-      name: "Research",
+      name: "研發部",
       en_prefix: "RND",
       zh_prefix: "研發",
     },
     {
       id: legalDeptId,
-      name: "Legal",
+      name: "法律部",
       en_prefix: "LEG",
       zh_prefix: "法律",
     },
@@ -173,6 +172,37 @@ async function main() {
 
   // Create role-department associations
   const roleDepartments = [
+    // Basic Info Management role in multiple departments
+    {
+      id: randomUUID(),
+      roleId: basicInfoManagementRoleId,
+      departmentId: hrDeptId,
+    },
+    {
+      id: randomUUID(),
+      roleId: basicInfoManagementRoleId,
+      departmentId: operationsDeptId,
+    },
+
+    // personnel permission Management
+    {
+      id: randomUUID(),
+      roleId: personnelPermissionManagementRoleId,
+      departmentId: hrDeptId,
+    },
+    {
+      id: randomUUID(),
+      roleId: personnelPermissionManagementRoleId,
+      departmentId: legalDeptId,
+    },
+
+    // Storage Management role in Operations department
+    {
+      id: randomUUID(),
+      roleId: storageManagementRoleId,
+      departmentId: operationsDeptId,
+    },
+
     // Production Management
     {
       id: randomUUID(),
@@ -188,32 +218,6 @@ async function main() {
       id: randomUUID(),
       roleId: productionManagementRoleId,
       departmentId: researchDeptId,
-    },
-
-    // Customer Management
-    {
-      id: randomUUID(),
-      roleId: customerManagementRoleId,
-      departmentId: hrDeptId,
-    },
-
-    // Basic Info Management role in multiple departments
-    {
-      id: randomUUID(),
-      roleId: basicInfoManagementRoleId,
-      departmentId: hrDeptId,
-    },
-    {
-      id: randomUUID(),
-      roleId: basicInfoManagementRoleId,
-      departmentId: operationsDeptId,
-    },
-
-    // Storage Management role in Operations department
-    {
-      id: randomUUID(),
-      roleId: storageManagementRoleId,
-      departmentId: operationsDeptId,
     },
   ];
 

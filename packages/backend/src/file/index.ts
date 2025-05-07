@@ -1,20 +1,19 @@
-import { TRPCError } from "@trpc/server";
-import { Hono } from "hono";
-import { s3Client } from "../s3.js";
 import {
   DeleteObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
+import { TRPCError } from "@trpc/server";
 import { fileTypeFromBuffer } from "file-type";
+import { Hono } from "hono";
+import { s3Client } from "../s3.js";
 import { honoAuthMiddleware } from "../trpc/core.js";
-import { PERMISSION_NAMES } from "../db/permissions.js";
 
 const fileRoutes = new Hono();
 
 fileRoutes.post(
   "/upload-company-logo",
-  honoAuthMiddleware(PERMISSION_NAMES.COMPANY_INFO_LOGO_CREATE),
+  honoAuthMiddleware(["BasicInfoManagement"]),
   async (c) => {
     const body = await c.req.parseBody();
     console.log(body["file"]); // File | string

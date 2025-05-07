@@ -27,7 +27,9 @@ export const Route = createFileRoute(
     searchTerm,
   }),
   async loader({ deps }) {
-    queryClient.ensureQueryData(trpc.basicInfo.readUsers.queryOptions(deps));
+    queryClient.ensureQueryData(
+      trpc.personnelPermission.readUsers.queryOptions(deps)
+    );
   },
   component: RouteComponent,
   pendingComponent: () => <Skeleton className="absolute inset-6" />,
@@ -50,7 +52,7 @@ function RouteComponent() {
 
   const navigate = Route.useNavigate();
   const { data: usersData } = useSuspenseQuery(
-    trpc.basicInfo.readUsers.queryOptions({
+    trpc.personnelPermission.readUsers.queryOptions({
       orderBy: deferredOrderBy,
       orderDirection: deferredOrderDirection,
       page: deferredPage,

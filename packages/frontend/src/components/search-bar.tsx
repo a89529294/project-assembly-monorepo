@@ -19,8 +19,8 @@ export function SearchBar({
   hideIcon,
   initSearchTerm,
 }: SearchBarProps) {
-  const [input, setInput] = useState(initSearchTerm);
-  const debouncedInput = useDecouncedValue(input);
+  const [input, setInput] = useState(initSearchTerm ?? "");
+  const debouncedInput = useDecouncedValue(input || undefined);
   const onSearchChangeRef = useRef(onSearchChange);
   const isComponentMounted = useRef(true);
 

@@ -12,7 +12,11 @@ export function AppSidebar({ user }: { user: User }) {
       <SidebarContent className="py-3 px-1">
         <CollapsibleSidebarMenu
           show={isAllowed(
-            [roleNameEnum.enumValues[0], roleNameEnum.enumValues[1]],
+            [
+              roleNameEnum.enumValues[0],
+              roleNameEnum.enumValues[1],
+              roleNameEnum.enumValues[2],
+            ],
             user.roles
           )}
           label={"設定"}
@@ -21,7 +25,7 @@ export function AppSidebar({ user }: { user: User }) {
 
         <CollapsibleSidebarMenu
           show={isAllowed(
-            [roleNameEnum.enumValues[0], roleNameEnum.enumValues[2]],
+            [roleNameEnum.enumValues[0], roleNameEnum.enumValues[1]],
             user.roles
           )}
           label={"客戶管理"}

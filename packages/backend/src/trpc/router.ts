@@ -14,4 +14,4 @@ export type AppRouter = typeof appRouter;
 export type User =
   AppRouter["auth"]["login"]["_def"]["$types"]["output"]["user"];
 export type AppUser =
-  AppRouter["personnelPermission"]["getAppUserByPermission"]["_def"]["$types"]["output"][number];
+  AppRouter["personnelPermission"]["readAppUserByPermission"]["_def"]["$types"]["output"][number];

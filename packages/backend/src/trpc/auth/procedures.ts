@@ -62,7 +62,7 @@ export const loginProcedure = publicProcedure
     };
   });
 
-export const logoutProcedure = protectedProcedure("").mutation(
+export const logoutProcedure = protectedProcedure().mutation(
   async ({ ctx }) => {
     const session = ctx.session;
     await invalidateSession(session.id);
