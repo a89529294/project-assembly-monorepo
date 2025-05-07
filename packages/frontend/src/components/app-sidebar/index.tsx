@@ -9,7 +9,7 @@ import { paths } from "@/components/app-sidebar/paths";
 export function AppSidebar({ user }: { user: User }) {
   return (
     <Sidebar>
-      <SidebarContent>
+      <SidebarContent className="py-3 px-1">
         <CollapsibleSidebarMenu
           show={isAllowed(
             [roleNameEnum.enumValues[0], roleNameEnum.enumValues[1]],

@@ -26,7 +26,7 @@ function Login() {
   const [logginIn, setLogginIn] = useState(false);
   const { login } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Basic validation
@@ -45,6 +45,7 @@ function Login() {
         // may need this if auth state hasnt updated yet
         // await new Promise(r=>setTimeout(r,1000))
 
+        console.log(search.redirect);
         await navigate({ to: search.redirect || "/" });
         setLogginIn(false);
       },
@@ -65,7 +66,7 @@ function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleLogin}>
           <div className="mb-4">
             <label htmlFor="account" className="block mb-2 font-medium">
               Account
@@ -87,6 +88,7 @@ function Login() {
             <input
               id="password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"

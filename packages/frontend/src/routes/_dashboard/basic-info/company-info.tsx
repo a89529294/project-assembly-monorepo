@@ -22,12 +22,11 @@ export const Route = createFileRoute("/_dashboard/basic-info/company-info")({
     } catch (e: unknown) {
       if (e instanceof TRPCClientError && e.data?.httpStatus === 404)
         return true;
-      throw new Error("unknown");
+      throw e;
     }
   },
   component: CompanyInfoPage,
   pendingComponent: () => <Skeleton className="mt-12 mx-6 h-full" />,
-  errorComponent: () => "error",
 });
 
 function CompanyInfoPage() {

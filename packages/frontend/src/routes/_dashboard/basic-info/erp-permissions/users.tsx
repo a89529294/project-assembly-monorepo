@@ -64,7 +64,15 @@ function RouteComponent() {
       <h2 className="text-xl font-bold mb-4 flex justify-between">
         <div className="flex gap-3 items-center">
           ERP使用者清單
-          <SearchBar navigate={navigate} />
+          <SearchBar
+            onSearchChange={(searchTerm) => {
+              navigate({
+                search: { searchTerm },
+                replace: true,
+              });
+            }}
+            initSearchTerm={searchTerm}
+          />
         </div>
         <DialogAddUser />
       </h2>

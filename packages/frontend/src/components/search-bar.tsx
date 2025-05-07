@@ -1,33 +1,43 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDecouncedValue } from "@/hooks/use-debounced-value";
-import { NavigateOptions, useSearch } from "@tanstack/react-router";
 import { LucideSearch } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface SearchBarProps {
   placeholder?: string;
-  navigate: (opts: NavigateOptions) => void;
+  onSearchChange: (s: string) => void;
   className?: string;
+  hideIcon?: boolean;
+  initSearchTerm?: string;
 }
 
 export function SearchBar({
   placeholder = "搜尋...",
-  navigate,
+  onSearchChange,
   className = "",
+  hideIcon,
+  initSearchTerm,
 }: SearchBarProps) {
-  const search = useSearch({
-    strict: false,
-  });
-  const [input, setInput] = useState(search.searchTerm);
-  const debouncedInput = useDecouncedValue(input ?? "");
+  const [input, setInput] = useState(initSearchTerm);
+  const debouncedInput = useDecouncedValue(input);
+  const onSearchChangeRef = useRef(onSearchChange);
+  const isComponentMounted = useRef(true);
 
   useEffect(() => {
-    navigate({
-      search: { searchTerm: debouncedInput ? debouncedInput : undefined },
-      replace: true,
-    });
-  }, [debouncedInput, navigate]);
+    // TODO both (isComponentMounted.current && typeof debouncedInput === "string") and the next useEffect are needed to prevent navigation revert when quickly navigating between pages
+    // Need to investigate why
+    // TEST: remove the following if check and the next useEffect then navigate between basic-info/employees and /basic-info/company-info to see the issue
+    if (isComponentMounted.current && typeof debouncedInput === "string") {
+      onSearchChangeRef.current(debouncedInput);
+    }
+  }, [debouncedInput]);
+
+  useEffect(() => {
+    return () => {
+      isComponentMounted.current = false;
+    };
+  }, []);
 
   return (
     <form className={`flex items-center gap-2 ${className}`} role="search">
@@ -39,9 +49,11 @@ export function SearchBar({
         className="flex-1"
         aria-label={placeholder}
       />
-      <Button type="submit" variant="outline" size="icon" aria-label="搜尋">
-        <LucideSearch className="h-5 w-5" />
-      </Button>
+      {!hideIcon && (
+        <Button type="submit" variant="outline" size="icon" aria-label="搜尋">
+          <LucideSearch className="h-5 w-5" />
+        </Button>
+      )}
     </form>
   );
 }

@@ -13,6 +13,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -28,12 +31,12 @@ export function CollapsibleSidebarMenu({
   // collapse or expand menu depending on current location
   useEffect(() => {
     const x = !!items.find((item) =>
-      location.pathname.startsWith(item.linkOptions.to)
+      location.pathname.startsWith(item.basePath)
     );
 
     if (x) setOpen(true);
     else setOpen(false);
-  }, [location]);
+  }, [location, items]);
 
   return (
     show && (
@@ -45,7 +48,7 @@ export function CollapsibleSidebarMenu({
         className="group/collapsible"
       >
         <SidebarGroup>
-          <SidebarGroupLabel asChild>
+          <SidebarGroupLabel asChild className="text-base">
             <CollapsibleTrigger>
               {label}
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
@@ -56,15 +59,39 @@ export function CollapsibleSidebarMenu({
               <SidebarMenu>
                 {items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link
-                        to={item.linkOptions.to}
-                        className="[&.active]:font-bold"
-                      >
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                    {item.linkOptions ? (
+                      <SidebarMenuButton asChild>
+                        <Link
+                          to={item.linkOptions.to}
+                          className="[&.active]:font-bold"
+                        >
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    ) : (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                        <SidebarMenuSub>
+                          {item.subs?.map((sub) => (
+                            <SidebarMenuSubItem key={sub.title}>
+                              <SidebarMenuSubButton asChild>
+                                <Link
+                                  to={sub.linkOptions.to}
+                                  className="[&.active]:font-bold"
+                                >
+                                  <sub.icon />
+                                  <span>{sub.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </SidebarMenuItem>
+                    )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

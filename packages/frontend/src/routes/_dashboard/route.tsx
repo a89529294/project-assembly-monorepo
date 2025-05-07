@@ -10,9 +10,11 @@ import { useAuth } from "../../auth/use-auth";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { TRPCClientError } from "@trpc/client";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_dashboard")({
   async beforeLoad({ context, location }) {
+    console.log(location.href);
     if (!context.auth.isAuthenticated) {
       throw redirect({
         to: "/login",
@@ -80,16 +82,20 @@ function ErrorComponent({ error }: { error: Error }) {
   const { clearAuth } = useAuth();
   const navigate = useNavigate();
 
-  if (error instanceof TRPCClientError) {
-    if (error.message === "UNAUTHORIZED") {
-      clearAuth();
-      navigate({ to: "/login" });
-    }
+  useEffect(() => {
+    if (!error) return;
 
-    if (error.message === "FORBIDDEN") {
-      navigate({ to: "/" });
+    const redirect = location.pathname + location.search;
+    if (error instanceof TRPCClientError) {
+      if (error.message === "UNAUTHORIZED") {
+        clearAuth();
+        navigate({ to: "/login", search: { redirect } });
+      } else if (error.message === "FORBIDDEN") {
+        navigate({ to: "/", search: { redirect } });
+      }
     }
-  }
+    console.log(error);
+  }, [error, clearAuth, navigate]);
 
   return "error";
 }

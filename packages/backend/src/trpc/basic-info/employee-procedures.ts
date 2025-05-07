@@ -5,7 +5,7 @@ import {
   usersTable,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
-import { count, eq, ilike, isNull, or } from "drizzle-orm";
+import { count, eq, ilike, isNull, or, and, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { PERMISSION_NAMES } from "../../db/permissions.js";
@@ -23,6 +23,7 @@ export const readEmployeesProcedure = protectedProcedure(
   .input(
     employeesSummaryQueryInputSchema.extend({
       notAssociatedWithAUser: z.boolean().optional(),
+      employeeIds: z.array(z.string().min(1)).optional(),
     })
   )
   .output(paginatedEmployeeSummarySchema)
@@ -42,6 +43,9 @@ export const readEmployeesProcedure = protectedProcedure(
       .from(employeesTable)
       .$dynamic();
 
+    // Collect all conditions to combine with AND
+    const conditions = [];
+
     if (searchTerm) {
       const term = `%${searchTerm}%`;
       const whereCondition = or(
@@ -52,18 +56,28 @@ export const readEmployeesProcedure = protectedProcedure(
         ilike(employeesTable.phone, term),
         ilike(employeesTable.email, term)
       );
-
-      countQuery.where(whereCondition);
-      employeesBaseQuery.where(whereCondition);
+      conditions.push(whereCondition);
     }
 
     if (input.notAssociatedWithAUser) {
-      employeesBaseQuery
-        .leftJoin(usersTable, eq(employeesTable.id, usersTable.employeeId))
-        .where(isNull(usersTable.id));
-      countQuery
-        .leftJoin(usersTable, eq(employeesTable.id, usersTable.employeeId))
-        .where(isNull(usersTable.id));
+      employeesBaseQuery.leftJoin(
+        usersTable,
+        eq(employeesTable.id, usersTable.employeeId)
+      );
+      countQuery.leftJoin(
+        usersTable,
+        eq(employeesTable.id, usersTable.employeeId)
+      );
+      conditions.push(isNull(usersTable.id));
+    }
+
+    if (input.employeeIds && input.employeeIds.length > 0) {
+      conditions.push(inArray(employeesTable.id, input.employeeIds));
+    }
+
+    if (conditions.length > 0) {
+      employeesBaseQuery.where(and(...conditions));
+      countQuery.where(and(...conditions));
     }
 
     const [{ count: total }] = await countQuery;

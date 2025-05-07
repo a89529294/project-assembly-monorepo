@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_dashboard/basic-info/employees/")({
     orderDirection,
     searchTerm,
   }),
+
   async loader({
     deps: { page, pageSize, orderBy, orderDirection, searchTerm },
   }) {
@@ -64,12 +65,23 @@ function RouteComponent() {
     })
   );
 
+  console.log(searchTerm);
+  console.log(typeof searchTerm);
+
   return (
     <div className="p-6 pb-0 bg-white flex flex-col rounded-lg shadow-lg h-full">
       <h2 className="text-xl font-bold mb-4 flex justify-between">
         <div className="flex gap-3 items-center">
           員工清單
-          <SearchBar navigate={navigate} />
+          <SearchBar
+            onSearchChange={(searchTerm) => {
+              navigate({
+                search: { searchTerm },
+                replace: true,
+              });
+            }}
+            initSearchTerm={searchTerm}
+          />
         </div>
         <Button asChild>
           <Link to="/basic-info/employees/create">新增員工</Link>
