@@ -2,6 +2,7 @@ import {
   Delete,
   Home,
   Inbox,
+  LucideFileLock2,
   LucideHandshake,
   LucideRocket,
   LucideUser,
@@ -17,7 +18,7 @@ export interface NavItemBase {
   title: string;
   icon: React.ComponentType;
   basePath: string;
-  roleNames: RoleName[]; // Changed from roleName to roleNames
+  roleNames: RoleName[];
 }
 
 // Case 1: Has linkOptions but NO subs
@@ -98,6 +99,13 @@ export const paths = {
             to: "/basic-info/erp-permissions/roles",
           },
           icon: LucideRocket,
+        },
+        {
+          title: "ERP人員權限",
+          linkOptions: {
+            to: "/basic-info/erp-permissions/department-members",
+          },
+          icon: LucideFileLock2,
         },
       ],
       icon: LucideUserLock,

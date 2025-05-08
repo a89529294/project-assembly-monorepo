@@ -1,9 +1,9 @@
 import { DataTable } from "@/components/data-table";
 import { DialogAddUser } from "@/components/dialogs/add-user";
 import { SmartPagination } from "@/components/pagination";
+import { PendingComponent } from "@/components/pending-component";
 import { SearchBar } from "@/components/search-bar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import { genUserColumns } from "@/features/users/data-table/columns";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
@@ -32,7 +32,7 @@ export const Route = createFileRoute(
     );
   },
   component: RouteComponent,
-  pendingComponent: () => <Skeleton className="absolute inset-6" />,
+  pendingComponent: PendingComponent,
 });
 
 // TODO contninue working on this, missing a ton of functionality

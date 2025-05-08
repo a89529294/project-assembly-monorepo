@@ -3,6 +3,7 @@ import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { OrderDirection, UserSummary, UserSummaryKey } from "@myapp/shared";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { DialogNewPassword } from "@/components/dialogs/new-password";
 
 const columnHelper = createColumnHelper<UserSummary>();
 
@@ -11,11 +12,13 @@ export const genUserColumns = ({
   orderDirection,
   clickOnCurrentHeader,
   clickOnOtherHeader,
+  hideColumns,
 }: {
   orderBy: UserSummaryKey;
   orderDirection: OrderDirection;
   clickOnCurrentHeader: (s: UserSummaryKey) => void;
   clickOnOtherHeader: (s: UserSummaryKey) => void;
+  hideColumns?: string[];
 }) => {
   const genHeader = (columnId: UserSummaryKey, headerText: string) => {
     return (
@@ -27,6 +30,7 @@ export const genUserColumns = ({
             clickOnCurrentHeader(columnId);
           }
         }}
+        className="has-[>svg]:px-0"
       >
         {headerText}
         {orderBy === columnId ? (
@@ -42,7 +46,19 @@ export const genUserColumns = ({
     );
   };
 
+  const show = (colId: string) => !hideColumns?.includes(colId);
+
   return [
+    columnHelper.display({
+      id: "password",
+      header: () => "密碼",
+      size: 66,
+      cell: (info) => (
+        <div className="flex items-center">
+          <DialogNewPassword userId={info.row.original.id} />
+        </div>
+      ),
+    }),
     columnHelper.accessor("account", {
       header: () => genHeader("account", "員工編號"),
       cell: (info) => info.getValue(),
@@ -63,5 +79,5 @@ export const genUserColumns = ({
     //     </Link>
     //   ),
     // }),
-  ] as ColumnDef<UserSummary>[];
+  ].filter((c) => show(c.id!)) as ColumnDef<UserSummary>[];
 };

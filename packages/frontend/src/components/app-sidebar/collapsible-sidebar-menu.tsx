@@ -65,7 +65,7 @@ export function CollapsibleSidebarMenu({
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
-          <CollapsibleContent className="data-[state=open]:animate-slideDown data-[state=closed]:animate-slideUp overflow-hidden">
+          <CollapsibleContent>
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (

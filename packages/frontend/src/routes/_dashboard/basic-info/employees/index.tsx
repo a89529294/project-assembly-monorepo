@@ -1,9 +1,9 @@
 import { DataTable } from "@/components/data-table";
 import { SmartPagination } from "@/components/pagination";
+import { PendingComponent } from "@/components/pending-component";
 import { SearchBar } from "@/components/search-bar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import { genEmployeeColumns } from "@/features/employees/data-table/columns";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_dashboard/basic-info/employees/")({
     );
   },
   component: RouteComponent,
-  pendingComponent: () => <Skeleton className="absolute inset-6" />,
+  pendingComponent: PendingComponent,
 });
 
 function RouteComponent() {

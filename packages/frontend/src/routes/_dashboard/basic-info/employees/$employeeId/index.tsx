@@ -1,12 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useEmployee } from "@/hooks/use-employee";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
+import { createFileRoute } from "@tanstack/react-router";
+import { UseFormReturn } from "react-hook-form";
+import { z } from "zod";
 
 import { EmployeeForm } from "@/components/employee-form";
+import { PendingComponent } from "@/components/pending-component";
 import { EmployeeDetail, employeeDetailedSchema } from "@myapp/shared";
 import { toast } from "sonner";
 
@@ -25,7 +25,7 @@ export const Route = createFileRoute(
     );
   },
   component: RouteComponent,
-  pendingComponent: () => <Skeleton className="absolute inset-6" />,
+  pendingComponent: PendingComponent,
 });
 
 function RouteComponent() {

@@ -47,8 +47,18 @@ export function DataTable<TData extends Record<"id", string>, TValue>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow className="border-b-0" key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
+                console.log(header.getSize());
                 return (
-                  <TableHead key={header.id} className="bg-white">
+                  <TableHead
+                    key={header.id}
+                    className={cn("bg-white")}
+                    style={{
+                      width:
+                        header.column.getSize() !== 150
+                          ? header.column.getSize()
+                          : "auto",
+                    }}
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(

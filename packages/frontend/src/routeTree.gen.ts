@@ -32,6 +32,7 @@ import { Route as DashboardPersonnelAppUsersIndexImport } from './routes/_dashbo
 import { Route as DashboardBasicInfoEmployeesIndexImport } from './routes/_dashboard/basic-info/employees/index'
 import { Route as DashboardBasicInfoErpPermissionsUsersImport } from './routes/_dashboard/basic-info/erp-permissions/users'
 import { Route as DashboardBasicInfoErpPermissionsRolesImport } from './routes/_dashboard/basic-info/erp-permissions/roles'
+import { Route as DashboardBasicInfoErpPermissionsDepartmentMembersImport } from './routes/_dashboard/basic-info/erp-permissions/department-members'
 import { Route as DashboardBasicInfoEmployeesCreateImport } from './routes/_dashboard/basic-info/employees/create'
 import { Route as DashboardBasicInfoEmployeesEmployeeIdIndexImport } from './routes/_dashboard/basic-info/employees/$employeeId/index'
 
@@ -164,6 +165,13 @@ const DashboardBasicInfoErpPermissionsRolesRoute =
   DashboardBasicInfoErpPermissionsRolesImport.update({
     id: '/erp-permissions/roles',
     path: '/erp-permissions/roles',
+    getParentRoute: () => DashboardBasicInfoRouteRoute,
+  } as any)
+
+const DashboardBasicInfoErpPermissionsDepartmentMembersRoute =
+  DashboardBasicInfoErpPermissionsDepartmentMembersImport.update({
+    id: '/erp-permissions/department-members',
+    path: '/erp-permissions/department-members',
     getParentRoute: () => DashboardBasicInfoRouteRoute,
   } as any)
 
@@ -311,6 +319,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBasicInfoEmployeesCreateImport
       parentRoute: typeof DashboardBasicInfoRouteImport
     }
+    '/_dashboard/basic-info/erp-permissions/department-members': {
+      id: '/_dashboard/basic-info/erp-permissions/department-members'
+      path: '/erp-permissions/department-members'
+      fullPath: '/basic-info/erp-permissions/department-members'
+      preLoaderRoute: typeof DashboardBasicInfoErpPermissionsDepartmentMembersImport
+      parentRoute: typeof DashboardBasicInfoRouteImport
+    }
     '/_dashboard/basic-info/erp-permissions/roles': {
       id: '/_dashboard/basic-info/erp-permissions/roles'
       path: '/erp-permissions/roles'
@@ -354,6 +369,7 @@ declare module '@tanstack/react-router' {
 interface DashboardBasicInfoRouteRouteChildren {
   DashboardBasicInfoCompanyInfoRoute: typeof DashboardBasicInfoCompanyInfoRoute
   DashboardBasicInfoEmployeesCreateRoute: typeof DashboardBasicInfoEmployeesCreateRoute
+  DashboardBasicInfoErpPermissionsDepartmentMembersRoute: typeof DashboardBasicInfoErpPermissionsDepartmentMembersRoute
   DashboardBasicInfoErpPermissionsRolesRoute: typeof DashboardBasicInfoErpPermissionsRolesRoute
   DashboardBasicInfoErpPermissionsUsersRoute: typeof DashboardBasicInfoErpPermissionsUsersRoute
   DashboardBasicInfoEmployeesIndexRoute: typeof DashboardBasicInfoEmployeesIndexRoute
@@ -365,6 +381,8 @@ const DashboardBasicInfoRouteRouteChildren: DashboardBasicInfoRouteRouteChildren
     DashboardBasicInfoCompanyInfoRoute: DashboardBasicInfoCompanyInfoRoute,
     DashboardBasicInfoEmployeesCreateRoute:
       DashboardBasicInfoEmployeesCreateRoute,
+    DashboardBasicInfoErpPermissionsDepartmentMembersRoute:
+      DashboardBasicInfoErpPermissionsDepartmentMembersRoute,
     DashboardBasicInfoErpPermissionsRolesRoute:
       DashboardBasicInfoErpPermissionsRolesRoute,
     DashboardBasicInfoErpPermissionsUsersRoute:
@@ -439,6 +457,7 @@ export interface FileRoutesByFullPath {
   '/storage/read': typeof DashboardStorageReadRoute
   '/storage/update': typeof DashboardStorageUpdateRoute
   '/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
+  '/basic-info/erp-permissions/department-members': typeof DashboardBasicInfoErpPermissionsDepartmentMembersRoute
   '/basic-info/erp-permissions/roles': typeof DashboardBasicInfoErpPermissionsRolesRoute
   '/basic-info/erp-permissions/users': typeof DashboardBasicInfoErpPermissionsUsersRoute
   '/basic-info/employees': typeof DashboardBasicInfoEmployeesIndexRoute
@@ -464,6 +483,7 @@ export interface FileRoutesByTo {
   '/storage/read': typeof DashboardStorageReadRoute
   '/storage/update': typeof DashboardStorageUpdateRoute
   '/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
+  '/basic-info/erp-permissions/department-members': typeof DashboardBasicInfoErpPermissionsDepartmentMembersRoute
   '/basic-info/erp-permissions/roles': typeof DashboardBasicInfoErpPermissionsRolesRoute
   '/basic-info/erp-permissions/users': typeof DashboardBasicInfoErpPermissionsUsersRoute
   '/basic-info/employees': typeof DashboardBasicInfoEmployeesIndexRoute
@@ -491,6 +511,7 @@ export interface FileRoutesById {
   '/_dashboard/storage/read': typeof DashboardStorageReadRoute
   '/_dashboard/storage/update': typeof DashboardStorageUpdateRoute
   '/_dashboard/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
+  '/_dashboard/basic-info/erp-permissions/department-members': typeof DashboardBasicInfoErpPermissionsDepartmentMembersRoute
   '/_dashboard/basic-info/erp-permissions/roles': typeof DashboardBasicInfoErpPermissionsRolesRoute
   '/_dashboard/basic-info/erp-permissions/users': typeof DashboardBasicInfoErpPermissionsUsersRoute
   '/_dashboard/basic-info/employees/': typeof DashboardBasicInfoEmployeesIndexRoute
@@ -519,6 +540,7 @@ export interface FileRouteTypes {
     | '/storage/read'
     | '/storage/update'
     | '/basic-info/employees/create'
+    | '/basic-info/erp-permissions/department-members'
     | '/basic-info/erp-permissions/roles'
     | '/basic-info/erp-permissions/users'
     | '/basic-info/employees'
@@ -543,6 +565,7 @@ export interface FileRouteTypes {
     | '/storage/read'
     | '/storage/update'
     | '/basic-info/employees/create'
+    | '/basic-info/erp-permissions/department-members'
     | '/basic-info/erp-permissions/roles'
     | '/basic-info/erp-permissions/users'
     | '/basic-info/employees'
@@ -568,6 +591,7 @@ export interface FileRouteTypes {
     | '/_dashboard/storage/read'
     | '/_dashboard/storage/update'
     | '/_dashboard/basic-info/employees/create'
+    | '/_dashboard/basic-info/erp-permissions/department-members'
     | '/_dashboard/basic-info/erp-permissions/roles'
     | '/_dashboard/basic-info/erp-permissions/users'
     | '/_dashboard/basic-info/employees/'
@@ -629,6 +653,7 @@ export const routeTree = rootRoute
       "children": [
         "/_dashboard/basic-info/company-info",
         "/_dashboard/basic-info/employees/create",
+        "/_dashboard/basic-info/erp-permissions/department-members",
         "/_dashboard/basic-info/erp-permissions/roles",
         "/_dashboard/basic-info/erp-permissions/users",
         "/_dashboard/basic-info/employees/",
@@ -693,6 +718,10 @@ export const routeTree = rootRoute
     },
     "/_dashboard/basic-info/employees/create": {
       "filePath": "_dashboard/basic-info/employees/create.tsx",
+      "parent": "/_dashboard/basic-info"
+    },
+    "/_dashboard/basic-info/erp-permissions/department-members": {
+      "filePath": "_dashboard/basic-info/erp-permissions/department-members.tsx",
       "parent": "/_dashboard/basic-info"
     },
     "/_dashboard/basic-info/erp-permissions/roles": {

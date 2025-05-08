@@ -35,6 +35,7 @@ export const genEmployeeColumns = ({
             clickOnOtherHeader(columnId);
           }
         }}
+        className="has-[>svg]:px-0"
       >
         {headerText}
         {orderBy === columnId ? (

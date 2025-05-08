@@ -3,7 +3,7 @@ import {
   UsersSummaryQueryInputSchema,
   usersTable,
 } from "@myapp/shared";
-import { count, ilike, inArray, or } from "drizzle-orm";
+import { count, ilike, inArray, or, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { hashPassword } from "../../db/password";
@@ -115,4 +115,28 @@ export const createUsersFromEmployeesProcedure = protectedProcedure([
       results.push({ user: userSummary, plainPassword });
     }
     return results;
+  });
+
+export const generatePasswordForUserProcedure = protectedProcedure([
+  "PersonnelPermissionManagement",
+])
+  .input(z.object({ userId: z.string().min(1) }))
+  .output(z.object({ plainPassword: z.string() }))
+  .mutation(async ({ input }) => {
+    // Generate a new password
+    const plainPassword = generatePassword();
+    const passwordHash = await hashPassword(plainPassword);
+
+    // Update the user's passwordHash
+    const [user] = await db
+      .update(usersTable)
+      .set({ passwordHash })
+      .where(eq(usersTable.id, input.userId))
+      .returning();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return { plainPassword };
   });

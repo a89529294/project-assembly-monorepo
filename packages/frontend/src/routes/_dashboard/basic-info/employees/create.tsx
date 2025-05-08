@@ -1,17 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
-import { Skeleton } from "@/components/ui/skeleton";
+import { EmployeeForm } from "@/components/employee-form";
+import { PendingComponent } from "@/components/pending-component";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
-import { EmployeeForm } from "@/components/employee-form";
 import { employeeDetailedSchema } from "@myapp/shared";
 import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { z } from "zod";
 
 export const Route = createFileRoute("/_dashboard/basic-info/employees/create")(
   {
     component: RouteComponent,
-    pendingComponent: () => <Skeleton className="absolute inset-6" />,
+    pendingComponent: PendingComponent,
   }
 );
 

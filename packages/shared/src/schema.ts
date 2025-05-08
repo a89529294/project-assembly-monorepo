@@ -1,6 +1,7 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   integer,
   pgEnum,
   pgTable,
@@ -113,6 +114,7 @@ export const employeeDepartmentsTable = pgTable("employee_departments", {
     .notNull()
     .references(() => departmentsTable.id),
   jobTitle: varchar("job_title", { length: 100 }),
+  valid: boolean().default(true),
   ...timestamps,
 });
 
