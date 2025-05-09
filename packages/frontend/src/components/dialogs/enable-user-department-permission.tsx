@@ -34,7 +34,7 @@ export const DialogEnableUserDepartmentPermission = ({
   } = useQuery(
     trpc.personnelPermission.readDepartmentUsers.queryOptions({
       departmentId,
-      valid: false,
+      inheritsDepartmentRoles: false,
     })
   );
   const { mutate, isPending } = useMutation(
@@ -56,7 +56,7 @@ export const DialogEnableUserDepartmentPermission = ({
       {
         userIds: selectedUserIds,
         departmentId,
-        valid: true,
+        inheritsDepartmentRoles: true,
       },
       {
         onSuccess() {

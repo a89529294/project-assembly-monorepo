@@ -14,6 +14,7 @@ import {
 } from "./procedures.js";
 import {
   createUsersFromEmployeesProcedure,
+  deleteUsersProcedure,
   generatePasswordForUserProcedure,
   readUsersProcedure,
 } from "./user-procedures.js";
@@ -22,6 +23,7 @@ export const personnelPermissionRouter = router({
   createUserWithRoles: createUserWithRolesProcedure,
   readUsers: readUsersProcedure,
   createUsersFromEmployees: createUsersFromEmployeesProcedure,
+  deleteUsers: deleteUsersProcedure,
   readAppUserByPermission: readAppUsersByPermissionProcedure,
   readDepartments: readDepartmentsProcedure,
   readUnassignedDepartments: readUnassignedDepartmentsProcedure,

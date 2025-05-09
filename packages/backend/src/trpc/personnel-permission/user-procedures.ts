@@ -3,7 +3,16 @@ import {
   UsersSummaryQueryInputSchema,
   usersTable,
 } from "@myapp/shared";
-import { count, ilike, inArray, or, eq } from "drizzle-orm";
+import {
+  count,
+  ilike,
+  inArray,
+  or,
+  eq,
+  notInArray,
+  and,
+  not,
+} from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { hashPassword } from "../../db/password";
@@ -20,7 +29,6 @@ export const readUsersProcedure = protectedProcedure([
   .query(async ({ input }) => {
     const { page, pageSize, orderBy, orderDirection, searchTerm } = input;
     const offset = (page - 1) * pageSize;
-    console.log(page, pageSize);
 
     const countQuery = db
       .select({ count: count() })
@@ -29,17 +37,21 @@ export const readUsersProcedure = protectedProcedure([
 
     const usersBaseQuery = db.select().from(usersTable).$dynamic();
 
-    // TODO allow searchTerm to search for associated departments, which comes from the associated employee
+    const baseWhereCondition = not(ilike(usersTable.account, "admin%"));
+
+    let finalWhereCondition = baseWhereCondition;
+
     if (searchTerm) {
       const term = `%${searchTerm}%`;
       const whereCondition = or(
         ilike(usersTable.account, term),
         ilike(usersTable.name, term)
       );
-
-      countQuery.where(whereCondition);
-      usersBaseQuery.where(whereCondition);
+      finalWhereCondition = and(baseWhereCondition, whereCondition)!;
     }
+
+    countQuery.where(finalWhereCondition);
+    usersBaseQuery.where(finalWhereCondition);
 
     // Get total count (now properly filtered)
     const [{ count: total }] = await countQuery;
@@ -115,6 +127,55 @@ export const createUsersFromEmployeesProcedure = protectedProcedure([
       results.push({ user: userSummary, plainPassword });
     }
     return results;
+  });
+
+export const deleteUsersProcedure = protectedProcedure([
+  "PersonnelPermissionManagement",
+])
+  .input(
+    z.union([
+      z.object({ userIds: z.array(z.string().min(1)).min(1) }),
+      z.object({
+        searchTerm: z.string().min(1),
+        deSelectedIds: z.array(z.string()),
+      }),
+    ])
+  )
+  .output(z.object({ deletedUserIds: z.array(z.string()) }))
+  .mutation(async ({ input }) => {
+    if ("userIds" in input) {
+      // Mode 1: Delete by userIds
+      const users = await db
+        .select()
+        .from(usersTable)
+        .where(inArray(usersTable.id, input.userIds));
+
+      if (users.length !== input.userIds.length) {
+        throw new Error("One or more user IDs not found");
+      }
+
+      await db.delete(usersTable).where(inArray(usersTable.id, input.userIds));
+
+      return { deletedUserIds: input.userIds };
+    } else {
+      // Mode 2: Delete by searchTerm except deSelectedIds
+      const term = `%${input.searchTerm}%`;
+      const whereCondition = or(
+        ilike(usersTable.account, term),
+        ilike(usersTable.name, term)
+      );
+      // Fetch matching users
+      const users = await db
+        .select({ id: usersTable.id })
+        .from(usersTable)
+        .where(
+          and(whereCondition, notInArray(usersTable.id, input.deSelectedIds))
+        );
+      const toDeleteIds = users.map((u) => u.id);
+
+      await db.delete(usersTable).where(inArray(usersTable.id, toDeleteIds));
+      return { deletedUserIds: toDeleteIds };
+    }
   });
 
 export const generatePasswordForUserProcedure = protectedProcedure([

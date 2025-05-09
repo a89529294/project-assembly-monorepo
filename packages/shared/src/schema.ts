@@ -76,21 +76,21 @@ export const departmentsTable = pgTable("departments", {
 
 export const employeesTable = pgTable("employees", {
   id: uuid("id").primaryKey().defaultRandom(),
-  idNumber: varchar({ length: 20 }).notNull().unique(),
-  chName: varchar({ length: 100 }).notNull(),
+  idNumber: varchar("id_number", { length: 20 }).notNull().unique(),
+  chName: varchar("ch_name", { length: 100 }).notNull(),
   phone: varchar({ length: 30 }).notNull(),
   gender: genderEnum().notNull(),
-  enName: varchar({ length: 100 }),
+  enName: varchar("en_name", { length: 100 }),
   birthday: timestamp("birthday", { withTimezone: true, mode: "date" }),
   marital_status: varchar({ length: 20 }),
   education: varchar({ length: 50 }),
   email: varchar({ length: 100 }),
-  residenceCounty: varchar({ length: 100 }),
-  residenceDistrict: varchar({ length: 100 }),
-  residenceAddress: varchar({ length: 255 }),
-  mailingCounty: varchar({ length: 100 }),
-  mailingDistrict: varchar({ length: 100 }),
-  mailingAddress: varchar({ length: 255 }),
+  residenceCounty: varchar("residence_county", { length: 100 }),
+  residenceDistrict: varchar("residence_district", { length: 100 }),
+  residenceAddress: varchar("residence_address", { length: 255 }),
+  mailingCounty: varchar("mailing_county", { length: 100 }),
+  mailingDistrict: varchar("mailing_district", { length: 100 }),
+  mailingAddress: varchar("mailing_address", { length: 255 }),
   ...timestamps,
 });
 
@@ -114,7 +114,7 @@ export const employeeDepartmentsTable = pgTable("employee_departments", {
     .notNull()
     .references(() => departmentsTable.id),
   jobTitle: varchar("job_title", { length: 100 }),
-  valid: boolean().default(true),
+  inheritsDepartmentRoles: boolean("inherits_department_roles").default(true),
   ...timestamps,
 });
 
@@ -172,27 +172,27 @@ export const sessionsTable = pgTable("sessions", {
 
 export const customersTable = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),
-  customerNumber: varchar({ length: 50 }).notNull().unique(),
+  customerNumber: varchar("customer_number", { length: 50 }).notNull().unique(),
   name: varchar({ length: 255 }).notNull(),
   nickname: varchar({ length: 100 }).notNull(),
   category: varchar({ length: 100 }),
   principal: varchar({ length: 100 }),
-  taxDeductionCategory: varchar({ length: 100 }),
-  taxId: varchar({ length: 50 }).notNull(),
+  taxDeductionCategory: varchar("tax_deduction_category", { length: 100 }),
+  taxId: varchar("tax_id", { length: 50 }).notNull(),
   phone: varchar({ length: 50 }).notNull(),
   fax: varchar({ length: 50 }),
   county: varchar({ length: 100 }),
   district: varchar({ length: 100 }),
   address: varchar({ length: 100 }),
-  invoiceCounty: varchar({ length: 100 }),
-  invoiceDistrict: varchar({ length: 100 }),
-  invoiceAddress: varchar({ length: 100 }),
+  invoiceCounty: varchar("invoice_county", { length: 100 }),
+  invoiceDistrict: varchar("invoice_district", { length: 100 }),
+  invoiceAddress: varchar("invoice_address", { length: 100 }),
   ...timestampsWithDeletedAt,
 });
 
 export const projectsTable = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
-  projectNumber: varchar({ length: 50 }).notNull(),
+  projectNumber: varchar("project_number", { length: 50 }).notNull(),
   status: projectStatusEnum().notNull().default("pending"),
   name: varchar({ length: 255 }).notNull(),
   county: varchar({ length: 100 }).notNull(),
@@ -207,7 +207,7 @@ export const projectsTable = pgTable("projects", {
 export const contactsTable = pgTable("contacts", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar({ length: 100 }).notNull(),
-  enName: varchar({ length: 100 }),
+  enName: varchar("en_name", { length: 100 }),
   phone: varchar({ length: 50 }).notNull(),
   lineId: varchar({ length: 100 }),
   weChatId: varchar({ length: 100 }),

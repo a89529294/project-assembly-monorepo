@@ -14,7 +14,6 @@ import { useEffect } from "react";
 
 export const Route = createFileRoute("/_dashboard")({
   async beforeLoad({ context, location }) {
-    console.log(location.href);
     if (!context.auth.isAuthenticated) {
       throw redirect({
         to: "/login",

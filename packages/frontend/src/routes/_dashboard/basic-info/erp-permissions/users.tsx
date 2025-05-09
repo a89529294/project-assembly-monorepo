@@ -4,14 +4,17 @@ import { SmartPagination } from "@/components/pagination";
 import { PendingComponent } from "@/components/pending-component";
 import { SearchBar } from "@/components/search-bar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { genUserColumns } from "@/features/users/data-table/columns";
+import { useGlobalSelection } from "@/hooks/use-global-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { UsersSummaryQueryInputSchema } from "@myapp/shared";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useDeferredValue } from "react";
+import { useDeferredValue, useEffect } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute(
   "/_dashboard/basic-info/erp-permissions/users"
@@ -35,15 +38,15 @@ export const Route = createFileRoute(
   pendingComponent: PendingComponent,
 });
 
-// TODO contninue working on this, missing a ton of functionality
 function RouteComponent() {
   const { orderBy, orderDirection, page, pageSize, searchTerm } =
     Route.useSearch();
+
   const deferredPage = useDeferredValue(page);
   const deferredOrderBy = useDeferredValue(orderBy);
   const deferredOrderDirection = useDeferredValue(orderDirection);
   const deferredSearchTerm = useDeferredValue(searchTerm);
-  // may need to add searchTerm, after implementing search
+
   const loading =
     page !== deferredPage ||
     orderBy !== deferredOrderBy ||
@@ -60,6 +63,78 @@ function RouteComponent() {
       pageSize,
     })
   );
+  const { mutate, isPending } = useMutation(
+    trpc.personnelPermission.deleteUsers.mutationOptions()
+  );
+
+  // Initialize global selection with total count from API
+  const {
+    getPageSelectedIds,
+    handleSelectionChange,
+    toggleSelectAll,
+    selection,
+    selectedCount,
+    resetSelection,
+    setDeselectedId,
+    setReselectedId,
+  } = useGlobalSelection({
+    totalFilteredCount: usersData.total,
+  });
+
+  // Reset selection when filter criteria change
+  useEffect(() => {
+    resetSelection();
+  }, [searchTerm, resetSelection]);
+
+  // Get current page IDs for selection state
+  const currentPageIds = usersData.data.map((user) => user.id);
+
+  // Get selection state for current page
+  const rowSelection = getPageSelectedIds(currentPageIds);
+
+  const onDeleteUsers = () => {
+    const config = {
+      onSuccess() {
+        queryClient.invalidateQueries({
+          queryKey: trpc.personnelPermission.readUsers.queryKey(),
+        });
+        toast.success("成功移除ERP使用者");
+        resetSelection();
+      },
+    };
+
+    if (selection.selectAll) {
+      mutate(
+        {
+          searchTerm,
+          deSelectedIds: Array.from(selection.deselectedIds),
+        },
+        config
+      );
+    } else {
+      mutate({ userIds: Array.from(selection.selectedIds) }, config);
+    }
+  };
+
+  console.log(trpc.personnelPermission.readUsers.pathKey);
+  console.log(trpc.personnelPermission.readUsers.queryKey());
+
+  // This function can be used to send selected data to backend
+  // const processSelection = () => {
+  //   if (selectAll) {
+  //     // When in "select all" mode, send:
+  //     return {
+  //       selectAll: true,
+  //       excludedIds: Array.from(deselectedIds),
+  //     };
+  //   } else {
+  //     // When in normal mode, send just the selected IDs
+  //     return {
+  //       selectAll: false,
+  //       selectedIds: Array.from(selectedIds),
+  //     };
+  //   }
+  // };
 
   return (
     <div className="p-6 pb-0 bg-white flex flex-col rounded-lg shadow-lg h-full">
@@ -74,9 +149,28 @@ function RouteComponent() {
               });
             }}
             initSearchTerm={searchTerm}
+            disabled={isPending}
           />
         </div>
-        <DialogAddUser />
+
+        <div className="flex items-center gap-3">
+          {selectedCount > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-normal">
+                已選擇 {selectedCount} 個使用者
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onDeleteUsers}
+                disabled={isPending}
+              >
+                移除ERP使用者
+              </Button>
+            </div>
+          )}
+          <DialogAddUser disabled={isPending} />
+        </div>
       </h2>
       <div className="flex-1 relative">
         <div className="absolute inset-0 bottom-10">
@@ -111,8 +205,15 @@ function RouteComponent() {
                     },
                   });
                 },
+                onSelectAllChange: toggleSelectAll,
+                selection,
+                setDeselectedId,
+                setReselectedId,
+                totalFilteredCount: usersData.total,
               })}
               data={usersData.data}
+              rowSelection={rowSelection}
+              setRowSelection={handleSelectionChange}
             />
           </ScrollArea>
         </div>
@@ -127,6 +228,7 @@ function RouteComponent() {
                 pageSize,
                 orderBy,
                 orderDirection,
+                searchTerm,
               },
             })
           }

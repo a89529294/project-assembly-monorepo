@@ -54,7 +54,12 @@ export async function getUserRoles(userId: string): Promise<Role[]> {
   const employeeDepartments = await db
     .select({ departmentId: employeeDepartmentsTable.departmentId })
     .from(employeeDepartmentsTable)
-    .where(and(eq(employeeDepartmentsTable.employeeId, employeeId), eq(employeeDepartmentsTable.valid, true)));
+    .where(
+      and(
+        eq(employeeDepartmentsTable.employeeId, employeeId),
+        eq(employeeDepartmentsTable.inheritsDepartmentRoles, true)
+      )
+    );
 
   if (employeeDepartments.length === 0) return [];
 

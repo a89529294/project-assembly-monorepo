@@ -23,7 +23,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export const DialogAddUser = () => {
+export const DialogAddUser = ({ disabled }: { disabled: boolean }) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [checked, setChecked] = useState(false);
@@ -100,7 +100,9 @@ export const DialogAddUser = () => {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">新增ERP使用者</Button>
+        <Button variant="outline" disabled={disabled}>
+          新增ERP使用者
+        </Button>
       </DialogTrigger>
       <DialogContent className="w-[550px]">
         <DialogHeader className="justify-between flex-row items-center">
@@ -170,8 +172,8 @@ export const DialogAddUser = () => {
                     hiddenColumns: ["employee-detail-link"],
                   })}
                   data={data.data}
-                  onRowSelect={onRowSelect}
-                  selectedRows={selectedEmployeeIds}
+                  // setRowSelection={onRowSelect}
+                  // selectedRows={selectedEmployeeIds}
                 />
               ) : error instanceof TRPCClientError ? (
                 <pre>

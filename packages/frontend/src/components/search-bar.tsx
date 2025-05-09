@@ -10,6 +10,7 @@ interface SearchBarProps {
   className?: string;
   hideIcon?: boolean;
   initSearchTerm?: string;
+  disabled?: boolean;
 }
 
 export function SearchBar({
@@ -18,9 +19,10 @@ export function SearchBar({
   className = "",
   hideIcon,
   initSearchTerm,
+  disabled,
 }: SearchBarProps) {
   const [input, setInput] = useState(initSearchTerm ?? "");
-  const debouncedInput = useDecouncedValue(input || undefined);
+  const debouncedInput = useDecouncedValue(input);
   const onSearchChangeRef = useRef(onSearchChange);
   const isComponentMounted = useRef(true);
 
@@ -34,6 +36,8 @@ export function SearchBar({
   }, [debouncedInput]);
 
   useEffect(() => {
+    isComponentMounted.current = true;
+
     return () => {
       isComponentMounted.current = false;
     };
@@ -48,6 +52,7 @@ export function SearchBar({
         placeholder={placeholder}
         className="flex-1"
         aria-label={placeholder}
+        disabled={disabled}
       />
       {!hideIcon && (
         <Button type="submit" variant="outline" size="icon" aria-label="搜尋">

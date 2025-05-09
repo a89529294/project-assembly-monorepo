@@ -207,7 +207,9 @@ export const addDepartmentsToRoleProcedure = protectedProcedure([
 export const readDepartmentUsersProcedure = protectedProcedure([
   "PersonnelPermissionManagement",
 ])
-  .input(z.object({ departmentId: z.string(), valid: z.boolean() }))
+  .input(
+    z.object({ departmentId: z.string(), inheritsDepartmentRoles: z.boolean() })
+  )
   .query(async ({ input }) => {
     const { departmentId } = input;
 
@@ -228,7 +230,10 @@ export const readDepartmentUsersProcedure = protectedProcedure([
       .where(
         and(
           eq(employeeDepartmentsTable.departmentId, departmentId),
-          eq(employeeDepartmentsTable.valid, input.valid)
+          eq(
+            employeeDepartmentsTable.inheritsDepartmentRoles,
+            input.inheritsDepartmentRoles
+          )
         )
       );
     if (employeeDepartments.length === 0) {
@@ -250,12 +255,12 @@ export const updateUserDepartmentRelationProcedure = protectedProcedure([
   .input(
     z.object({
       userIds: z.array(z.string().uuid()).min(1),
-      valid: z.boolean(),
+      inheritsDepartmentRoles: z.boolean(),
       departmentId: z.string().uuid(),
     })
   )
   .mutation(async ({ input }) => {
-    const { userIds, valid, departmentId } = input;
+    const { userIds, inheritsDepartmentRoles, departmentId } = input;
 
     // 1. Verify department exists
     const department = await db
@@ -300,7 +305,7 @@ export const updateUserDepartmentRelationProcedure = protectedProcedure([
         employeeDepartments.map((ed) =>
           db
             .update(employeeDepartmentsTable)
-            .set({ valid })
+            .set({ inheritsDepartmentRoles })
             .where(eq(employeeDepartmentsTable.id, ed.id))
         )
       );

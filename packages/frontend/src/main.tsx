@@ -27,5 +27,6 @@ createRoot(document.getElementById("root")!).render(
       </AuthProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
+    //{" "}
   </StrictMode>
 );

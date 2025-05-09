@@ -2,6 +2,7 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
+  RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
 
@@ -14,12 +15,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { Dispatch, SetStateAction } from "react";
 
 interface DataTableProps<TData extends Record<"id", string>, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  onRowSelect?: (id: string) => void;
-  selectedRows?: string[];
+  rowSelection?: RowSelectionState;
+  setRowSelection?: Dispatch<SetStateAction<RowSelectionState>>;
 }
 
 //Tip: If you find yourself using <DataTable /> in multiple places, this is the component you could make reusable by extracting it to components/ui/data-table.tsx.
@@ -29,13 +31,18 @@ interface DataTableProps<TData extends Record<"id", string>, TValue> {
 export function DataTable<TData extends Record<"id", string>, TValue>({
   columns,
   data,
-  onRowSelect,
-  selectedRows,
+  rowSelection,
+  setRowSelection,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
     columns,
+    getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
+    onRowSelectionChange: setRowSelection,
+    state: {
+      rowSelection,
+    },
   });
 
   return (
@@ -47,7 +54,6 @@ export function DataTable<TData extends Record<"id", string>, TValue>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow className="border-b-0" key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
-                console.log(header.getSize());
                 return (
                   <TableHead
                     key={header.id}
@@ -77,13 +83,6 @@ export function DataTable<TData extends Record<"id", string>, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                onClick={() => {
-                  if (onRowSelect) onRowSelect(row.original.id);
-                }}
-                className={cn(
-                  selectedRows?.includes(row.original.id) &&
-                    "outline-2 outline-blue-300"
-                )}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

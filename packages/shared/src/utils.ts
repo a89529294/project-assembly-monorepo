@@ -48,5 +48,5 @@ export const summaryQueryInputSchemaGenrator = <T extends z.ZodRawShape>(
     orderDirection: z
       .enum(["DESC", "ASC"] as [OrderDirection, ...OrderDirection[]])
       .default("DESC"),
-    searchTerm: z.string().optional(),
+    searchTerm: z.string().default(""),
   });

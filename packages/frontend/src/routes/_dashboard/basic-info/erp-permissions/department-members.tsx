@@ -59,7 +59,7 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
     trpc.personnelPermission.readDepartmentUsers.queryOptions(
       {
         departmentId: department.id,
-        valid: true,
+        inheritsDepartmentRoles: true,
       },
       {
         enabled: open,
@@ -82,7 +82,7 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
       {
         departmentId: department.id,
         userIds: selectedUserIds,
-        valid: false,
+        inheritsDepartmentRoles: false,
       },
       {
         onSuccess() {
