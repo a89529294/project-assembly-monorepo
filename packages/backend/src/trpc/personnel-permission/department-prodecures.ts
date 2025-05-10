@@ -6,8 +6,19 @@ import {
   rolesTable,
   employeeDepartmentsTable,
   usersTable,
+  employeesTable,
+  selectionInputSchema,
 } from "@myapp/shared";
-import { and, eq, exists, notExists, inArray } from "drizzle-orm";
+import {
+  and,
+  eq,
+  exists,
+  notExists,
+  inArray,
+  ilike,
+  or,
+  notInArray,
+} from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { protectedProcedure } from "../core";
@@ -254,65 +265,100 @@ export const updateUserDepartmentRelationProcedure = protectedProcedure([
 ])
   .input(
     z.object({
-      userIds: z.array(z.string().uuid()).min(1),
+      selection: selectionInputSchema,
       inheritsDepartmentRoles: z.boolean(),
       departmentId: z.string().uuid(),
     })
   )
   .mutation(async ({ input }) => {
-    const { userIds, inheritsDepartmentRoles, departmentId } = input;
-
+    const { selection, inheritsDepartmentRoles, departmentId } = input;
     // 1. Verify department exists
     const department = await db
       .select()
       .from(departmentsTable)
       .where(eq(departmentsTable.id, departmentId))
       .limit(1);
-
     if (department.length === 0) {
       throw new Error("Department not found");
     }
-
-    // 2. Find employees associated with the users
+    // 2. Resolve userIds
+    let userIds: string[] = [];
+    if ("selectedIds" in selection) {
+      userIds = selection.selectedIds;
+    } else {
+      // Search mode: find users by search term, departmentId, and opposite inheritsDepartmentRoles
+      const term = `%${selection.searchTerm}%`;
+      // Join users, employees, employeeDepartments
+      const users = await db
+        .select({
+          userId: usersTable.id,
+          employeeId: usersTable.employeeId,
+        })
+        .from(usersTable)
+        .innerJoin(
+          employeeDepartmentsTable,
+          eq(usersTable.employeeId, employeeDepartmentsTable.employeeId)
+        )
+        .innerJoin(employeesTable, eq(usersTable.employeeId, employeesTable.id))
+        .where(
+          and(
+            eq(employeeDepartmentsTable.departmentId, departmentId),
+            eq(
+              employeeDepartmentsTable.inheritsDepartmentRoles,
+              !inheritsDepartmentRoles
+            ),
+            or(
+              ilike(employeesTable.chName, term),
+              ilike(employeesTable.enName, term),
+              ilike(employeesTable.email, term),
+              ilike(employeesTable.idNumber, term),
+              ilike(employeesTable.phone, term),
+              ilike(employeesTable.email, term)
+            ),
+            notInArray(usersTable.id, selection.deSelectedIds)
+          )
+        );
+      userIds = users.map((u) => u.userId);
+    }
+    if (!userIds.length) {
+      return { success: true, updatedCount: 0, userIds: [] };
+    }
+    // 3. Find employees associated with the users
     const users = await db
       .select({ id: usersTable.id, employeeId: usersTable.employeeId })
       .from(usersTable)
       .where(inArray(usersTable.id, userIds));
-
-    if (users.length === 0) {
-      throw new Error("No users found");
-    }
 
     // Get all valid employeeIds
     const employeeIds = users
       .map((user) => user.employeeId)
       .filter(Boolean) as string[];
 
-    // 3. Find the entries in employeeDepartmentsTable
+    // 4. Find the entries in employeeDepartmentsTable that match departmentId and opposite inheritsDepartmentRoles
     const employeeDepartments = await db
       .select()
       .from(employeeDepartmentsTable)
       .where(
         and(
           inArray(employeeDepartmentsTable.employeeId, employeeIds),
-          eq(employeeDepartmentsTable.departmentId, departmentId)
+          eq(employeeDepartmentsTable.departmentId, departmentId),
+          eq(
+            employeeDepartmentsTable.inheritsDepartmentRoles,
+            !inheritsDepartmentRoles
+          )
         )
       );
+    // 5. Update the inheritsDepartmentRoles field for all found relations
 
-    // 4. Update the valid field for all found relations
-    try {
-      await Promise.all(
-        employeeDepartments.map((ed) =>
-          db
-            .update(employeeDepartmentsTable)
-            .set({ inheritsDepartmentRoles })
-            .where(eq(employeeDepartmentsTable.id, ed.id))
+    await db
+      .update(employeeDepartmentsTable)
+      .set({ inheritsDepartmentRoles })
+      .where(
+        inArray(
+          employeeDepartmentsTable.id,
+          employeeDepartments.map((v) => v.id)
         )
       );
-    } catch (e) {
-      console.log(e);
-      throw e;
-    }
 
     return {
       success: true,

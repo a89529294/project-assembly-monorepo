@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 interface DataTableProps<TData extends Record<"id", string>, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -34,14 +34,17 @@ export function DataTable<TData extends Record<"id", string>, TValue>({
   rowSelection,
   setRowSelection,
 }: DataTableProps<TData, TValue>) {
+  const [innerRowSelection, setInnerRowSelection] = useState<RowSelectionState>(
+    {}
+  );
   const table = useReactTable({
     data,
     columns,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: setRowSelection ?? setInnerRowSelection,
     state: {
-      rowSelection,
+      rowSelection: rowSelection ?? innerRowSelection,
     },
   });
 
@@ -57,7 +60,7 @@ export function DataTable<TData extends Record<"id", string>, TValue>({
                 return (
                   <TableHead
                     key={header.id}
-                    className={cn("bg-white")}
+                    className={cn("bg-white isolate z-10")}
                     style={{
                       width:
                         header.column.getSize() !== 150

@@ -1,5 +1,6 @@
 import {
   paginatedUserSummarySchema,
+  selectionInputSchema,
   UsersSummaryQueryInputSchema,
   usersTable,
 } from "@myapp/shared";
@@ -21,6 +22,8 @@ import { generatePassword } from "../../helpers/auth";
 import { protectedProcedure } from "../core";
 import { orderDirectionFn } from "../helpers";
 
+const excludeAdminCondition = not(ilike(usersTable.account, "admin%"));
+
 export const readUsersProcedure = protectedProcedure([
   "PersonnelPermissionManagement",
 ])
@@ -37,9 +40,7 @@ export const readUsersProcedure = protectedProcedure([
 
     const usersBaseQuery = db.select().from(usersTable).$dynamic();
 
-    const baseWhereCondition = not(ilike(usersTable.account, "admin%"));
-
-    let finalWhereCondition = baseWhereCondition;
+    let finalWhereCondition = excludeAdminCondition;
 
     if (searchTerm) {
       const term = `%${searchTerm}%`;
@@ -47,7 +48,7 @@ export const readUsersProcedure = protectedProcedure([
         ilike(usersTable.account, term),
         ilike(usersTable.name, term)
       );
-      finalWhereCondition = and(baseWhereCondition, whereCondition)!;
+      finalWhereCondition = and(excludeAdminCondition, whereCondition)!;
     }
 
     countQuery.where(finalWhereCondition);
@@ -81,7 +82,7 @@ export const readUsersProcedure = protectedProcedure([
 export const createUsersFromEmployeesProcedure = protectedProcedure([
   "PersonnelPermissionManagement",
 ])
-  .input(z.object({ employeeIds: z.array(z.string().min(1)).min(1) }))
+  .input(selectionInputSchema)
   .output(
     z.array(
       z.object({
@@ -91,13 +92,42 @@ export const createUsersFromEmployeesProcedure = protectedProcedure([
     )
   )
   .mutation(async ({ input }) => {
+    let employeeIds: string[];
+    if ("selectedIds" in input) {
+      employeeIds = input.selectedIds;
+    } else {
+      const term = `%${input.searchTerm}%`;
+      const whereCondition = or(
+        ilike(employeesTable.chName, term),
+        ilike(employeesTable.enName, term),
+        ilike(employeesTable.email, term),
+        ilike(employeesTable.idNumber, term),
+        ilike(employeesTable.phone, term),
+        ilike(employeesTable.email, term)
+      );
+      const employees = await db
+        .select({ id: employeesTable.id })
+        .from(employeesTable)
+        .where(
+          and(
+            whereCondition,
+            notInArray(employeesTable.id, input.deSelectedIds)
+          )
+        );
+      employeeIds = employees.map((e) => e.id);
+    }
+
+    if (employeeIds.length === 0) {
+      return [];
+    }
+
     // Fetch employees by IDs
     const employees = await db
       .select()
       .from(employeesTable)
-      .where(inArray(employeesTable.id, input.employeeIds));
+      .where(inArray(employeesTable.id, employeeIds));
 
-    if (employees.length !== input.employeeIds.length) {
+    if (employees.length !== employeeIds.length) {
       throw new Error("One or more employee IDs not found");
     }
 
@@ -105,7 +135,7 @@ export const createUsersFromEmployeesProcedure = protectedProcedure([
     const existingUsers = await db
       .select()
       .from(usersTable)
-      .where(inArray(usersTable.employeeId, input.employeeIds));
+      .where(inArray(usersTable.employeeId, employeeIds));
     const existingEmployeeIds = new Set(existingUsers.map((u) => u.employeeId));
 
     const results = [];
@@ -132,31 +162,31 @@ export const createUsersFromEmployeesProcedure = protectedProcedure([
 export const deleteUsersProcedure = protectedProcedure([
   "PersonnelPermissionManagement",
 ])
-  .input(
-    z.union([
-      z.object({ userIds: z.array(z.string().min(1)).min(1) }),
-      z.object({
-        searchTerm: z.string().min(1),
-        deSelectedIds: z.array(z.string()),
-      }),
-    ])
-  )
+  .input(selectionInputSchema)
   .output(z.object({ deletedUserIds: z.array(z.string()) }))
   .mutation(async ({ input }) => {
-    if ("userIds" in input) {
+    if ("selectedIds" in input) {
       // Mode 1: Delete by userIds
       const users = await db
         .select()
         .from(usersTable)
-        .where(inArray(usersTable.id, input.userIds));
+        .where(inArray(usersTable.id, input.selectedIds));
 
-      if (users.length !== input.userIds.length) {
+      if (users.length !== input.selectedIds.length) {
         throw new Error("One or more user IDs not found");
       }
 
-      await db.delete(usersTable).where(inArray(usersTable.id, input.userIds));
-
-      return { deletedUserIds: input.userIds };
+      // Only delete users whose account does not start with 'admin'
+      await db
+        .delete(usersTable)
+        .where(
+          and(inArray(usersTable.id, input.selectedIds), excludeAdminCondition)
+        );
+      // Only return actually deleted user IDs
+      const deletedUsers = users.filter(
+        (u) => !u.account.toLowerCase().startsWith("admin")
+      );
+      return { deletedUserIds: deletedUsers.map((u) => u.id) };
     } else {
       // Mode 2: Delete by searchTerm except deSelectedIds
       const term = `%${input.searchTerm}%`;
@@ -164,16 +194,24 @@ export const deleteUsersProcedure = protectedProcedure([
         ilike(usersTable.account, term),
         ilike(usersTable.name, term)
       );
+
+      // Never delete users whose account starts with 'admin'
       // Fetch matching users
       const users = await db
-        .select({ id: usersTable.id })
+        .select({ id: usersTable.id, account: usersTable.account })
         .from(usersTable)
         .where(
-          and(whereCondition, notInArray(usersTable.id, input.deSelectedIds))
+          and(
+            whereCondition,
+            notInArray(usersTable.id, input.deSelectedIds),
+            excludeAdminCondition
+          )
         );
       const toDeleteIds = users.map((u) => u.id);
 
-      await db.delete(usersTable).where(inArray(usersTable.id, toDeleteIds));
+      await db
+        .delete(usersTable)
+        .where(and(inArray(usersTable.id, toDeleteIds), excludeAdminCondition));
       return { deletedUserIds: toDeleteIds };
     }
   });

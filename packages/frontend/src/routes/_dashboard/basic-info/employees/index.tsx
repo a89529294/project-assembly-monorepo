@@ -5,13 +5,15 @@ import { SearchBar } from "@/components/search-bar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { genEmployeeColumns } from "@/features/employees/data-table/columns";
+import { useSelection } from "@/hooks/use-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { employeesSummaryQueryInputSchema } from "@myapp/shared";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useDeferredValue } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_dashboard/basic-info/employees/")({
   validateSearch: employeesSummaryQueryInputSchema,
@@ -64,9 +66,38 @@ function RouteComponent() {
       searchTerm: deferredSearchTerm,
     })
   );
+  const {
+    onSelectionChange,
+    onSelectAllChange,
+    selection,
+    selectedCount,
+    rowSelection,
+    resetSelection,
+    data: selectedUsers,
+  } = useSelection({
+    totalFilteredCount: employees.total,
+    pageIds: employees.data.map((e) => e.id),
+  });
+  const { mutate, isPending } = useMutation(
+    trpc.basicInfo.deleteEmployees.mutationOptions()
+  );
 
-  console.log(searchTerm);
-  console.log(typeof searchTerm);
+  const onDeleteEmployees = () => {
+    mutate(selectedUsers, {
+      onSuccess() {
+        toast.success("成功移除員工");
+
+        queryClient.invalidateQueries({
+          queryKey: trpc.basicInfo.readEmployees.queryKey(),
+        });
+
+        resetSelection();
+      },
+      onError() {
+        toast.error("無法移除員工");
+      },
+    });
+  };
 
   return (
     <div className="p-6 pb-0 bg-white flex flex-col rounded-lg shadow-lg h-full">
@@ -79,13 +110,33 @@ function RouteComponent() {
                 search: { searchTerm },
                 replace: true,
               });
+              resetSelection();
             }}
             initSearchTerm={searchTerm}
+            disabled={isPending}
           />
         </div>
-        <Button asChild>
-          <Link to="/basic-info/employees/create">新增員工</Link>
-        </Button>
+
+        <div className="flex items-center gap-3">
+          {selectedCount > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-normal">
+                已選擇 {selectedCount} 個使用者
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onDeleteEmployees}
+                disabled={isPending}
+              >
+                移除員工員工
+              </Button>
+            </div>
+          )}
+          <Button asChild disabled={isPending}>
+            <Link to="/basic-info/employees/create">新增員工</Link>
+          </Button>
+        </div>
       </h2>
       <div className="flex-1 relative">
         <div className="absolute inset-0 bottom-10">
@@ -97,6 +148,8 @@ function RouteComponent() {
           >
             <DataTable
               columns={genEmployeeColumns({
+                selection,
+                onSelectAllChange,
                 orderBy,
                 orderDirection,
                 clickOnCurrentHeader: (columnId) => {
@@ -120,6 +173,8 @@ function RouteComponent() {
                 },
               })}
               data={employees.data}
+              rowSelection={rowSelection}
+              setRowSelection={onSelectionChange}
             />
           </ScrollArea>
         </div>

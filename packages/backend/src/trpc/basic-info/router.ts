@@ -5,6 +5,7 @@ import {
 } from "./company-procedures.js";
 import {
   createEmployeeProcedure,
+  deleteEmployeesProcedure,
   readEmployeeByIdProcedure,
   readEmployeesProcedure,
   updateEmployeeByIdProcedure,
@@ -12,10 +13,11 @@ import {
 import { router } from "../core.js";
 
 export const basicInfoRouter = router({
+  createEmployee: createEmployeeProcedure,
   readEmployees: readEmployeesProcedure,
   readEmployeeById: readEmployeeByIdProcedure,
   updateEmployeeById: updateEmployeeByIdProcedure,
-  createEmployee: createEmployeeProcedure,
+  deleteEmployees: deleteEmployeesProcedure,
   readCompanyInfo: readCompanyInfoProcedure,
   createCompanyInfo: createCompanyInfoProcedure,
   updateCompanyInfo: updateCompanyInfoProcedure,

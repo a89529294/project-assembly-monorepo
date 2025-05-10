@@ -8,6 +8,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
@@ -50,7 +51,7 @@ function RouteComponent() {
 
 function DepartmentSection({ department }: { department: DepartmentSummary }) {
   const [open, setOpen] = useState(false);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+
   const {
     data: users,
     isSuccess,
@@ -69,19 +70,13 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
   const { mutate, isPending } = useMutation(
     trpc.personnelPermission.updateUserDepartmentRelation.mutationOptions()
   );
-
-  const toggleSelectUser = (userId: string) =>
-    setSelectedUserIds((prev) =>
-      selectedUserIds.includes(userId)
-        ? prev.filter((pid) => pid !== userId)
-        : [...prev, userId]
-    );
+  const { selected, clearAll, toggle, isSelected } = useSimpleSelection(users);
 
   const removeUsersFromDepartment = () => {
     mutate(
       {
+        selection: { selectedIds: selected },
         departmentId: department.id,
-        userIds: selectedUserIds,
         inheritsDepartmentRoles: false,
       },
       {
@@ -92,7 +87,7 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
             }),
           });
           toast.success(`成功從${department.name}移除使用者`);
-          setSelectedUserIds([]);
+          clearAll();
         },
         onError() {
           toast.error(`無法從${department.name}移除使用者`);
@@ -125,11 +120,11 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
         <div className="px-6 pb-4 pt-2 flex flex-col gap-2">
           <div className="flex justify-end">
             <div className="flex gap-1">
-              {selectedUserIds.length > 0 && (
+              {selected.length > 0 && (
                 <>
                   <Button
                     variant={"secondary"}
-                    onClick={() => setSelectedUserIds([])}
+                    onClick={clearAll}
                     disabled={isPending}
                   >
                     反選
@@ -159,11 +154,10 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
                 users.map((user) => (
                   <button
                     key={user.id}
-                    onClick={() => toggleSelectUser(user.id)}
+                    onClick={() => toggle(user.id)}
                     className={cn(
                       "flex items-center gap-3 p-3 bg-gray-50 rounded-md border hover:shadow-sm transition",
-                      selectedUserIds.includes(user.id) &&
-                        "scale-[1.01] border-red-300"
+                      isSelected(user.id) && "scale-[1.01] border-red-300"
                     )}
                   >
                     <User className="w-5 h-5 text-gray-400" />

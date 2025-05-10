@@ -3,10 +3,9 @@ import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { DialogNewPassword } from "@/components/dialogs/new-password";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SelectionState } from "@/hooks/use-selection";
 import { OrderDirection, UserSummary, UserSummaryKey } from "@myapp/shared";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
-import { SelectionState } from "@/hooks/use-global-selection";
-import { flushSync } from "react-dom";
 
 const columnHelper = createColumnHelper<UserSummary>();
 
@@ -18,9 +17,6 @@ export const genUserColumns = ({
   hideColumns,
   onSelectAllChange,
   selection,
-  setDeselectedId,
-  setReselectedId,
-  totalFilteredCount,
 }: {
   orderBy: UserSummaryKey;
   orderDirection: OrderDirection;
@@ -29,9 +25,6 @@ export const genUserColumns = ({
   hideColumns?: string[];
   onSelectAllChange?: (checked: boolean) => void;
   selection: SelectionState;
-  setDeselectedId?: (s: string) => void;
-  setReselectedId?: (s: string) => void;
-  totalFilteredCount?: number;
 }) => {
   const genHeader = (columnId: UserSummaryKey, headerText: string) => {
     return (
@@ -64,16 +57,14 @@ export const genUserColumns = ({
   return [
     columnHelper.display({
       id: "select",
+      size: 66,
       header: ({ table }) => {
-        // Use the custom isAllSelected function if provided
         const checked = selection
           ? selection.selectAll === false
             ? false
             : selection.deselectedIds.size === 0
               ? true
-              : selection.deselectedIds.size === totalFilteredCount
-                ? false
-                : "indeterminate"
+              : "indeterminate"
           : table.getIsAllPageRowsSelected();
 
         return (
@@ -81,10 +72,8 @@ export const genUserColumns = ({
             checked={checked}
             onCheckedChange={(value) => {
               if (onSelectAllChange) {
-                // Use the custom select all handler if provided
                 onSelectAllChange(!!value);
               } else {
-                // Fall back to the default behavior
                 table.toggleAllPageRowsSelected(!!value);
               }
             }}
@@ -96,13 +85,6 @@ export const genUserColumns = ({
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => {
-            if (value === false && setDeselectedId) {
-              flushSync(() => setDeselectedId(row.original.id));
-            }
-            if (value === true && setReselectedId) {
-              flushSync(() => setReselectedId(row.original.id));
-            }
-
             row.toggleSelected(!!value);
           }}
           aria-label="Select row"

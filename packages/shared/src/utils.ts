@@ -50,3 +50,11 @@ export const summaryQueryInputSchemaGenrator = <T extends z.ZodRawShape>(
       .default("DESC"),
     searchTerm: z.string().default(""),
   });
+
+export const selectionInputSchema = z.union([
+  z.object({ selectedIds: z.array(z.string().min(1)).min(1) }),
+  z.object({
+    searchTerm: z.string(),
+    deSelectedIds: z.array(z.string()),
+  }),
+]);

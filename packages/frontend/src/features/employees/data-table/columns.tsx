@@ -8,6 +8,8 @@ import {
 } from "@myapp/shared";
 import { Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { SelectionState } from "@/hooks/use-selection";
 
 const columnHelper = createColumnHelper<EmployeeSummary>();
 
@@ -17,12 +19,16 @@ export const genEmployeeColumns = ({
   clickOnCurrentHeader,
   clickOnOtherHeader,
   hiddenColumns,
+  onSelectAllChange,
+  selection,
 }: {
   orderBy: EmployeeSummaryKey;
   orderDirection: OrderDirection;
   clickOnCurrentHeader: (s: EmployeeSummaryKey) => void;
   clickOnOtherHeader: (s: EmployeeSummaryKey) => void;
   hiddenColumns?: string[];
+  onSelectAllChange: (checked: boolean) => void;
+  selection: SelectionState;
 }) => {
   const genHeader = (columnId: EmployeeSummaryKey, headerText: string) => {
     return (
@@ -52,6 +58,37 @@ export const genEmployeeColumns = ({
   };
 
   return [
+    columnHelper.display({
+      id: "select",
+      header: ({ table }) => {
+        const checked = selection
+          ? selection.selectAll === false
+            ? false
+            : selection.deselectedIds.size === 0
+              ? true
+              : "indeterminate"
+          : table.getIsAllPageRowsSelected();
+
+        return (
+          <Checkbox
+            checked={checked}
+            onCheckedChange={(value) => {
+              onSelectAllChange(!!value);
+            }}
+            aria-label="Select all"
+          />
+        );
+      },
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => {
+            row.toggleSelected(!!value);
+          }}
+          aria-label="Select row"
+        />
+      ),
+    }),
     columnHelper.accessor("idNumber", {
       header: () => genHeader("idNumber", "員工編號"),
       cell: (info) => info.getValue(),

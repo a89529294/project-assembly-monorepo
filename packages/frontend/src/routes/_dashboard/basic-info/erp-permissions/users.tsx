@@ -3,17 +3,17 @@ import { DialogAddUser } from "@/components/dialogs/add-user";
 import { SmartPagination } from "@/components/pagination";
 import { PendingComponent } from "@/components/pending-component";
 import { SearchBar } from "@/components/search-bar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { genUserColumns } from "@/features/users/data-table/columns";
-import { useGlobalSelection } from "@/hooks/use-global-selection";
+import { useSelection } from "@/hooks/use-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { UsersSummaryQueryInputSchema } from "@myapp/shared";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useDeferredValue, useEffect } from "react";
+import { useDeferredValue } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute(
@@ -67,30 +67,18 @@ function RouteComponent() {
     trpc.personnelPermission.deleteUsers.mutationOptions()
   );
 
-  // Initialize global selection with total count from API
   const {
-    getPageSelectedIds,
-    handleSelectionChange,
-    toggleSelectAll,
+    onSelectionChange,
+    onSelectAllChange,
     selection,
     selectedCount,
+    rowSelection,
     resetSelection,
-    setDeselectedId,
-    setReselectedId,
-  } = useGlobalSelection({
+    data: selectedUsers,
+  } = useSelection({
     totalFilteredCount: usersData.total,
+    pageIds: usersData.data.map((user) => user.id),
   });
-
-  // Reset selection when filter criteria change
-  useEffect(() => {
-    resetSelection();
-  }, [searchTerm, resetSelection]);
-
-  // Get current page IDs for selection state
-  const currentPageIds = usersData.data.map((user) => user.id);
-
-  // Get selection state for current page
-  const rowSelection = getPageSelectedIds(currentPageIds);
 
   const onDeleteUsers = () => {
     const config = {
@@ -101,23 +89,13 @@ function RouteComponent() {
         toast.success("成功移除ERP使用者");
         resetSelection();
       },
+      onError() {
+        toast.error("無法移除erp使用者");
+      },
     };
 
-    if (selection.selectAll) {
-      mutate(
-        {
-          searchTerm,
-          deSelectedIds: Array.from(selection.deselectedIds),
-        },
-        config
-      );
-    } else {
-      mutate({ userIds: Array.from(selection.selectedIds) }, config);
-    }
+    mutate(selectedUsers, config);
   };
-
-  console.log(trpc.personnelPermission.readUsers.pathKey);
-  console.log(trpc.personnelPermission.readUsers.queryKey());
 
   // This function can be used to send selected data to backend
   // const processSelection = () => {
@@ -147,6 +125,7 @@ function RouteComponent() {
                 search: { searchTerm },
                 replace: true,
               });
+              resetSelection();
             }}
             initSearchTerm={searchTerm}
             disabled={isPending}
@@ -205,15 +184,12 @@ function RouteComponent() {
                     },
                   });
                 },
-                onSelectAllChange: toggleSelectAll,
+                onSelectAllChange: onSelectAllChange,
                 selection,
-                setDeselectedId,
-                setReselectedId,
-                totalFilteredCount: usersData.total,
               })}
               data={usersData.data}
               rowSelection={rowSelection}
-              setRowSelection={handleSelectionChange}
+              setRowSelection={onSelectionChange}
             />
           </ScrollArea>
         </div>

@@ -15,25 +15,29 @@ import { genEmployeeColumns } from "@/features/employees/data-table/columns";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 
+import { useSelection } from "@/hooks/use-selection";
 import { trpc } from "@/trpc";
 import { EmployeeSummaryKey, OrderDirection } from "@myapp/shared";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
 
 export const DialogAddUser = ({ disabled }: { disabled: boolean }) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [checked, setChecked] = useState(false);
+  // const [checked, setChecked] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [orderBy, setOrderBy] = useState<EmployeeSummaryKey>("idNumber");
   const [orderDirection, setOrderDirection] = useState<OrderDirection>("DESC");
-  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
 
-  const { data, isFetching, isSuccess, error } = useQuery(
+  const {
+    data: employeesData,
+    isFetching,
+    isSuccess,
+    error,
+  } = useQuery(
     trpc.basicInfo.readEmployees.queryOptions({
       page,
       pageSize,
@@ -41,53 +45,52 @@ export const DialogAddUser = ({ disabled }: { disabled: boolean }) => {
       orderDirection,
       notAssociatedWithAUser: true,
       searchTerm,
-      employeeIds: checked ? selectedEmployeeIds : undefined,
+      // employeeIds: checked ? selectedEmployeeIds : undefined,
     })
   );
   const { mutate } = useMutation(
     trpc.personnelPermission.createUsersFromEmployees.mutationOptions()
   );
-
-  const onRowSelect = (id: string) => {
-    setSelectedEmployeeIds((prev) => {
-      let newIds = [...prev];
-      if (prev.includes(id)) newIds = prev.filter((prevId) => prevId !== id);
-      else newIds.push(id);
-      return newIds;
-    });
-  };
+  const {
+    onSelectAllChange,
+    selection,
+    rowSelection,
+    resetSelection,
+    onSelectionChange,
+    data: selectedEmployees,
+  } = useSelection({
+    totalFilteredCount: employeesData?.total ?? 0,
+    pageIds: employeesData?.data.map((user) => user.id) ?? [],
+  });
 
   const reset = () => {
-    setSelectedEmployeeIds([]);
     setPage(1);
     setOrderBy("idNumber");
     setOrderDirection("DESC");
   };
 
   const onCreateUsers = async () => {
-    mutate(
-      { employeeIds: selectedEmployeeIds },
-      {
-        onSuccess() {
-          queryClient.invalidateQueries({
-            queryKey: [trpc.basicInfo.readEmployees.queryKey()[0]],
-          });
-          queryClient.invalidateQueries({
-            queryKey: [trpc.personnelPermission.readUsers.queryKey()[0]],
-          });
-          setOpen(false);
-          toast.success("成功新增erp使用者");
-        },
-        onError() {
-          toast.error("無法新增erp使用者");
-        },
-      }
-    );
+    mutate(selectedEmployees, {
+      onSuccess() {
+        queryClient.invalidateQueries({
+          queryKey: [trpc.basicInfo.readEmployees.queryKey()[0]],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [trpc.personnelPermission.readUsers.queryKey()[0]],
+        });
+        setOpen(false);
+        toast.success("成功新增erp使用者");
+        resetSelection();
+      },
+      onError() {
+        toast.error("無法新增erp使用者");
+      },
+    });
   };
 
-  useEffect(() => {
-    if (selectedEmployeeIds.length === 0) setChecked(false);
-  }, [selectedEmployeeIds.length]);
+  // useEffect(() => {
+  //   if (selectedEmployeeIds.length === 0) setChecked(false);
+  // }, [selectedEmployeeIds.length]);
 
   // TODO might want to extract the error display
 
@@ -112,18 +115,12 @@ export const DialogAddUser = ({ disabled }: { disabled: boolean }) => {
               onSearchChange={(s) => {
                 setSearchTerm(s);
                 setPage(1);
+                resetSelection();
               }}
               hideIcon
             />
             <Button
-              variant={"destructive"}
-              onClick={() => setSelectedEmployeeIds([])}
-              disabled={selectedEmployeeIds.length === 0}
-            >
-              反選
-            </Button>
-            <Button
-              disabled={selectedEmployeeIds.length === 0}
+              // disabled={selectedEmployeeIds.length === 0}
               onClick={onCreateUsers}
             >
               新增
@@ -134,7 +131,7 @@ export const DialogAddUser = ({ disabled }: { disabled: boolean }) => {
         </DialogHeader>
 
         {/* Checkbox for filtering unbound employees */}
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <Checkbox
             checked={checked}
             onCheckedChange={(s) => {
@@ -148,7 +145,7 @@ export const DialogAddUser = ({ disabled }: { disabled: boolean }) => {
           >
             顯示已選則的員工
           </label>
-        </div>
+        </div> */}
 
         <div className="col-span-1 h-[400px] rounded border border-gray-200 relative">
           <div className="absolute inset-0">
@@ -170,10 +167,12 @@ export const DialogAddUser = ({ disabled }: { disabled: boolean }) => {
                       setOrderDirection("DESC");
                     },
                     hiddenColumns: ["employee-detail-link"],
+                    selection,
+                    onSelectAllChange,
                   })}
-                  data={data.data}
-                  // setRowSelection={onRowSelect}
-                  // selectedRows={selectedEmployeeIds}
+                  data={employeesData.data}
+                  setRowSelection={onSelectionChange}
+                  rowSelection={rowSelection}
                 />
               ) : error instanceof TRPCClientError ? (
                 <pre>
@@ -200,7 +199,7 @@ export const DialogAddUser = ({ disabled }: { disabled: boolean }) => {
           onPageChange={(newPage) => {
             setPage(newPage);
           }}
-          totalPages={data?.totalPages ?? 0}
+          totalPages={employeesData?.totalPages ?? 0}
         />
       </DialogContent>
     </Dialog>

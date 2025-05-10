@@ -3,15 +3,27 @@ import {
   employeesSummaryQueryInputSchema,
   paginatedEmployeeSummarySchema,
   usersTable,
+  selectionInputSchema,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
-import { and, count, eq, ilike, inArray, isNull, or } from "drizzle-orm";
+import {
+  and,
+  count,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  notInArray,
+  or,
+} from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import {
   departmentsTable,
   employeeDepartmentsTable,
   employeesTable,
+  appUsersTable,
+  appUserPermissions,
 } from "../../db/schema.js";
 import { protectedProcedure } from "../core.js";
 import { orderDirectionFn } from "../helpers.js";
@@ -216,5 +228,72 @@ export const createEmployeeProcedure = protectedProcedure([
         );
       }
       return { success: true, id: employee.id };
+    });
+  });
+
+export const deleteEmployeesProcedure = protectedProcedure([
+  "BasicInfoManagement",
+])
+  .input(selectionInputSchema)
+  .mutation(async ({ input }) => {
+    let employeeIds: string[];
+    if ("selectedIds" in input) {
+      employeeIds = input.selectedIds;
+    } else {
+      const term = `%${input.searchTerm}%`;
+      const whereCondition = or(
+        ilike(employeesTable.chName, term),
+        ilike(employeesTable.enName, term),
+        ilike(employeesTable.email, term),
+        ilike(employeesTable.idNumber, term),
+        ilike(employeesTable.phone, term),
+        ilike(employeesTable.email, term)
+      );
+
+      const employees = await db
+        .select({ id: employeesTable.id })
+        .from(employeesTable)
+        .where(
+          and(
+            whereCondition,
+            notInArray(employeesTable.id, input.deSelectedIds)
+          )
+        );
+      employeeIds = employees.map((e) => e.id);
+    }
+
+    if (employeeIds.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    return db.transaction(async (tx) => {
+      // Remove department associations
+      await tx
+        .delete(employeeDepartmentsTable)
+        .where(inArray(employeeDepartmentsTable.employeeId, employeeIds));
+      // Remove users
+      await tx
+        .delete(usersTable)
+        .where(inArray(usersTable.employeeId, employeeIds));
+      // Remove app user permissions (must delete before removing app users)
+      const appUsers = await tx
+        .select({ id: appUsersTable.id })
+        .from(appUsersTable)
+        .where(inArray(appUsersTable.employeeId, employeeIds));
+      const appUserIds = appUsers.map((u) => u.id);
+      if (appUserIds.length > 0) {
+        await tx
+          .delete(appUserPermissions)
+          .where(inArray(appUserPermissions.appUserId, appUserIds));
+      }
+      // Remove app users
+      await tx
+        .delete(appUsersTable)
+        .where(inArray(appUsersTable.employeeId, employeeIds));
+      // Remove employees
+      await tx
+        .delete(employeesTable)
+        .where(inArray(employeesTable.id, employeeIds));
+      return { success: true, count: employeeIds.length };
     });
   });

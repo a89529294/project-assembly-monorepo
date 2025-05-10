@@ -9,7 +9,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { departmentColumns } from "@/features/departments/data-table/columns";
+import { genDepartmentColumns } from "@/features/departments/data-table/columns";
+import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 
@@ -30,9 +31,6 @@ export const DialogAddDepartment = ({
   disabled: boolean;
 }) => {
   const [open, setOpen] = useState(false);
-  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>(
-    []
-  );
   const { data, isFetching, isSuccess, error } = useQuery(
     trpc.personnelPermission.readUnassignedDepartments.queryOptions({
       roleName,
@@ -41,18 +39,19 @@ export const DialogAddDepartment = ({
   const { mutate, isPending } = useMutation(
     trpc.personnelPermission.addDepartmentsToRole.mutationOptions()
   );
-
-  const onRowSelect = (id: string) => {
-    setSelectedDepartmentIds((prev) => {
-      let newIds = [...prev];
-      if (prev.includes(id)) newIds = prev.filter((prevId) => prevId !== id);
-      else newIds.push(id);
-      return newIds;
-    });
-  };
+  const {
+    clearAll,
+    selected,
+    selectedCount,
+    setRowSelection,
+    rowSelection,
+    toggleAll,
+    isAllSelected,
+    isPartialSelected,
+  } = useSimpleSelection(data);
 
   const reset = () => {
-    setSelectedDepartmentIds([]);
+    clearAll();
   };
 
   const onSubmit: FormEventHandler<HTMLFormElement> = (e) => {
@@ -60,7 +59,7 @@ export const DialogAddDepartment = ({
     mutate(
       {
         roleName,
-        departmentIds: selectedDepartmentIds,
+        departmentIds: selected,
       },
       {
         onSuccess() {
@@ -104,17 +103,9 @@ export const DialogAddDepartment = ({
           <DialogTitle>新增部門</DialogTitle>
           <div className="flex gap-1 mr-2">
             <Button
-              type="button"
-              variant="destructive"
-              onClick={reset}
-              disabled={isPending || selectedDepartmentIds.length === 0}
-            >
-              反選
-            </Button>
-            <Button
               type="submit"
               form="role-department-form"
-              disabled={isPending || selectedDepartmentIds.length === 0}
+              disabled={isPending || selectedCount === 0}
             >
               新增
             </Button>
@@ -134,10 +125,14 @@ export const DialogAddDepartment = ({
             >
               {isSuccess ? (
                 <DataTable
-                  columns={departmentColumns}
+                  columns={genDepartmentColumns({
+                    toggleAll,
+                    isAllSelected,
+                    isPartialSelected,
+                  })}
                   data={data}
-                  onRowSelect={onRowSelect}
-                  selectedRows={selectedDepartmentIds}
+                  setRowSelection={setRowSelection}
+                  rowSelection={rowSelection}
                 />
               ) : error instanceof TRPCClientError ? (
                 <pre>

@@ -9,6 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { genUserColumns } from "@/features/users/data-table/columns";
+import { useSelection } from "@/hooks/use-selection";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { OrderDirection, UserSummaryKey } from "@myapp/shared";
@@ -24,7 +25,6 @@ export const DialogEnableUserDepartmentPermission = ({
   disabled: boolean;
 }) => {
   const [open, setOpen] = useState(false);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [orderBy, setOrderBy] = useState<UserSummaryKey>("account");
   const [orderDirection, setOrderDirection] = useState<OrderDirection>("DESC");
   const {
@@ -40,21 +40,22 @@ export const DialogEnableUserDepartmentPermission = ({
   const { mutate, isPending } = useMutation(
     trpc.personnelPermission.updateUserDepartmentRelation.mutationOptions()
   );
-
-  const onRowSelect = (id: string) => {
-    setSelectedUserIds((prev) =>
-      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
-    );
-  };
-
-  const reset = () => {
-    setSelectedUserIds([]);
-  };
+  const {
+    onSelectionChange,
+    onSelectAllChange,
+    selection,
+    rowSelection,
+    resetSelection,
+    data: selectedUsers,
+  } = useSelection({
+    totalFilteredCount: users?.length ?? 0,
+    pageIds: users?.map((user) => user.id) ?? [],
+  });
 
   const onConfirm = () => {
     mutate(
       {
-        userIds: selectedUserIds,
+        selection: selectedUsers,
         departmentId,
         inheritsDepartmentRoles: true,
       },
@@ -80,7 +81,7 @@ export const DialogEnableUserDepartmentPermission = ({
       open={open}
       onOpenChange={(o) => {
         setOpen(o);
-        reset();
+        resetSelection();
       }}
     >
       <DialogTrigger asChild>
@@ -101,6 +102,8 @@ export const DialogEnableUserDepartmentPermission = ({
             {(data) => (
               <DataTable
                 columns={genUserColumns({
+                  selection,
+                  onSelectAllChange,
                   orderBy,
                   orderDirection,
                   clickOnCurrentHeader() {
@@ -115,8 +118,8 @@ export const DialogEnableUserDepartmentPermission = ({
                   hideColumns: ["password"],
                 })}
                 data={data}
-                onRowSelect={onRowSelect}
-                selectedRows={selectedUserIds}
+                rowSelection={rowSelection}
+                setRowSelection={onSelectionChange}
               />
             )}
           </RenderQueryResult>
@@ -129,10 +132,7 @@ export const DialogEnableUserDepartmentPermission = ({
           >
             取消
           </Button>
-          <Button
-            disabled={selectedUserIds.length === 0 || isPending}
-            onClick={onConfirm}
-          >
+          <Button disabled={isPending} onClick={onConfirm}>
             確認
           </Button>
         </div>

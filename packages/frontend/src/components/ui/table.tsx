@@ -17,7 +17,7 @@ function Table({
       <table
         data-slot="table"
         className={cn(
-          "w-full border-separate border-spacing-0 caption-bottom text-sm",
+          "w-full border-separate border-spacing-0 caption-bottom text-sm isolate",
           className
         )}
         {...props}
@@ -36,7 +36,7 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
-      className={cn("[&_tr:last-child]:border-0 relative z-10", className)}
+      className={cn("[&_tr:last-child]:border-0 ", className)}
       {...props}
     />
   );
