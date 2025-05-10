@@ -309,7 +309,7 @@ async function main() {
       account: employeesFromDB[i].idNumber,
       employeeId: employeesFromDB[i].id,
       passwordHash:
-        "$argon2id$v=19$m=19456,t=2,p=1$7plTOkhlpe84tk5lqAZoQw$qoWYFqavEmYzpzdOOzQyIgnURp/wwqL0kohWCER4x84",
+        "$argon2id$v=19$m=19456,t=2,p=1$fzeSLfQlQRhJsr68FPaZUw$g/7mDLYFNOi4zmqCE7MILrTQXwNq9fU/Cunz8Tgc864",
     });
   }
 
