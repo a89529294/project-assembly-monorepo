@@ -6,11 +6,9 @@ type QueryResultProps<T> = {
   // Data and render function
   data: T;
   children: (data: Exclude<T, undefined>) => ReactNode;
-
-  // Status flags (typically from React Query)
-  isLoading?: boolean;
-  isError?: boolean;
-  isSuccess?: boolean;
+  isLoading: boolean;
+  isError: boolean;
+  isSuccess: boolean;
 
   // Optional customization
   error?: Error | unknown;

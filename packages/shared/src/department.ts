@@ -5,8 +5,8 @@ import { z } from "zod";
 export const departmentSummarySchema = createSelectSchema(
   departmentsTable
 ).omit({
-  updated_at: true,
-  created_at: true,
+  updatedAt: true,
+  createdAt: true,
 });
 
 export type DepartmentSummary = z.infer<typeof departmentSummarySchema>;

@@ -1,15 +1,15 @@
 import { DialogAddDepartment } from "@/components/dialogs/add-department";
 import { PendingComponent } from "@/components/pending-component";
-import { Button } from "@/components/ui/button";
+import SelectionActionButtons from "@/components/selection-action-buttons";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { RoleName } from "@myapp/shared";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute(
@@ -32,26 +32,19 @@ function Section({ title, roleName }: { title: string; roleName: RoleName }) {
       roleName,
     })
   );
-  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>(
-    []
-  );
+
   const { mutate, isPending } = useMutation(
     trpc.personnelPermission.removeDepartmentsFromRole.mutationOptions()
   );
 
-  const toggleSelectDepartment = (id: string) => {
-    if (selectedDepartmentIds.includes(id))
-      setSelectedDepartmentIds((prev) =>
-        prev.filter((prevId) => prevId !== id)
-      );
-    else setSelectedDepartmentIds((prev) => [...prev, id]);
-  };
+  const { clearAll, selected, selectedCount, toggle, isSelected } =
+    useSimpleSelection(data);
 
   const removeDepartments = () => {
     mutate(
       {
         roleName,
-        departmentIds: selectedDepartmentIds,
+        departmentIds: selected,
       },
       {
         onSuccess() {
@@ -67,7 +60,7 @@ function Section({ title, roleName }: { title: string; roleName: RoleName }) {
             ),
           });
           toast.success(`成功移除部門`);
-          setSelectedDepartmentIds([]);
+          clearAll();
         },
         onError() {
           toast.error("無法移除部門");
@@ -81,40 +74,23 @@ function Section({ title, roleName }: { title: string; roleName: RoleName }) {
       <CardHeader className="flex flex-row items-center justify-between">
         <h2 className="text-xl font-semibold">{title}</h2>
 
-        <div className="flex gap-1">
-          {selectedDepartmentIds.length > 0 && (
-            <Button
-              variant={"secondary"}
-              onClick={() => setSelectedDepartmentIds([])}
-              disabled={isPending}
-            >
-              反選
-            </Button>
-          )}
-          {selectedDepartmentIds.length > 0 && (
-            <Button
-              variant={"destructive"}
-              onClick={removeDepartments}
-              disabled={isPending}
-            >
-              移除
-            </Button>
-          )}
+        <SelectionActionButtons
+          hasSelection={selectedCount > 0}
+          isPending={isPending}
+          onClear={clearAll}
+          onRemove={removeDepartments}
+        >
           <DialogAddDepartment disabled={isPending} roleName={roleName} />
-        </div>
+        </SelectionActionButtons>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-4">
           {data.map((dept) => (
-            <button
-              key={dept.id}
-              onClick={() => toggleSelectDepartment(dept.id)}
-            >
+            <button key={dept.id} onClick={() => toggle(dept.id)}>
               <Card
                 className={cn(
                   "transition-transform p-4",
-                  selectedDepartmentIds.includes(dept.id) &&
-                    "scale-[1.03] border border-red-300"
+                  isSelected(dept.id) && "scale-[1.03] border border-red-300"
                 )}
               >
                 <p>{dept.name}</p>

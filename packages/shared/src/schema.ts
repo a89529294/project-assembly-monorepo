@@ -18,11 +18,17 @@ export const projectStatusEnum = pgEnum("project_status", [
   "cancelled",
 ]);
 export const genderEnum = pgEnum("gender", ["male", "female"]);
-export const appPermissionEnum = pgEnum("app_permission", [
+
+export const APP_PERMISSIONS = [
   "man-production", // production management
   "ctr-gdstd", // GD-STD operations
   "monitor-weight", // real-time monitoring
-]);
+] as const;
+
+// Drizzle ORM enum
+export const appPermissionEnum = pgEnum("app_permission", APP_PERMISSIONS);
+
+// Zod enum
 
 // Define enum for management types
 export const roleNameEnum = pgEnum("role_name", [
@@ -36,23 +42,23 @@ export const roleNameEnum = pgEnum("role_name", [
 export type RoleName = (typeof roleNameEnum.enumValues)[number];
 
 const timestamps = {
-  created_at: timestamp({ withTimezone: true, mode: "date" })
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
     .notNull()
     .defaultNow(),
-  updated_at: timestamp({ withTimezone: true, mode: "date" })
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
 };
 const timestampsWithDeletedAt = {
   ...timestamps,
-  deleted_at: timestamp({ withTimezone: true, mode: "date" }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "date" }),
 };
 
 export const rolesTable = pgTable("roles", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: roleNameEnum().notNull().unique(),
-  chinese_name: varchar({ length: 255 }),
+  chineseName: varchar("chinese_name", { length: 255 }),
   ...timestamps,
 });
 
@@ -69,8 +75,8 @@ export const rolesTable = pgTable("roles", {
 export const departmentsTable = pgTable("departments", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar({ length: 100 }).notNull(),
-  en_prefix: varchar({ length: 10 }).notNull(),
-  zh_prefix: varchar({ length: 10 }).notNull(),
+  enPrefix: varchar("en_prefix", { length: 10 }).notNull(),
+  zhPrefix: varchar("zh_prefix", { length: 10 }).notNull(),
   ...timestamps,
 });
 
@@ -82,7 +88,7 @@ export const employeesTable = pgTable("employees", {
   gender: genderEnum().notNull(),
   enName: varchar("en_name", { length: 100 }),
   birthday: timestamp("birthday", { withTimezone: true, mode: "date" }),
-  marital_status: varchar({ length: 20 }),
+  maritalStatus: varchar("maritalStatus", { length: 20 }),
   education: varchar({ length: 50 }),
   email: varchar({ length: 100 }),
   residenceCounty: varchar("residence_county", { length: 100 }),

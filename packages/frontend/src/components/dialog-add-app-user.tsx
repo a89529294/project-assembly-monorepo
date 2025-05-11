@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table";
+import { RenderQueryResult } from "@/components/render-query-result";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,14 +11,32 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import { appUsersColumns } from "@/features/app-users/data-table/columns";
+import { genAppUsersOrEmployeesColumns } from "@/features/app-users/data-table/columns";
 import { trpc } from "@/trpc";
+import { AppUserPermission } from "@myapp/shared";
 import { useQuery } from "@tanstack/react-query";
 
-export const DialogAddAppUser = () => {
-  const { data } = useQuery(
-    trpc.personnelPermission.readAppUserByPermission.queryOptions()
+export const DialogAddAppUser = ({
+  permission,
+}: {
+  permission: AppUserPermission;
+}) => {
+  const { data, isLoading, isSuccess, isError } = useQuery(
+    trpc.personnelPermission.readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermission.queryOptions(
+      {
+        criteria: {
+          page: 1,
+          pageSize: 10,
+          orderBy: "employee.idNumber",
+          orderDirection: "DESC",
+          searchTerm: "",
+        },
+        permission,
+      }
+    )
   );
+
+  console.log(data);
 
   // State for selected user
   // const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
@@ -40,16 +59,24 @@ export const DialogAddAppUser = () => {
         <div
           className="max-h-[400px] mt-4 rounded border border-gray-200"
           style={{
-            overflowY: data && data.length > 10 ? "auto" : "visible",
+            overflowY: data && data.total > 10 ? "auto" : "visible",
           }}
         >
-          {data && data.length > 0 ? (
-            <DataTable columns={appUsersColumns} data={data} />
-          ) : (
-            <div className="text-gray-500 p-4">No users found.</div>
-          )}
+          {/* <RenderQueryResult
+            data={data}
+            isLoading={isLoading}
+            isSuccess={isSuccess}
+            isError={isError}
+          >
+            {(data) => (
+              <DataTable
+                columns={genAppUsersOrEmployeesColumns()}
+                data={data.data}
+              />
+            )}
+          </RenderQueryResult> */}
         </div>
-        {/* TODO: Add form fields here */}
+
         <DialogFooter>{/* Add actions like Save/Cancel here */}</DialogFooter>
       </DialogContent>
     </Dialog>

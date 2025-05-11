@@ -1,6 +1,8 @@
 import {
   paginatedUserSummarySchema,
+  rolesTable,
   selectionInputSchema,
+  userRolesTable,
   UsersSummaryQueryInputSchema,
   usersTable,
 } from "@myapp/shared";
@@ -21,6 +23,7 @@ import { employeesTable } from "../../db/schema";
 import { generatePassword } from "../../helpers/auth";
 import { protectedProcedure } from "../core";
 import { orderDirectionFn } from "../helpers";
+import { TRPCError } from "@trpc/server";
 
 const excludeAdminCondition = not(ilike(usersTable.account, "admin%"));
 
@@ -64,7 +67,7 @@ export const readUsersProcedure = protectedProcedure([
       .offset(offset);
 
     const data = users.map((u) => {
-      const { updated_at, created_at, ...rest } = u;
+      const { updatedAt, createdAt, ...rest } = u;
       return rest;
     });
 
@@ -152,8 +155,8 @@ export const createUsersFromEmployeesProcedure = protectedProcedure([
           passwordHash,
         })
         .returning();
-      // Remove created_at, updated_at from user
-      const { created_at, updated_at, ...userSummary } = user;
+
+      const { createdAt, updatedAt, ...userSummary } = user;
       results.push({ user: userSummary, plainPassword });
     }
     return results;
@@ -238,4 +241,50 @@ export const generatePasswordForUserProcedure = protectedProcedure([
     }
 
     return { plainPassword };
+  });
+
+export const createUserWithRolesProcedure = protectedProcedure([
+  "PersonnelPermissionManagement",
+])
+  .input(
+    z.object({
+      account: z.string().min(1),
+      name: z.string().min(1),
+      roleIds: z.array(z.string().uuid()).min(1),
+    })
+  )
+  .mutation(async ({ input }) => {
+    const password = generatePassword();
+    const passwordHash = await hashPassword(password);
+
+    // Validate all roleIds exist
+    const roles = await db
+      .select({ id: rolesTable.id })
+      .from(rolesTable)
+      .where(inArray(rolesTable.id, input.roleIds));
+    if (roles.length !== input.roleIds.length) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "One or more roleIds do not exist",
+      });
+    }
+
+    const user = await db
+      .insert(usersTable)
+      .values({
+        account: input.account,
+        name: input.name,
+        employeeId: null,
+        passwordHash,
+      })
+      .returning();
+
+    const userId = user[0].id;
+    await Promise.all(
+      input.roleIds.map((roleId) =>
+        db.insert(userRolesTable).values({ userId, roleId })
+      )
+    );
+
+    return user[0];
   });

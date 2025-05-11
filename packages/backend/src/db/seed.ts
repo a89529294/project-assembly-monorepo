@@ -108,62 +108,62 @@ async function main() {
     {
       id: hrDeptId,
       name: "人資部",
-      en_prefix: "HR",
-      zh_prefix: "人資",
+      enPrefix: "HR",
+      zhPrefix: "人資",
     },
     {
       id: financeDeptId,
       name: "財務部",
-      en_prefix: "FIN",
-      zh_prefix: "財務",
+      enPrefix: "FIN",
+      zhPrefix: "財務",
     },
     {
       id: marketingDeptId,
       name: "行銷部",
-      en_prefix: "MKT",
-      zh_prefix: "行銷",
+      enPrefix: "MKT",
+      zhPrefix: "行銷",
     },
     {
       id: salesDeptId,
       name: "銷售部",
-      en_prefix: "SAL",
-      zh_prefix: "銷售",
+      enPrefix: "SAL",
+      zhPrefix: "銷售",
     },
     {
       id: engineeringDeptId,
       name: "工程部",
-      en_prefix: "ENG",
-      zh_prefix: "工程",
+      enPrefix: "ENG",
+      zhPrefix: "工程",
     },
     {
       id: productDeptId,
       name: "產品部",
-      en_prefix: "PRD",
-      zh_prefix: "產品",
+      enPrefix: "PRD",
+      zhPrefix: "產品",
     },
     {
       id: operationsDeptId,
       name: "營運部",
-      en_prefix: "OPS",
-      zh_prefix: "營運",
+      enPrefix: "OPS",
+      zhPrefix: "營運",
     },
     {
       id: customerServiceDeptId,
       name: "客服部",
-      en_prefix: "CS",
-      zh_prefix: "客服",
+      enPrefix: "CS",
+      zhPrefix: "客服",
     },
     {
       id: researchDeptId,
       name: "研發部",
-      en_prefix: "RND",
-      zh_prefix: "研發",
+      enPrefix: "RND",
+      zhPrefix: "研發",
     },
     {
       id: legalDeptId,
       name: "法律部",
-      en_prefix: "LEG",
-      zh_prefix: "法律",
+      enPrefix: "LEG",
+      zhPrefix: "法律",
     },
   ];
 
@@ -235,8 +235,8 @@ async function main() {
   const departmentConfigs: DepartmentConfig[] = allDepartments.map((dept) => ({
     departmentId: dept.id,
     count: Math.floor(Math.random() * 100) + 1, // 1 to 100 employees
-    chPrefix: dept.zh_prefix,
-    enPrefix: dept.en_prefix,
+    chPrefix: dept.zhPrefix,
+    enPrefix: dept.enPrefix,
   }));
 
   const employeesFromDB = await seedEmployees(departmentConfigs);

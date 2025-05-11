@@ -27,3 +27,22 @@ export function appUsersWithEmployeeAndDepartmentsQuery() {
     )
     .$dynamic();
 }
+
+export function employeesWithDepartmentsQuery() {
+  return db
+    .select({
+      employee: employeesTable,
+      department: departmentsTable,
+      jobTitle: employeeDepartmentsTable.jobTitle,
+    })
+    .from(employeesTable)
+    .innerJoin(
+      employeeDepartmentsTable,
+      eq(employeesTable.id, employeeDepartmentsTable.employeeId)
+    )
+    .innerJoin(
+      departmentsTable,
+      eq(employeeDepartmentsTable.departmentId, departmentsTable.id)
+    )
+    .$dynamic();
+}

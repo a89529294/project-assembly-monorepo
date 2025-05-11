@@ -100,7 +100,7 @@ export const readEmployeesProcedure = protectedProcedure([
       .offset(offset);
 
     const data = employees.map((row) => {
-      const { updated_at, created_at, ...rest } = row.employees;
+      const { updatedAt, createdAt, ...rest } = row.employees;
       return rest;
     });
 
@@ -141,7 +141,7 @@ export const readEmployeeByIdProcedure = protectedProcedure([
       });
 
     const {
-      employees: { created_at, updated_at, ...rest },
+      employees: { createdAt, updatedAt, ...rest },
     } = employees[0];
 
     const employee = {

@@ -27,17 +27,13 @@ interface UseSimpleSelectionResult {
 export function useSimpleSelection<T extends { id: string }>(
   pendingItems?: T[]
 ): UseSimpleSelectionResult {
-  // Memoize items to prevent dependency changes on every render
-  const items = useMemo(
-    () => pendingItems?.map((v) => v.id) ?? [],
-    [pendingItems]
-  );
+  const items = pendingItems?.map((v) => v.id) ?? [];
+
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   // Convert rowSelection to array of selected IDs
   const selected = useMemo(() => Object.keys(rowSelection), [rowSelection]);
 
-  // Toggle selection of a specific ID
   const toggle = useCallback((id: string) => {
     setRowSelection((prev) => {
       const newSelection = { ...prev };
@@ -50,8 +46,7 @@ export function useSimpleSelection<T extends { id: string }>(
     });
   }, []);
 
-  // Toggle all items
-  const toggleAll = useCallback(() => {
+  const toggleAll = () => {
     if (selected.length === items.length) {
       // Clear all if all are selected
       setRowSelection({});
@@ -63,23 +58,20 @@ export function useSimpleSelection<T extends { id: string }>(
       });
       setRowSelection(newSelection);
     }
-  }, [items, selected.length]);
+  };
 
-  // Select all items
-  const selectAll = useCallback(() => {
+  const selectAll = () => {
     const newSelection: RowSelectionState = {};
     items.forEach((id) => {
       newSelection[id] = true;
     });
     setRowSelection(newSelection);
-  }, [items]);
+  };
 
-  // Clear all selections
-  const clearAll = useCallback(() => {
+  const clearAll = () => {
     setRowSelection({});
-  }, []);
+  };
 
-  // Check if an item is selected
   const isSelected = useCallback(
     (id: string) => !!rowSelection[id],
     [rowSelection]
@@ -89,7 +81,7 @@ export function useSimpleSelection<T extends { id: string }>(
 
   const isAllSelected = items.length > 0 && selected.length === items.length;
 
-  const isPartialSelected = selected.length > 0 && !isAllSelected;
+  const isPartialSelected = selected.length > 0;
 
   return {
     rowSelection,

@@ -7,8 +7,8 @@ import {
 } from "./utils";
 
 export const employeeSummarySchema = createSelectSchema(employeesTable).omit({
-  updated_at: true,
-  created_at: true,
+  updatedAt: true,
+  createdAt: true,
 });
 
 export type EmployeeSummary = z.infer<typeof employeeSummarySchema>;

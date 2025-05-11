@@ -51,6 +51,20 @@ export const summaryQueryInputSchemaGenrator = <T extends z.ZodRawShape>(
     searchTerm: z.string().default(""),
   });
 
+export const summaryQueryInputSchemaGenratorUnsafe = <T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>,
+  defaultOrderBy: string
+) =>
+  z.object({
+    page: z.number().int().min(1).default(1),
+    pageSize: z.number().int().min(1).max(100).default(20),
+    orderBy: z.string().default(defaultOrderBy),
+    orderDirection: z
+      .enum(["DESC", "ASC"] as [OrderDirection, ...OrderDirection[]])
+      .default("DESC"),
+    searchTerm: z.string().default(""),
+  });
+
 export const selectionInputSchema = z.union([
   z.object({ selectedIds: z.array(z.string().min(1)).min(1) }),
   z.object({

@@ -1,5 +1,10 @@
 import { router } from "../core.js";
 import {
+  deleteAppUsersPermissionProcedure,
+  readAppUsersByPermissionProcedure,
+  readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermissionProcedure,
+} from "./app-users-procedures.js";
+import {
   addDepartmentsToRoleProcedure,
   readAssignedDepartmentsProcedure,
   readDepartmentsProcedure,
@@ -9,11 +14,8 @@ import {
   updateUserDepartmentRelationProcedure,
 } from "./department-prodecures.js";
 import {
-  createUserWithRolesProcedure,
-  readAppUsersByPermissionProcedure,
-} from "./procedures.js";
-import {
   createUsersFromEmployeesProcedure,
+  createUserWithRolesProcedure,
   deleteUsersProcedure,
   generatePasswordForUserProcedure,
   readUsersProcedure,
@@ -24,13 +26,16 @@ export const personnelPermissionRouter = router({
   readUsers: readUsersProcedure,
   createUsersFromEmployees: createUsersFromEmployeesProcedure,
   deleteUsers: deleteUsersProcedure,
+  generatePasswordForUser: generatePasswordForUserProcedure,
   readAppUserByPermission: readAppUsersByPermissionProcedure,
+  readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermission:
+    readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermissionProcedure,
+  deleteAppUsersPermission: deleteAppUsersPermissionProcedure,
   readDepartments: readDepartmentsProcedure,
   readUnassignedDepartments: readUnassignedDepartmentsProcedure,
   readAssignedDepartments: readAssignedDepartmentsProcedure,
   addDepartmentsToRole: addDepartmentsToRoleProcedure,
   removeDepartmentsFromRole: removeDepartmentsFromRoleProcedure,
-  generatePasswordForUser: generatePasswordForUserProcedure,
   readDepartmentUsers: readDepartmentUsersProcedure,
   updateUserDepartmentRelation: updateUserDepartmentRelationProcedure,
 });

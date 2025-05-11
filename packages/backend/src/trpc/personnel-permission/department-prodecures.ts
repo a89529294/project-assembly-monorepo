@@ -32,7 +32,7 @@ export const readDepartmentsProcedure = protectedProcedure([
     const departments = await db.select().from(departmentsTable);
 
     return departments.map((e) => {
-      const { updated_at, created_at, ...rest } = e;
+      const { updatedAt, createdAt, ...rest } = e;
       return rest;
     });
   });
