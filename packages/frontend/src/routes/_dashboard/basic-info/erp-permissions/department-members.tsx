@@ -56,6 +56,8 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
     data: users,
     isSuccess,
     isError,
+    isFetching,
+    isLoading,
   } = useQuery(
     trpc.personnelPermission.readDepartmentUsers.queryOptions(
       {
@@ -136,6 +138,8 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
               data={users}
               isSuccess={isSuccess}
               isError={isError}
+              isFetching={isFetching}
+              isLoading={isLoading}
             >
               {(users) =>
                 users.map((user) => (

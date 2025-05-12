@@ -2,11 +2,11 @@
 
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { EmployeeOrAppUserWithDepartments } from "@myapp/shared";
+import { AppUserWithDepartments } from "@myapp/shared";
 
-const columnHelper = createColumnHelper<EmployeeOrAppUserWithDepartments>();
+const columnHelper = createColumnHelper<AppUserWithDepartments>();
 
-export const genAppUsersOrEmployeesColumns = () =>
+export const genAppUsersWithAllDepartmentsColumns = () =>
   [
     columnHelper.display({
       id: "select",
@@ -71,4 +71,4 @@ export const genAppUsersOrEmployeesColumns = () =>
       header: "電話",
       cell: (info) => info.getValue(),
     }),
-  ] as ColumnDef<EmployeeOrAppUserWithDepartments>[];
+  ] as ColumnDef<AppUserWithDepartments>[];

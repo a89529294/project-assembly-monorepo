@@ -1,63 +1,65 @@
-import {
-  departmentsTable,
-  EmployeeFromDb,
-  APP_PERMISSIONS,
-  employeesTable,
-} from "./schema";
+import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { APP_PERMISSIONS, departmentsTable, employeesTable } from "./schema";
 import {
   paginatedSchemaGenerator,
-  summaryQueryInputSchemaGenratorUnsafe,
+  summaryQueryNestedInputSchemaGenerator,
 } from "./utils";
-import { createSelectSchema } from "drizzle-zod";
-
-export type EmployeeOrAppUserWithDepartments =
-  | {
-      id: `employee:${string}`;
-      employee: Omit<EmployeeFromDb, "createdAt" | "updatedAt">;
-      departments: (typeof departmentsTable.$inferSelect & {
-        jobTitle: string;
-      })[];
-    }
-  | {
-      id: `appUser:${string}`;
-      employee: Omit<EmployeeFromDb, "createdAt" | "updatedAt">;
-      departments: (typeof departmentsTable.$inferSelect & {
-        jobTitle: string;
-      })[];
-    };
 
 export const appUserPermissionEnum = z.enum(APP_PERMISSIONS);
 export type AppUserPermission = z.infer<typeof appUserPermissionEnum>;
 
-const employeeOrAppUserWithDepartmentsSchema = z.object({
-  id: z
-    .union([z.string().regex(/^employee:/), z.string().regex(/^appUser:/)])
-    .refine(
-      (val) => val.startsWith("employee:") || val.startsWith("appUser:"),
-      {
-        message: "ID must start with 'employee:' or 'appUser:'",
-      }
-    ),
-  employee: createSelectSchema(employeesTable).omit({
-    updatedAt: true,
-    createdAt: true,
-  }),
+const appUserWithDepartmentsSchema = z.object({
+  id: z.string(),
+  employee: createSelectSchema(employeesTable),
   departments: z.array(
     createSelectSchema(departmentsTable).extend({ jobTitle: z.string() })
   ),
 });
 
+const appUserOrEmployeeWithSpecificDepartmentSchema = z.object({
+  id: z.string(),
+  idNumber: z.string(),
+  name: z.string(),
+  department: z.object({
+    id: z.string(),
+    name: z.string(),
+    jobTitle: z.string().nullable(),
+  }),
+  isAppUser: z.boolean(),
+  permissions: z.array(z.enum(APP_PERMISSIONS)),
+});
+
+export type AppUserWithDepartments = z.infer<
+  typeof appUserWithDepartmentsSchema
+>;
+export type AppUserOrEmployeeWithSpecificDepartment = z.infer<
+  typeof appUserOrEmployeeWithSpecificDepartmentSchema
+>;
+
 // Array schema
 export const employeeOrAppUserWithDepartmentsArraySchema = z.array(
-  employeeOrAppUserWithDepartmentsSchema
+  appUserWithDepartmentsSchema
 );
 
 export const appUsersOrEmployeesSummaryQueryInputSchema =
-  summaryQueryInputSchemaGenratorUnsafe(
-    employeeOrAppUserWithDepartmentsSchema,
-    "employee.idNumber"
-  );
+  summaryQueryNestedInputSchemaGenerator(
+    appUserWithDepartmentsSchema,
+    "employee",
+    "idNumber"
+  )
+    .extend({
+      departmentId: z.string(),
+    })
+    .omit({
+      orderBy: true,
+      orderDirection: true,
+      searchTerm: true,
+    });
 
-export const paginatedAppUsersOrEmployeesSummarySchema =
-  paginatedSchemaGenerator(employeeOrAppUserWithDepartmentsSchema);
+export const paginatedAppUsersSummarySchema = paginatedSchemaGenerator(
+  appUserWithDepartmentsSchema
+);
+
+export const paginatedAppUsersOrEmployeesWithSpecificDepartmentSummarySchema =
+  paginatedSchemaGenerator(appUserOrEmployeeWithSpecificDepartmentSchema);

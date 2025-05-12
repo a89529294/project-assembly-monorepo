@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 export function DialogNewPassword({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState("");
-  const { mutate, isSuccess, isError } = useMutation(
+  const { mutate, isSuccess, isError, isPending } = useMutation(
     trpc.personnelPermission.generatePasswordForUser.mutationOptions()
   );
 
@@ -47,6 +47,8 @@ export function DialogNewPassword({ userId }: { userId: string }) {
               data={password}
               isSuccess={isSuccess}
               isError={isError}
+              isFetching={isPending}
+              isLoading={isPending}
               errorComponent={"無法產生密碼"}
             >
               {(data) => data}

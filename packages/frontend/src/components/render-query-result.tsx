@@ -9,6 +9,7 @@ type QueryResultProps<T> = {
   isLoading: boolean;
   isError: boolean;
   isSuccess: boolean;
+  isFetching: boolean;
 
   // Optional customization
   error?: Error | unknown;
@@ -18,6 +19,7 @@ type QueryResultProps<T> = {
   loadingClassName?: string;
 };
 
+// TODO: clean up with status, right now its too convoluted
 export function RenderQueryResult<T>({
   // Core props
   children,
@@ -27,6 +29,7 @@ export function RenderQueryResult<T>({
   isSuccess,
   isError,
   isLoading,
+  isFetching,
   error,
 
   // Customization
@@ -69,6 +72,14 @@ export function RenderQueryResult<T>({
     );
   }
 
+  // fetching state
+  if (isFetching) {
+    return (
+      <div className={cn("absoulte inset-0 opacity-50")}>
+        {children(data as Exclude<T, undefined>)}
+      </div>
+    );
+  }
   // Success state with data
   if (status.success && data !== undefined) {
     return children(data as Exclude<T, undefined>);

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { usersTable } from "./schema";
 import {
   paginatedSchemaGenerator,
-  summaryQueryInputSchemaGenrator,
+  summaryQueryInputSchemaGenerator,
 } from "./utils";
 
 export const userSummarySchema = createSelectSchema(usersTable).omit({
@@ -27,7 +27,7 @@ function makeSummaryDefault<TOrderBy extends string>(orderBy: TOrderBy) {
   };
 }
 
-export const UsersSummaryQueryInputSchema = summaryQueryInputSchemaGenrator(
+export const UsersSummaryQueryInputSchema = summaryQueryInputSchemaGenerator(
   userSummarySchema,
   "account"
 ).default(makeSummaryDefault("account"));

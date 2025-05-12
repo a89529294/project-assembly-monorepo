@@ -1,14 +1,17 @@
 import type { InferSelectModel } from "drizzle-orm";
-import { relations } from "drizzle-orm";
+import { eq, relations, sql } from "drizzle-orm";
+
 import {
   boolean,
   integer,
   pgEnum,
   pgTable,
+  pgView,
   timestamp,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { AppUserPermission } from "./app-users";
 
 // Enums
 export const projectStatusEnum = pgEnum("project_status", [
@@ -80,7 +83,7 @@ export const departmentsTable = pgTable("departments", {
   ...timestamps,
 });
 
-export const employeesTable = pgTable("employees", {
+const employeeColumns = {
   id: uuid("id").primaryKey().defaultRandom(),
   idNumber: varchar("id_number", { length: 20 }).notNull().unique(),
   chName: varchar("ch_name", { length: 100 }).notNull(),
@@ -98,7 +101,9 @@ export const employeesTable = pgTable("employees", {
   mailingDistrict: varchar("mailing_district", { length: 100 }),
   mailingAddress: varchar("mailing_address", { length: 255 }),
   ...timestamps,
-});
+};
+
+export const employeesTable = pgTable("employees", employeeColumns);
 
 export const usersTable = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -246,6 +251,122 @@ export const companyInfoTable = pgTable("company_info", {
   fax: varchar("fax", { length: 50 }).notNull(),
   taxId: varchar("tax_id", { length: 50 }).notNull(),
   logoURL: varchar("logo_link", { length: 255 }),
+});
+
+export const employeeOrAppUserWithDepartmentSummaryView = pgView(
+  "employee_summary_view"
+).as((qb) => {
+  // 1. Get employees and their department IDs
+  const employeesInDepartments = qb
+    .select({
+      ...(Object.fromEntries(
+        (
+          Object.keys(employeeColumns) as Array<keyof typeof employeeColumns>
+        ).map((col) => [col, employeesTable[col]])
+      ) as {
+        [K in keyof typeof employeeColumns]: (typeof employeesTable)[K];
+      }),
+      department_id: employeeDepartmentsTable.departmentId,
+      department_name: departmentsTable.name,
+      department_job_title: employeeDepartmentsTable.jobTitle,
+    })
+    .from(employeesTable)
+    .innerJoin(
+      employeeDepartmentsTable,
+      eq(employeeDepartmentsTable.employeeId, employeesTable.id)
+    )
+    .innerJoin(
+      departmentsTable,
+      eq(departmentsTable.id, employeeDepartmentsTable.departmentId)
+    )
+    .as("employees_in_departments");
+
+  // 2. Employees without app users
+  const employeesWithoutUsers = qb
+    .select({
+      id: employeesInDepartments.id,
+      id_number: employeesInDepartments.idNumber,
+      name: employeesInDepartments.chName,
+      department_id: employeesInDepartments.department_id,
+      department_name: employeesInDepartments.department_name,
+      department_job_title: employeesInDepartments.department_job_title,
+      is_app_user: sql<boolean>`false`.as("is_app_user"),
+      permissions: sql<AppUserPermission[]>`'{}'::text[]`.as("permissions"),
+    })
+    .from(employeesInDepartments)
+    .where(
+      sql`not exists (
+        select 1 from ${appUsersTable} 
+        where ${appUsersTable.employeeId} = ${employeesInDepartments.id}
+      )`
+    )
+    .as("employees_without_users");
+
+  // 3. App users with aggregated permissions
+  const appUsersWithPermissions = qb
+    .select({
+      id: appUsersTable.id,
+      id_number: employeesInDepartments.idNumber,
+      name: employeesInDepartments.chName,
+      department_id: employeesInDepartments.department_id,
+      department_name: employeesInDepartments.department_name,
+      department_job_title: employeesInDepartments.department_job_title,
+      is_app_user: sql<boolean>`true`.as("is_app_user"),
+      permissions: sql<AppUserPermission[]>`
+  coalesce(array_agg(${appUserPermissions.permission}::text), '{}')::text[]`.as(
+        "permissions"
+      ),
+    })
+    .from(appUsersTable)
+    .innerJoin(
+      employeesInDepartments,
+      sql`${appUsersTable.employeeId} = ${employeesInDepartments.id}`
+    )
+    .leftJoin(
+      appUserPermissions,
+      sql`${appUserPermissions.appUserId} = ${appUsersTable.id}`
+    )
+    .groupBy(
+      appUsersTable.id,
+      employeesInDepartments.id,
+      employeesInDepartments.idNumber,
+      employeesInDepartments.chName,
+      employeesInDepartments.department_id,
+      employeesInDepartments.department_name,
+      employeesInDepartments.department_job_title
+    )
+    .as("app_users_with_permissions");
+
+  // 4. Combine both sources
+  return qb.select().from(
+    qb
+      .select({
+        id: employeesWithoutUsers.id,
+        id_number: employeesWithoutUsers.id_number,
+        name: employeesWithoutUsers.name,
+        department_id: employeesWithoutUsers.department_id,
+        department_name: employeesWithoutUsers.department_name,
+        department_job_title: employeesWithoutUsers.department_job_title,
+        is_app_user: employeesWithoutUsers.is_app_user,
+        permissions: employeesWithoutUsers.permissions,
+      })
+      .from(employeesWithoutUsers)
+      .unionAll(
+        qb
+          .select({
+            id: appUsersWithPermissions.id,
+            id_number: appUsersWithPermissions.id_number,
+            name: appUsersWithPermissions.name,
+            department_id: appUsersWithPermissions.department_id,
+            department_name: appUsersWithPermissions.department_name,
+            department_job_title: appUsersWithPermissions.department_job_title,
+            is_app_user: appUsersWithPermissions.is_app_user,
+            permissions: appUsersWithPermissions.permissions,
+          })
+          .from(appUsersWithPermissions)
+      )
+      .as("combined")
+  );
 });
 
 export const customersRelations = relations(customersTable, ({ many }) => ({

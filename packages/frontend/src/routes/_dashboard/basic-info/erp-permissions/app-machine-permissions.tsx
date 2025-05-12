@@ -4,7 +4,7 @@ import { PendingComponent } from "@/components/pending-component";
 import SelectionActionButtons from "@/components/selection-action-buttons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { genAppUsersOrEmployeesColumns } from "@/features/app-users/data-table/columns";
+import { genAppUsersWithAllDepartmentsColumns } from "@/features/app-users/data-table/app-users-with-all-departments";
 import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
@@ -120,8 +120,8 @@ export function RouteComponent() {
             )}
           >
             <DataTable
-              columns={genAppUsersOrEmployeesColumns()}
-              data={Array(1).fill(data).flat()}
+              columns={genAppUsersWithAllDepartmentsColumns()}
+              data={data}
               rowSelection={rowSelection}
               setRowSelection={setRowSelection}
             />

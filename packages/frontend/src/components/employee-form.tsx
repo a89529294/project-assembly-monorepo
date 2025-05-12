@@ -42,7 +42,7 @@ export function EmployeeForm({
     enName: "",
     birthday: null,
     gender: "male",
-    marital_status: "",
+    maritalStatus: "",
     education: "",
     phone: "",
     email: "",
@@ -171,9 +171,9 @@ export function EmployeeForm({
 
                     <TextField
                       form={form}
-                      name="marital_status"
+                      name="maritalStatus"
                       required={
-                        !employeeDetailedSchema.shape.marital_status.isNullable()
+                        !employeeDetailedSchema.shape.maritalStatus.isNullable()
                       }
                     />
 

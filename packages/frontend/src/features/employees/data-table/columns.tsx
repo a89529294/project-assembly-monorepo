@@ -122,7 +122,7 @@ export const genEmployeeColumns = ({
       header: "電子信箱",
       cell: (info) => info.getValue() || "-",
     }),
-    columnHelper.accessor("marital_status", {
+    columnHelper.accessor("maritalStatus", {
       header: "婚姻狀態",
       cell: (info) => info.getValue() || "-",
     }),

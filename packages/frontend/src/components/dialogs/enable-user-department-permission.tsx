@@ -31,6 +31,8 @@ export const DialogEnableUserDepartmentPermission = ({
     data: users,
     isSuccess,
     isError,
+    isFetching,
+    isLoading,
   } = useQuery(
     trpc.personnelPermission.readDepartmentUsers.queryOptions({
       departmentId,
@@ -98,6 +100,8 @@ export const DialogEnableUserDepartmentPermission = ({
             data={users}
             isSuccess={isSuccess}
             isError={isError}
+            isFetching={isFetching}
+            isLoading={isLoading}
           >
             {(data) => (
               <DataTable

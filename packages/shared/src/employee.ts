@@ -3,7 +3,7 @@ import { z } from "zod";
 import { employeesTable } from "./schema";
 import {
   paginatedSchemaGenerator,
-  summaryQueryInputSchemaGenrator,
+  summaryQueryInputSchemaGenerator,
 } from "./utils";
 
 export const employeeSummarySchema = createSelectSchema(employeesTable).omit({
@@ -19,10 +19,8 @@ export const paginatedEmployeeSummarySchema = paginatedSchemaGenerator(
 
 export type EmployeeSummaryKey = keyof EmployeeSummary;
 
-export const employeesSummaryQueryInputSchema = summaryQueryInputSchemaGenrator(
-  employeeSummarySchema,
-  "idNumber"
-);
+export const employeesSummaryQueryInputSchema =
+  summaryQueryInputSchemaGenerator(employeeSummarySchema, "idNumber");
 
 export const employeeDetailedSchema = employeeSummarySchema
   .omit({ id: true })

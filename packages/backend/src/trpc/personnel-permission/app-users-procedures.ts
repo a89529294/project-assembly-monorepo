@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, or, ilike } from "drizzle-orm";
+import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import {
@@ -7,23 +7,15 @@ import {
   appUserPermissions,
   appUsersOrEmployeesSummaryQueryInputSchema,
   appUsersTable,
+  AppUserWithDepartments,
   DepartmentFromDb,
   EmployeeFromDb,
-  EmployeeOrAppUserWithDepartments,
-  employeesTable,
-  paginatedAppUsersOrEmployeesSummarySchema,
+  employeeOrAppUserWithDepartmentSummaryView,
+  paginatedAppUsersOrEmployeesWithSpecificDepartmentSummarySchema,
 } from "../../db/schema.js";
 import { protectedProcedure } from "../../trpc/core.js";
-import {
-  appUsersWithEmployeeAndDepartmentsQuery,
-  employeesWithDepartmentsQuery,
-} from "./helpers.js";
 import { orderDirectionFn } from "../helpers.js";
-
-const genPartialEmployee = (v: EmployeeFromDb) => {
-  const { createdAt, updatedAt, ...rest } = v;
-  return rest;
-};
+import { appUsersWithEmployeeAndDepartmentsQuery } from "./helpers.js";
 
 function groupEmployeesOrAppUsersWithDepartments(
   rows: Array<{
@@ -32,8 +24,8 @@ function groupEmployeesOrAppUsersWithDepartments(
     department: DepartmentFromDb;
     jobTitle: string | null;
   }>
-): EmployeeOrAppUserWithDepartments[] {
-  const userMap = new Map<string, EmployeeOrAppUserWithDepartments>();
+): AppUserWithDepartments[] {
+  const userMap = new Map<string, AppUserWithDepartments>();
   for (const row of rows) {
     const key =
       row.appUser != null
@@ -42,7 +34,7 @@ function groupEmployeesOrAppUsersWithDepartments(
     if (!userMap.has(key)) {
       userMap.set(key, {
         id: key,
-        employee: genPartialEmployee(row.employee),
+        employee: row.employee,
         departments: [
           {
             ...row.department,
@@ -101,7 +93,7 @@ export const deleteAppUsersPermissionProcedure = protectedProcedure([
       permission: appUserPermissionEnum,
     })
   )
-  .mutation(async ({ input, ctx }) => {
+  .mutation(async ({ input }) => {
     const { appUserIds, permission } = input;
     if (!appUserIds.length) return { count: 0 };
 
@@ -117,8 +109,6 @@ export const deleteAppUsersPermissionProcedure = protectedProcedure([
     return { count: result?.rowCount ?? 0 };
   });
 
-import { queryEmployeesAppUsersView } from "../../db/views/employees-app-users-queries.js";
-
 export const readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermissionProcedure =
   protectedProcedure(["PersonnelPermissionManagement"])
     .input(
@@ -127,27 +117,67 @@ export const readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermissionPro
         permission: appUserPermissionEnum,
       })
     )
-    // .output(paginatedAppUsersOrEmployeesSummarySchema)
+    .output(paginatedAppUsersOrEmployeesWithSpecificDepartmentSummarySchema)
     .query(async ({ input }) => {
       const { criteria, permission } = input;
-      const { page, pageSize, searchTerm, orderBy, orderDirection } = criteria;
+      const { page, pageSize, departmentId } = criteria;
 
-      // Use the new view-based approach with built-in pagination and filtering
-      const result = await queryEmployeesAppUsersView({
-        permission,
-        page,
-        pageSize,
-        searchTerm,
-        orderBy,
-        orderDirection: orderDirection.toLowerCase() as "asc" | "desc",
-      });
+      const results = await db
+        .select({
+          id: employeeOrAppUserWithDepartmentSummaryView.id,
+          id_number: employeeOrAppUserWithDepartmentSummaryView.id_number,
+          name: employeeOrAppUserWithDepartmentSummaryView.name,
+          permissions: employeeOrAppUserWithDepartmentSummaryView.permissions,
+          is_app_user: employeeOrAppUserWithDepartmentSummaryView.is_app_user,
+          department_id:
+            employeeOrAppUserWithDepartmentSummaryView.department_id,
+          department_name:
+            employeeOrAppUserWithDepartmentSummaryView.department_name,
+          department_job_title:
+            employeeOrAppUserWithDepartmentSummaryView.department_job_title,
+          total_count: sql`count(*) over()`,
+        })
+        .from(employeeOrAppUserWithDepartmentSummaryView)
+        .where(
+          and(
+            eq(
+              employeeOrAppUserWithDepartmentSummaryView.department_id,
+              departmentId
+            ),
+            or(
+              sql`${employeeOrAppUserWithDepartmentSummaryView.permissions} = '{}'::text[]`,
+              sql`${permission} != ALL(${employeeOrAppUserWithDepartmentSummaryView.permissions})`
+            )
+          )
+        )
+        .orderBy(
+          orderDirectionFn("DESC")(
+            employeeOrAppUserWithDepartmentSummaryView.id_number
+          )
+        )
+        .limit(pageSize)
+        .offset((page - 1) * pageSize);
 
-      // Format the response to match the expected output schema
+      const total = results.length > 0 ? Number(results[0].total_count) : 0;
+
+      const totalPages = Math.ceil(total / pageSize);
+
       return {
-        data: result.data,
         page,
         pageSize,
-        total: result.pagination.total,
-        totalPages: result.pagination.pageCount,
+        total,
+        totalPages,
+        data: results.map((v) => ({
+          id: v.id,
+          idNumber: v.id_number,
+          name: v.name,
+          permissions: v.permissions,
+          isAppUser: v.is_app_user,
+          department: {
+            id: v.department_id,
+            name: v.department_name,
+            jobTitle: v.department_job_title,
+          },
+        })),
       };
     });
