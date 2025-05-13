@@ -117,12 +117,12 @@ export const readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermissionPro
     .input(
       z.object({
         criteria: appUsersOrEmployeesSummaryQueryInputSchema,
-        permission: appUserPermissionEnum,
+        permissionToExclude: appUserPermissionEnum,
       })
     )
     .output(paginatedAppUsersOrEmployeesWithOptionalDepartmentSummarySchema)
     .query(async ({ input }) => {
-      const { criteria, permission } = input;
+      const { criteria, permissionToExclude } = input;
       const { page, pageSize, departmentId } = criteria;
 
       if (departmentId === "no-department") {
@@ -139,7 +139,7 @@ export const readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermissionPro
           .where(
             or(
               sql`${employeeOrAppUserWithoutDepartmentsView.permissions} = ARRAY[]::text[]`,
-              sql`${permission} != ALL(${employeeOrAppUserWithoutDepartmentsView.permissions})`
+              sql`${permissionToExclude} != ALL(${employeeOrAppUserWithoutDepartmentsView.permissions})`
             )
           )
           .orderBy(
@@ -192,7 +192,7 @@ export const readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermissionPro
               ),
               or(
                 sql`${employeeOrAppUserWithDepartmentSummaryView.permissions} = ARRAY[]::text[]`,
-                sql`${permission} != ALL(${employeeOrAppUserWithDepartmentSummaryView.permissions})`
+                sql`${permissionToExclude} != ALL(${employeeOrAppUserWithDepartmentSummaryView.permissions})`
               )
             )
           )

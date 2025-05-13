@@ -226,3 +226,5 @@ export function useSelection({
     data,
   };
 }
+
+export type UseSelectionReturn = ReturnType<typeof useSelection>;

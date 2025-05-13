@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCounties } from "@/hooks/use-counties";
+import { useDepartments } from "@/hooks/departments/use-departments";
 import { useTowns } from "@/hooks/use-towns";
-import { trpc } from "@/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EmployeeDetail, employeeDetailedSchema } from "@myapp/shared";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -27,9 +26,7 @@ export function EmployeeForm({
   onSubmit,
   ActionButtons,
 }: EmployeeFormProps) {
-  const { data: departments, isLoading: isLoadingDepartments } = useQuery(
-    trpc.personnelPermission.readDepartments.queryOptions()
-  );
+  const { departments, isLoading: isLoadingDepartments } = useDepartments();
   const {
     data: counties,
     isLoading: isLoadingCounties,

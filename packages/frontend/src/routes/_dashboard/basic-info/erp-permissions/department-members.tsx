@@ -8,12 +8,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useSuspendedDepartments } from "@/hooks/departments/use-suspended-departments";
 import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { DepartmentSummary } from "@myapp/shared";
-import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronRight, User } from "lucide-react";
 import { useState } from "react";
@@ -32,9 +33,7 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  const { data: departments } = useSuspenseQuery(
-    trpc.personnelPermission.readDepartments.queryOptions()
-  );
+  const { data: departments } = useSuspendedDepartments();
 
   return (
     <div className="absolute inset-6">
