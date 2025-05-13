@@ -15,7 +15,7 @@ import {
   employeesTable,
   employeeDepartmentsTable,
   appUsersTable,
-  appUserPermissions,
+  appUserPermissionsTable,
   appUserRefreshTokensTable,
   roleNameEnum,
 } from "./schema.js";
@@ -33,7 +33,7 @@ async function main() {
 
   // Clean all tables before seeding (order matters for FKs)
   await db.delete(appUserRefreshTokensTable);
-  await db.delete(appUserPermissions);
+  await db.delete(appUserPermissionsTable);
   await db.delete(userRolesTable);
   await db.delete(roleDepartmentsTable);
   await db.delete(sessionsTable);
@@ -321,7 +321,7 @@ async function main() {
     "monitor-weight",
   ] as const;
   for (let i = 0; i < appUsers.length; i++) {
-    await db.insert(appUserPermissions).values({
+    await db.insert(appUserPermissionsTable).values({
       id: randomUUID(),
       appUserId: appUsers[i].id,
       permission: permissionsList[i % permissionsList.length],

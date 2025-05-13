@@ -2,24 +2,37 @@
 
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AppUserOrEmployeeWithSpecificDepartment } from "@myapp/shared";
+import { AppUserOrEmployeeWithOptionalDepartment } from "@myapp/shared";
+import { SelectionState } from "@/hooks/use-selection";
 
 const columnHelper =
-  createColumnHelper<AppUserOrEmployeeWithSpecificDepartment>();
+  createColumnHelper<AppUserOrEmployeeWithOptionalDepartment>();
 
-export const genAppUsersOrEmployeesWithSpecificDepartmentColumns = () =>
+export const genAppUsersOrEmployeesWithSpecificDepartmentColumns = ({
+  onSelectAllChange,
+  selection,
+}: {
+  onSelectAllChange: (checked: boolean) => void;
+  selection: SelectionState;
+}) =>
   [
     columnHelper.display({
       id: "select",
       size: 66,
       header: ({ table }) => {
-        const checked = table.getIsAllPageRowsSelected();
+        const checked = selection
+          ? selection.selectAll === false
+            ? false
+            : selection.deselectedIds.size === 0
+              ? true
+              : "indeterminate"
+          : table.getIsAllPageRowsSelected();
 
         return (
           <Checkbox
             checked={checked}
             onCheckedChange={(value) => {
-              table.toggleAllPageRowsSelected(!!value);
+              onSelectAllChange(!!value);
             }}
             aria-label="Select all"
           />
@@ -45,11 +58,13 @@ export const genAppUsersOrEmployeesWithSpecificDepartmentColumns = () =>
     }),
     columnHelper.accessor("department", {
       header: "部門",
-      cell: (info) => (
-        <div className="flex gap-1">
-          {info.getValue().name}
-          {info.getValue().jobTitle}
-        </div>
-      ),
+      cell: (info) => {
+        const department = info.getValue();
+        return (
+          <div className="flex gap-1">
+            {department ? `${department.name} ${department.jobTitle}` : ""}
+          </div>
+        );
+      },
     }),
-  ] as ColumnDef<AppUserOrEmployeeWithSpecificDepartment>[];
+  ] as ColumnDef<AppUserOrEmployeeWithOptionalDepartment>[];

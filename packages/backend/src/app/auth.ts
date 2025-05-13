@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { db } from "../db/index.js";
 import {
   appUsersTable,
-  appUserPermissions,
+  appUserPermissionsTable,
   appUserRefreshTokensTable,
 } from "../db/schema.js";
 import { verifyPasswordHash } from "../db/password.js";
@@ -85,9 +85,9 @@ authRoutes.post("/login", async (c) => {
   }
 
   const perms = await db
-    .select({ permission: appUserPermissions.permission })
-    .from(appUserPermissions)
-    .where(eq(appUserPermissions.appUserId, user.id));
+    .select({ permission: appUserPermissionsTable.permission })
+    .from(appUserPermissionsTable)
+    .where(eq(appUserPermissionsTable.appUserId, user.id));
   const permissions = perms.map((p) => p.permission);
 
   // --- Refresh token DB row ---
@@ -141,9 +141,9 @@ authRoutes.post("/refresh", async (c) => {
 
   const user = tokenRow.appUser;
   const perms = await db
-    .select({ permission: appUserPermissions.permission })
-    .from(appUserPermissions)
-    .where(eq(appUserPermissions.appUserId, user.id));
+    .select({ permission: appUserPermissionsTable.permission })
+    .from(appUserPermissionsTable)
+    .where(eq(appUserPermissionsTable.appUserId, user.id));
   const permissions = perms.map((p) => p.permission);
   const accessToken = signAccessToken({
     sub: user.id,

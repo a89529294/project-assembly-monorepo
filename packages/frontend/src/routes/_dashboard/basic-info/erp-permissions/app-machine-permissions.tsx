@@ -9,7 +9,7 @@ import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
-import { appUserPermissionEnum } from "@myapp/shared";
+import { AppUserPermission, appUserPermissionEnum } from "@myapp/shared";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useDeferredValue } from "react";
@@ -78,10 +78,16 @@ export function RouteComponent() {
               }
             ),
           });
+          clearAll();
         },
         onError() {},
       }
     );
+  };
+
+  const onSwitchPermission = (permission: AppUserPermission) => {
+    navigate({ search: { permission } });
+    clearAll();
   };
 
   return (
@@ -100,7 +106,7 @@ export function RouteComponent() {
         {TABS.map((t) => (
           <button
             key={t.key}
-            onClick={() => navigate({ search: { permission: t.key } })}
+            onClick={() => onSwitchPermission(t.key)}
             className={`flex-1 py-3 text-center font-medium transition-colors border-b-2 focus:outline-none ${
               permission === t.key
                 ? "border-blue-600 text-blue-600 font-bold"

@@ -23,7 +23,7 @@ import {
   employeeDepartmentsTable,
   employeesTable,
   appUsersTable,
-  appUserPermissions,
+  appUserPermissionsTable,
 } from "../../db/schema.js";
 import { protectedProcedure } from "../core.js";
 import { orderDirectionFn } from "../helpers.js";
@@ -283,8 +283,8 @@ export const deleteEmployeesProcedure = protectedProcedure([
       const appUserIds = appUsers.map((u) => u.id);
       if (appUserIds.length > 0) {
         await tx
-          .delete(appUserPermissions)
-          .where(inArray(appUserPermissions.appUserId, appUserIds));
+          .delete(appUserPermissionsTable)
+          .where(inArray(appUserPermissionsTable.appUserId, appUserIds));
       }
       // Remove app users
       await tx

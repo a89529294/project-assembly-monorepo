@@ -49,6 +49,7 @@ export function useSelection({
     selectedIds: new Set<string>(),
     deselectedIds: new Set<string>(),
   });
+  const hasSelection = selection.selectAll || selection.selectedIds.size > 0;
 
   const isRowSelected = useCallback(
     (rowId: string): boolean => {
@@ -213,6 +214,7 @@ export function useSelection({
     // Selection state
     selection,
     selectedCount,
+    hasSelection,
     rowSelection, // tanstack query rowSelection state
 
     // Selection operations

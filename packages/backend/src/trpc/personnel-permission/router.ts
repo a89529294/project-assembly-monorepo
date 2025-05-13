@@ -1,6 +1,7 @@
 import { router } from "../core.js";
 import {
   deleteAppUsersPermissionProcedure,
+  grantPermissionMutationProcedure,
   readAppUsersByPermissionProcedure,
   readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermissionProcedure,
 } from "./app-users-procedures.js";
@@ -31,6 +32,7 @@ export const personnelPermissionRouter = router({
   readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermission:
     readEmployeesWithNoAppUserOrAppUsersWithoutTheSpecificPermissionProcedure,
   deleteAppUsersPermission: deleteAppUsersPermissionProcedure,
+  grantEmployeeOrAppUserPermission: grantPermissionMutationProcedure,
   readDepartments: readDepartmentsProcedure,
   readUnassignedDepartments: readUnassignedDepartmentsProcedure,
   readAssignedDepartments: readAssignedDepartmentsProcedure,

@@ -140,7 +140,7 @@ export const appUsersTable = pgTable("app_users", {
   ...timestamps,
 });
 
-export const appUserPermissions = pgTable("app_user_permissions", {
+export const appUserPermissionsTable = pgTable("app_user_permissions", {
   id: uuid("id").primaryKey().defaultRandom(),
   appUserId: uuid("app_user_id")
     .notNull()
@@ -291,7 +291,7 @@ export const employeeOrAppUserWithDepartmentSummaryView = pgView(
       department_name: employeesInDepartments.department_name,
       department_job_title: employeesInDepartments.department_job_title,
       is_app_user: sql<boolean>`false`.as("is_app_user"),
-      permissions: sql<AppUserPermission[]>`'{}'::text[]`.as("permissions"),
+      permissions: sql<AppUserPermission[]>`ARRAY[]::text[]`.as("permissions"),
     })
     .from(employeesInDepartments)
     .where(
@@ -313,7 +313,7 @@ export const employeeOrAppUserWithDepartmentSummaryView = pgView(
       department_job_title: employeesInDepartments.department_job_title,
       is_app_user: sql<boolean>`true`.as("is_app_user"),
       permissions: sql<AppUserPermission[]>`
-  coalesce(array_agg(${appUserPermissions.permission}::text), '{}')::text[]`.as(
+  COALESCE(ARRAY_REMOVE(ARRAY_AGG(app_user_permissions.permission::text), NULL), ARRAY[]::text[])`.as(
         "permissions"
       ),
     })
@@ -323,8 +323,8 @@ export const employeeOrAppUserWithDepartmentSummaryView = pgView(
       sql`${appUsersTable.employeeId} = ${employeesInDepartments.id}`
     )
     .leftJoin(
-      appUserPermissions,
-      sql`${appUserPermissions.appUserId} = ${appUsersTable.id}`
+      appUserPermissionsTable,
+      sql`${appUserPermissionsTable.appUserId} = ${appUsersTable.id}`
     )
     .groupBy(
       appUsersTable.id,
@@ -364,6 +364,86 @@ export const employeeOrAppUserWithDepartmentSummaryView = pgView(
             permissions: appUsersWithPermissions.permissions,
           })
           .from(appUsersWithPermissions)
+      )
+      .as("combined")
+  );
+});
+
+export const employeeOrAppUserWithoutDepartmentsView = pgView(
+  "employees_without_departments_view"
+).as((qb) => {
+  // 1. Employees without department entries and not app users
+  const employeesWithoutDepartments = qb
+    .select({
+      id: employeesTable.id,
+      id_number: employeesTable.idNumber,
+      name: employeesTable.chName,
+      is_app_user: sql<boolean>`false`.as("is_app_user"),
+      permissions: sql<AppUserPermission[]>`ARRAY[]::text[]`.as("permissions"),
+    })
+    .from(employeesTable)
+    .where(
+      sql`NOT EXISTS (
+        SELECT 1 FROM ${employeeDepartmentsTable} 
+        WHERE ${employeeDepartmentsTable.employeeId} = ${employeesTable.id}
+      ) AND NOT EXISTS (
+        SELECT 1 FROM ${appUsersTable} 
+        WHERE ${appUsersTable.employeeId} = ${employeesTable.id}
+      )`
+    )
+    .as("employees_without_departments");
+
+  // 2. App users with aggregated permissions (for employees without departments)
+  const appUsersWithoutDepartments = qb
+    .select({
+      id: appUsersTable.id,
+      id_number: employeesTable.idNumber,
+      name: employeesTable.chName,
+      is_app_user: sql<boolean>`true`.as("is_app_user"),
+      permissions: sql<AppUserPermission[]>`
+        COALESCE(ARRAY_REMOVE(ARRAY_AGG(app_user_permissions.permission::text), NULL), ARRAY[]::text[])`.as(
+        "permissions"
+      ),
+    })
+    .from(appUsersTable)
+    .innerJoin(
+      employeesTable,
+      sql`${appUsersTable.employeeId} = ${employeesTable.id}`
+    )
+    .leftJoin(
+      appUserPermissionsTable,
+      sql`${appUserPermissionsTable.appUserId} = ${appUsersTable.id}`
+    )
+    .where(
+      sql`NOT EXISTS (
+        SELECT 1 FROM ${employeeDepartmentsTable} 
+        WHERE ${employeeDepartmentsTable.employeeId} = ${employeesTable.id}
+      )`
+    )
+    .groupBy(appUsersTable.id, employeesTable.idNumber, employeesTable.chName)
+    .as("app_users_without_departments");
+
+  // 3. Combine both sources like in the original code, but with simplified structure
+  return qb.select().from(
+    qb
+      .select({
+        id: employeesWithoutDepartments.id,
+        id_number: employeesWithoutDepartments.id_number,
+        name: employeesWithoutDepartments.name,
+        is_app_user: employeesWithoutDepartments.is_app_user,
+        permissions: employeesWithoutDepartments.permissions,
+      })
+      .from(employeesWithoutDepartments)
+      .unionAll(
+        qb
+          .select({
+            id: appUsersWithoutDepartments.id,
+            id_number: appUsersWithoutDepartments.id_number,
+            name: appUsersWithoutDepartments.name,
+            is_app_user: appUsersWithoutDepartments.is_app_user,
+            permissions: appUsersWithoutDepartments.permissions,
+          })
+          .from(appUsersWithoutDepartments)
       )
       .as("combined")
   );
@@ -436,7 +516,7 @@ export const appUsersRelations = relations(appUsersTable, ({ one, many }) => ({
     fields: [appUsersTable.employeeId],
     references: [employeesTable.id],
   }),
-  permissions: many(appUserPermissions),
+  permissions: many(appUserPermissionsTable),
 }));
 
 export const employeeDepartmentsRelations = relations(

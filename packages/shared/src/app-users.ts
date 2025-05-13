@@ -17,15 +17,17 @@ const appUserWithDepartmentsSchema = z.object({
   ),
 });
 
-const appUserOrEmployeeWithSpecificDepartmentSchema = z.object({
+const appUserOrEmployeeWithOptionalDepartmentSchema = z.object({
   id: z.string(),
   idNumber: z.string(),
   name: z.string(),
-  department: z.object({
-    id: z.string(),
-    name: z.string(),
-    jobTitle: z.string().nullable(),
-  }),
+  department: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      jobTitle: z.string().nullable(),
+    })
+    .optional(),
   isAppUser: z.boolean(),
   permissions: z.array(z.enum(APP_PERMISSIONS)),
 });
@@ -33,8 +35,8 @@ const appUserOrEmployeeWithSpecificDepartmentSchema = z.object({
 export type AppUserWithDepartments = z.infer<
   typeof appUserWithDepartmentsSchema
 >;
-export type AppUserOrEmployeeWithSpecificDepartment = z.infer<
-  typeof appUserOrEmployeeWithSpecificDepartmentSchema
+export type AppUserOrEmployeeWithOptionalDepartment = z.infer<
+  typeof appUserOrEmployeeWithOptionalDepartmentSchema
 >;
 
 // Array schema
@@ -61,5 +63,5 @@ export const paginatedAppUsersSummarySchema = paginatedSchemaGenerator(
   appUserWithDepartmentsSchema
 );
 
-export const paginatedAppUsersOrEmployeesWithSpecificDepartmentSummarySchema =
-  paginatedSchemaGenerator(appUserOrEmployeeWithSpecificDepartmentSchema);
+export const paginatedAppUsersOrEmployeesWithOptionalDepartmentSummarySchema =
+  paginatedSchemaGenerator(appUserOrEmployeeWithOptionalDepartmentSchema);
