@@ -1,4 +1,4 @@
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, eq, inArray, or, sql, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import {
@@ -13,6 +13,7 @@ import {
   employeeOrAppUserWithDepartmentSummaryView,
   employeeOrAppUserWithoutDepartmentsView,
   employeesTable,
+  getAppUsersByPermissionInputSchema,
   paginatedAppUsersOrEmployeesWithOptionalDepartmentSummarySchema,
 } from "../../db/schema.js";
 import { protectedProcedure } from "../../trpc/core.js";
@@ -58,32 +59,29 @@ function groupEmployeesOrAppUsersWithDepartments(
 export const readAppUsersByPermissionProcedure = protectedProcedure([
   "PersonnelPermissionManagement",
 ])
-  .input(
-    z
-      .object({
-        permission: appUserPermissionEnum,
-      })
-      .optional()
-  )
+  .input(getAppUsersByPermissionInputSchema)
   .query(async ({ input }) => {
-    const baseQuery = appUsersWithEmployeeAndDepartmentsQuery();
-    let rows: {
-      appUser: AppUserFromDb;
-      employee: EmployeeFromDb;
-      department: DepartmentFromDb;
-      jobTitle: string | null;
-    }[] = [];
-    if (input?.permission) {
-      // filter by permission
-      rows = await baseQuery
-        .innerJoin(
-          appUserPermissionsTable,
-          eq(appUsersTable.id, appUserPermissionsTable.appUserId)
+    const searchTerm = input.searchTerm ? `%${input.searchTerm}%` : null;
+
+    const rows = await appUsersWithEmployeeAndDepartmentsQuery()
+      .innerJoin(
+        appUserPermissionsTable,
+        eq(appUsersTable.id, appUserPermissionsTable.appUserId)
+      )
+      .where(
+        and(
+          eq(appUserPermissionsTable.permission, input.permission),
+          searchTerm
+            ? or(
+                ilike(employeesTable.idNumber, searchTerm),
+                ilike(employeesTable.chName, searchTerm),
+                ilike(employeesTable.email, searchTerm),
+                ilike(employeesTable.phone, searchTerm)
+              )
+            : undefined
         )
-        .where(eq(appUserPermissionsTable.permission, input.permission));
-    } else {
-      rows = await baseQuery;
-    }
+      );
+
     return groupEmployeesOrAppUsersWithDepartments(rows);
   });
 
@@ -268,10 +266,7 @@ export const grantPermissionMutationProcedure = protectedProcedure([
       });
     }
 
-    if (
-      selectionMode === "exclude" &&
-      (!deselectedIds || deselectedIds.length === 0)
-    ) {
+    if (selectionMode === "exclude" && !deselectedIds) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Deselected IDs are required when using exclude mode",

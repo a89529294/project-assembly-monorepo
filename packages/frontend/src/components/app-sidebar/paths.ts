@@ -2,10 +2,12 @@ import {
   Delete,
   Home,
   Inbox,
+  LucideBadgePlus,
   LucideFileLock2,
   LucideHandshake,
   LucideMonitorPlay,
   LucideRocket,
+  LucideRows4,
   LucideUserLock,
   LucideUserRoundCog,
   RefreshCcw,
@@ -118,6 +120,26 @@ export const paths = {
       icon: LucideUserLock,
     },
   ],
+  customerRoutes: [
+    {
+      title: "客戶列表",
+      basePath: "/customers/summary",
+      linkOptions: {
+        to: "/customers/summary",
+      },
+      icon: LucideRows4,
+      roleNames: ["BasicInfoManagement", "AdminManagement"],
+    },
+    {
+      title: "新增客戶",
+      basePath: "/customers/create",
+      linkOptions: {
+        to: "/customers/create",
+      },
+      icon: LucideBadgePlus,
+      roleNames: ["BasicInfoManagement", "AdminManagement"],
+    },
+  ],
   productionRoutes: [
     {
       title: "Create",
@@ -151,44 +173,6 @@ export const paths = {
       basePath: "/production/delete",
       linkOptions: {
         to: "/production/delete",
-      },
-      icon: Delete,
-      roleNames: ["ProductionManagement", "AdminManagement"],
-    },
-  ],
-  customerRoutes: [
-    {
-      title: "Create",
-      basePath: "/customer/create",
-      linkOptions: {
-        to: "/personnel/create",
-      },
-      icon: Home,
-      roleNames: ["ProductionManagement", "AdminManagement"],
-    },
-    {
-      title: "Read",
-      basePath: "/customer/read",
-      linkOptions: {
-        to: "/personnel/read",
-      },
-      icon: Inbox,
-      roleNames: ["ProductionManagement", "AdminManagement"],
-    },
-    {
-      title: "Update",
-      basePath: "/customer/update",
-      linkOptions: {
-        to: "/personnel/update",
-      },
-      icon: RefreshCcw,
-      roleNames: ["ProductionManagement", "AdminManagement"],
-    },
-    {
-      title: "Delete",
-      basePath: "/customer/delete",
-      linkOptions: {
-        to: "/personnel/delete",
       },
       icon: Delete,
       roleNames: ["ProductionManagement", "AdminManagement"],

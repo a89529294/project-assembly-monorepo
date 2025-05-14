@@ -1,6 +1,6 @@
 import DialogEnableUserDepartmentPermission from "@/components/dialogs/enable-user-department-permission";
 import { PendingComponent } from "@/components/pending-component";
-import { RenderQueryResult } from "@/components/render-query-result";
+import { RenderResult } from "@/components/render-result";
 import SelectionActionButtons from "@/components/selection-action-buttons";
 import {
   Collapsible,
@@ -51,13 +51,7 @@ function RouteComponent() {
 function DepartmentSection({ department }: { department: DepartmentSummary }) {
   const [open, setOpen] = useState(false);
 
-  const {
-    data: users,
-    isSuccess,
-    isError,
-    isFetching,
-    isLoading,
-  } = useQuery(
+  const usersQueryResult = useQuery(
     trpc.personnelPermission.readDepartmentUsers.queryOptions(
       {
         departmentId: department.id,
@@ -71,7 +65,9 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
   const { mutate, isPending } = useMutation(
     trpc.personnelPermission.updateUserDepartmentRelation.mutationOptions()
   );
-  const { selected, clearAll, toggle, isSelected } = useSimpleSelection(users);
+  const { selected, clearAll, toggle, isSelected } = useSimpleSelection(
+    usersQueryResult.data
+  );
 
   const removeUsersFromDepartment = () => {
     mutate(
@@ -133,13 +129,7 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
             </SelectionActionButtons>
           </div>
           <div className="grid grid-cols-2 gap-3 relative min-h-10">
-            <RenderQueryResult
-              data={users}
-              isSuccess={isSuccess}
-              isError={isError}
-              isFetching={isFetching}
-              isLoading={isLoading}
-            >
+            <RenderResult useQueryResult={usersQueryResult}>
               {(users) =>
                 users.map((user) => (
                   <button
@@ -155,7 +145,7 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
                   </button>
                 ))
               }
-            </RenderQueryResult>
+            </RenderResult>
           </div>
         </div>
       </CollapsibleContent>

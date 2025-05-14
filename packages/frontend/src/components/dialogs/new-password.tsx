@@ -1,4 +1,4 @@
-import { RenderQueryResult } from "@/components/render-query-result";
+import { RenderResult } from "@/components/render-result";
 import {
   Dialog,
   DialogContent,
@@ -14,15 +14,16 @@ import { useEffect, useState } from "react";
 
 export function DialogNewPassword({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
+  // this is used to saved pw in memory so if user opens the dialog again we dont need to make another mutation
   const [password, setPassword] = useState("");
-  const { mutate, isSuccess, isError, isPending } = useMutation(
+  const newUserPasswordMutation = useMutation(
     trpc.personnelPermission.generatePasswordForUser.mutationOptions()
   );
 
   useEffect(() => {
     if (!open || password) return;
 
-    mutate(
+    newUserPasswordMutation.mutate(
       {
         userId,
       },
@@ -32,7 +33,7 @@ export function DialogNewPassword({ userId }: { userId: string }) {
         },
       }
     );
-  }, [userId, mutate, open, password]);
+  }, [newUserPasswordMutation, open, password, userId]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -43,16 +44,12 @@ export function DialogNewPassword({ userId }: { userId: string }) {
         <DialogHeader>
           <DialogTitle>密碼</DialogTitle>
           <DialogDescription className="flex justify-center relative min-h-10 items-center">
-            <RenderQueryResult
-              data={password}
-              isSuccess={isSuccess}
-              isError={isError}
-              isFetching={isPending}
-              isLoading={isPending}
-              errorComponent={"無法產生密碼"}
+            <RenderResult
+              useMutationResult={newUserPasswordMutation}
+              errorComponent={<span>無法產生密碼</span>}
             >
-              {(data) => data}
-            </RenderQueryResult>
+              {(data) => <span>{data.plainPassword}</span>}
+            </RenderResult>
           </DialogDescription>
         </DialogHeader>
       </DialogContent>

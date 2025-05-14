@@ -1,33 +1,38 @@
 import { DataTable } from "@/components/data-table";
 import { DialogAddAppUser } from "@/components/dialog-add-app-user";
 import { PendingComponent } from "@/components/pending-component";
+import { SearchBar } from "@/components/search-bar";
 import SelectionActionButtons from "@/components/selection-action-buttons";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { APP_USER_PERMISSION_TABS } from "@/features/app-users";
 
 import { genAppUsersWithAllDepartmentsColumns } from "@/features/app-users/data-table/app-users-with-all-departments";
 import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
-import { AppUserPermission, appUserPermissionEnum } from "@myapp/shared";
+import { SearchBarImperativeHandle } from "@/types";
+import {
+  AppUserPermission,
+  getAppUsersByPermissionInputSchema,
+} from "@myapp/shared";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useDeferredValue } from "react";
-import { z } from "zod";
+import { useDeferredValue, useRef } from "react";
 
 export const Route = createFileRoute(
   "/_dashboard/basic-info/erp-permissions/app-machine-permissions"
 )({
-  validateSearch: z.object({
-    permission: appUserPermissionEnum.default("man-production"),
-  }),
-  loaderDeps: ({ search: { permission } }) => ({
+  validateSearch: getAppUsersByPermissionInputSchema,
+  loaderDeps: ({ search: { permission, searchTerm } }) => ({
     permission,
+    searchTerm,
   }),
-  loader: async ({ deps: { permission } }) => {
+  loader: async ({ deps: { permission, searchTerm } }) => {
     queryClient.ensureQueryData(
       trpc.personnelPermission.readAppUserByPermission.queryOptions({
-        permission: permission,
+        permission,
+        searchTerm,
       })
     );
   },
@@ -36,15 +41,13 @@ export const Route = createFileRoute(
 });
 
 export function RouteComponent() {
-  const TABS = [
-    { key: "man-production" as const, label: "man-production" },
-    { key: "ctr-gdstd" as const, label: "ctr-gdstd" },
-    { key: "monitor-weight" as const, label: "monitor-weight" },
-  ];
-  const { permission } = Route.useSearch();
+  const ref = useRef<SearchBarImperativeHandle>(null);
+  const { permission, searchTerm } = Route.useSearch();
   const navigate = Route.useNavigate();
   const deferredPermission = useDeferredValue(permission);
-  const loading = permission !== deferredPermission;
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const loading =
+    permission !== deferredPermission || searchTerm !== deferredSearchTerm;
 
   const { mutate, isPending } = useMutation(
     trpc.personnelPermission.deleteAppUsersPermission.mutationOptions()
@@ -53,6 +56,7 @@ export function RouteComponent() {
   const { data } = useSuspenseQuery(
     trpc.personnelPermission.readAppUserByPermission.queryOptions({
       permission: deferredPermission,
+      searchTerm: deferredSearchTerm,
     })
   );
   const {
@@ -86,13 +90,27 @@ export function RouteComponent() {
   };
 
   const onSwitchPermission = (permission: AppUserPermission) => {
-    navigate({ search: { permission } });
+    navigate({ search: { permission, searchTerm: "" } });
+    ref.current!.resetInput();
     clearAll();
   };
 
   return (
     <div className="p-6 bg-white flex flex-col rounded-lg shadow-lg h-full">
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-between mb-6">
+        <SearchBar
+          ref={ref}
+          onSearchChange={(searchTerm) => {
+            navigate({
+              search: {
+                searchTerm,
+                permission,
+              },
+            });
+          }}
+          initSearchTerm={searchTerm}
+        />
+
         <SelectionActionButtons
           hasSelection={isPartialSelected}
           isPending={isPending}
@@ -103,7 +121,7 @@ export function RouteComponent() {
         </SelectionActionButtons>
       </div>
       <div className="flex border-b border-gray-200 mb-4">
-        {TABS.map((t) => (
+        {APP_USER_PERMISSION_TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => onSwitchPermission(t.key)}

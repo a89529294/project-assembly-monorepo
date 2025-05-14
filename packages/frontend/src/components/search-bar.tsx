@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDecouncedValue } from "@/hooks/use-debounced-value";
+import { SearchBarImperativeHandle } from "@/types";
 import { LucideSearch } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Ref, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 interface SearchBarProps {
   placeholder?: string;
@@ -11,6 +12,7 @@ interface SearchBarProps {
   hideIcon?: boolean;
   initSearchTerm?: string;
   disabled?: boolean;
+  ref?: Ref<SearchBarImperativeHandle>;
 }
 
 export function SearchBar({
@@ -20,11 +22,21 @@ export function SearchBar({
   hideIcon,
   initSearchTerm,
   disabled,
+  ref,
 }: SearchBarProps) {
   const [input, setInput] = useState(initSearchTerm ?? "");
   const debouncedInput = useDecouncedValue(input);
   const onSearchChangeRef = useRef(onSearchChange);
+  onSearchChangeRef.current = onSearchChange;
   const isComponentMounted = useRef(true);
+
+  useImperativeHandle(ref, () => {
+    return {
+      resetInput() {
+        setInput("");
+      },
+    };
+  }, []);
 
   useEffect(() => {
     // TODO both (isComponentMounted.current && typeof debouncedInput === "string") and the next useEffect are needed to prevent navigation revert when quickly navigating between pages

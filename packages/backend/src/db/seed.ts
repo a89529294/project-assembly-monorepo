@@ -330,6 +330,24 @@ async function main() {
 
   console.log("Users and employees created!");
 
+  // --- Add 30 sample customers ---
+  const customers = Array.from({length: 30}, (_, i) => ({
+    id: randomUUID(),
+    name: `Customer ${i + 1}`,
+    phone: `+852${Math.floor(1000000 + Math.random() * 9000000)}`,
+    customerNumber: `CUST-${String(i + 1).padStart(3, '0')}`,
+    nickname: `Cust${i + 1}`,
+    taxId: `TAX${Math.floor(10000 + Math.random() * 90000)}`,
+    email: `customer${i + 1}@example.com`,
+    contactPerson: `Contact ${i + 1}`,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }));
+  
+  await db.insert(customersTable).values(customers);
+  
+  console.log("Customers created!");
+
   console.log("Database seed completed successfully!");
 }
 

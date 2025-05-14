@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/data-table";
-import { RenderQueryResult } from "@/components/render-query-result";
+import { RenderResult } from "@/components/render-result";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,13 +27,7 @@ export const DialogEnableUserDepartmentPermission = ({
   const [open, setOpen] = useState(false);
   const [orderBy, setOrderBy] = useState<UserSummaryKey>("account");
   const [orderDirection, setOrderDirection] = useState<OrderDirection>("DESC");
-  const {
-    data: users,
-    isSuccess,
-    isError,
-    isFetching,
-    isLoading,
-  } = useQuery(
+  const departmentUsersQuery = useQuery(
     trpc.personnelPermission.readDepartmentUsers.queryOptions({
       departmentId,
       inheritsDepartmentRoles: false,
@@ -50,8 +44,8 @@ export const DialogEnableUserDepartmentPermission = ({
     resetSelection,
     data: selectedUsers,
   } = useSelection({
-    totalFilteredCount: users?.length ?? 0,
-    pageIds: users?.map((user) => user.id) ?? [],
+    totalFilteredCount: departmentUsersQuery.data?.length ?? 0,
+    pageIds: departmentUsersQuery.data?.map((user) => user.id) ?? [],
   });
 
   const onConfirm = () => {
@@ -96,13 +90,7 @@ export const DialogEnableUserDepartmentPermission = ({
           <DialogTitle>選擇使用者</DialogTitle>
         </DialogHeader>
         <div className="h-[320px] mt-4 border rounded overflow-auto p-1 relative">
-          <RenderQueryResult
-            data={users}
-            isSuccess={isSuccess}
-            isError={isError}
-            isFetching={isFetching}
-            isLoading={isLoading}
-          >
+          <RenderResult useQueryResult={departmentUsersQuery}>
             {(data) => (
               <DataTable
                 columns={genUserColumns({
@@ -126,7 +114,7 @@ export const DialogEnableUserDepartmentPermission = ({
                 setRowSelection={onSelectionChange}
               />
             )}
-          </RenderQueryResult>
+          </RenderResult>
         </div>
         <div className="flex justify-end gap-2 mt-4">
           <Button

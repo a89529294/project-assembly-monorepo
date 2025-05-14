@@ -2,17 +2,18 @@ import { DataTable } from "@/components/data-table";
 import { AsyncSelect } from "@/components/inputs/async-select";
 import { StaticSelect } from "@/components/inputs/static-select";
 import { SmartPagination } from "@/components/pagination";
-import { RenderQueryResult } from "@/components/render-query-result";
+import { RenderResult } from "@/components/render-result";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { APP_USER_PERMISSION_TABS } from "@/features/app-users";
 
 import { genAppUsersOrEmployeesWithSpecificDepartmentColumns } from "@/features/app-users/data-table/app-users-employees-with-specific-department";
 import { useEmployeesOrAppUsers } from "@/hooks/app-users/use-employees-or-app-users";
@@ -23,14 +24,6 @@ import { useSelection } from "@/hooks/use-selection";
 import { AppUserPermission } from "@myapp/shared";
 import { useEffect, useState } from "react";
 
-// TODO this is the same TABS in app-machine-permissions.tsx
-const TABS = [
-  { key: "man-production" as const, label: "man-production" },
-  { key: "ctr-gdstd" as const, label: "ctr-gdstd" },
-  { key: "monitor-weight" as const, label: "monitor-weight" },
-];
-
-// TODO go over the optimization again 05/14
 export const DialogAddAppUser = ({
   permission,
 }: {
@@ -53,16 +46,10 @@ export const DialogAddAppUser = ({
   const [departmentId, setDepartmentId] = useState<string>("");
 
   // emps/appUsers with or without department, excluding selected permission
-  const {
-    data: employeesOrAppUsers,
-    isLoading,
-    isError,
-    isFetching,
-    isSuccess,
-  } = useEmployeesOrAppUsers({
+  const empsOrAppUsersQueryResult = useEmployeesOrAppUsers({
     page,
     departmentId,
-    permissionToExclude: permission,
+    permissionToExclude: selectedPermission,
   });
 
   const {
@@ -73,14 +60,15 @@ export const DialogAddAppUser = ({
     selection,
     onSelectionChange,
   } = useSelection({
-    pageIds: employeesOrAppUsers?.data.map((v) => v.id) ?? [],
-    totalFilteredCount: employeesOrAppUsers?.total ?? 0,
+    pageIds: empsOrAppUsersQueryResult.data?.data.map((v) => v.id) ?? [],
+    totalFilteredCount: empsOrAppUsersQueryResult.data?.total ?? 0,
   });
 
   const { grantPermission, isPending } = useGrantPermission({
     permission,
     onSuccess() {
       setOpen(false);
+      resetSelection();
     },
   });
 
@@ -115,6 +103,24 @@ export const DialogAddAppUser = ({
     });
   };
 
+  const onSelectValueChange = ({
+    type,
+    value,
+  }:
+    | {
+        type: "permission";
+        value: AppUserPermission;
+      }
+    | {
+        type: "department";
+        value: string;
+      }) => {
+    if (type === "permission") setSelectedPermission(value);
+    else setDepartmentId(value);
+
+    resetSelection();
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
@@ -123,19 +129,23 @@ export const DialogAddAppUser = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>新增App使用者權限</DialogTitle>
-          <DialogDescription className="flex justify-between">
+          <div className="flex justify-between">
             <div className="flex gap-1">
               <AsyncSelect
                 isLoading={isLoadingDepartments}
-                onValueChange={setDepartmentId}
+                onValueChange={(value) =>
+                  onSelectValueChange({ type: "department", value })
+                }
                 value={departmentId}
                 options={departmentOptions}
               />
 
               <StaticSelect
                 value={selectedPermission}
-                onValueChange={setSelectedPermission}
-                options={TABS}
+                onValueChange={(value) =>
+                  onSelectValueChange({ type: "permission", value })
+                }
+                options={APP_USER_PERMISSION_TABS}
               />
             </div>
             <Button
@@ -144,18 +154,12 @@ export const DialogAddAppUser = ({
             >
               確認
             </Button>
-          </DialogDescription>
+          </div>
         </DialogHeader>
 
         <div className="h-[400px] mt-4 rounded border border-gray-200">
           <ScrollArea className="h-full">
-            <RenderQueryResult
-              data={employeesOrAppUsers}
-              isLoading={isLoading}
-              isSuccess={isSuccess}
-              isError={isError}
-              isFetching={isFetching}
-            >
+            <RenderResult useQueryResult={empsOrAppUsersQueryResult}>
               {(data) => (
                 <DataTable
                   columns={genAppUsersOrEmployeesWithSpecificDepartmentColumns({
@@ -167,14 +171,14 @@ export const DialogAddAppUser = ({
                   setRowSelection={onSelectionChange}
                 />
               )}
-            </RenderQueryResult>
+            </RenderResult>
           </ScrollArea>
         </div>
 
         <SmartPagination
           currentPage={page}
           onPageChange={setPage}
-          totalPages={employeesOrAppUsers?.totalPages ?? 0}
+          totalPages={empsOrAppUsersQueryResult.data?.totalPages ?? 0}
         />
       </DialogContent>
     </Dialog>

@@ -65,3 +65,8 @@ export const paginatedAppUsersSummarySchema = paginatedSchemaGenerator(
 
 export const paginatedAppUsersOrEmployeesWithOptionalDepartmentSummarySchema =
   paginatedSchemaGenerator(appUserOrEmployeeWithOptionalDepartmentSchema);
+
+export const getAppUsersByPermissionInputSchema = z.object({
+  permission: appUserPermissionEnum.default("man-production"),
+  searchTerm: z.string().default(""),
+});

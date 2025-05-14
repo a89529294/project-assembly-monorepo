@@ -23,10 +23,8 @@ import { Route as DashboardProductionUpdateImport } from './routes/_dashboard/pr
 import { Route as DashboardProductionReadImport } from './routes/_dashboard/production/read'
 import { Route as DashboardProductionDeleteImport } from './routes/_dashboard/production/delete'
 import { Route as DashboardProductionCreateImport } from './routes/_dashboard/production/create'
-import { Route as DashboardPersonnelUpdateImport } from './routes/_dashboard/personnel/update'
-import { Route as DashboardPersonnelReadImport } from './routes/_dashboard/personnel/read'
-import { Route as DashboardPersonnelDeleteImport } from './routes/_dashboard/personnel/delete'
-import { Route as DashboardPersonnelCreateImport } from './routes/_dashboard/personnel/create'
+import { Route as DashboardCustomersSummaryImport } from './routes/_dashboard/customers/summary'
+import { Route as DashboardCustomersCreateImport } from './routes/_dashboard/customers/create'
 import { Route as DashboardBasicInfoCompanyInfoImport } from './routes/_dashboard/basic-info/company-info'
 import { Route as DashboardBasicInfoEmployeesIndexImport } from './routes/_dashboard/basic-info/employees/index'
 import { Route as DashboardBasicInfoErpPermissionsUsersImport } from './routes/_dashboard/basic-info/erp-permissions/users'
@@ -109,27 +107,15 @@ const DashboardProductionCreateRoute = DashboardProductionCreateImport.update({
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 
-const DashboardPersonnelUpdateRoute = DashboardPersonnelUpdateImport.update({
-  id: '/personnel/update',
-  path: '/personnel/update',
+const DashboardCustomersSummaryRoute = DashboardCustomersSummaryImport.update({
+  id: '/customers/summary',
+  path: '/customers/summary',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 
-const DashboardPersonnelReadRoute = DashboardPersonnelReadImport.update({
-  id: '/personnel/read',
-  path: '/personnel/read',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-
-const DashboardPersonnelDeleteRoute = DashboardPersonnelDeleteImport.update({
-  id: '/personnel/delete',
-  path: '/personnel/delete',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-
-const DashboardPersonnelCreateRoute = DashboardPersonnelCreateImport.update({
-  id: '/personnel/create',
-  path: '/personnel/create',
+const DashboardCustomersCreateRoute = DashboardCustomersCreateImport.update({
+  id: '/customers/create',
+  path: '/customers/create',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 
@@ -228,32 +214,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBasicInfoCompanyInfoImport
       parentRoute: typeof DashboardBasicInfoRouteImport
     }
-    '/_dashboard/personnel/create': {
-      id: '/_dashboard/personnel/create'
-      path: '/personnel/create'
-      fullPath: '/personnel/create'
-      preLoaderRoute: typeof DashboardPersonnelCreateImport
+    '/_dashboard/customers/create': {
+      id: '/_dashboard/customers/create'
+      path: '/customers/create'
+      fullPath: '/customers/create'
+      preLoaderRoute: typeof DashboardCustomersCreateImport
       parentRoute: typeof DashboardRouteImport
     }
-    '/_dashboard/personnel/delete': {
-      id: '/_dashboard/personnel/delete'
-      path: '/personnel/delete'
-      fullPath: '/personnel/delete'
-      preLoaderRoute: typeof DashboardPersonnelDeleteImport
-      parentRoute: typeof DashboardRouteImport
-    }
-    '/_dashboard/personnel/read': {
-      id: '/_dashboard/personnel/read'
-      path: '/personnel/read'
-      fullPath: '/personnel/read'
-      preLoaderRoute: typeof DashboardPersonnelReadImport
-      parentRoute: typeof DashboardRouteImport
-    }
-    '/_dashboard/personnel/update': {
-      id: '/_dashboard/personnel/update'
-      path: '/personnel/update'
-      fullPath: '/personnel/update'
-      preLoaderRoute: typeof DashboardPersonnelUpdateImport
+    '/_dashboard/customers/summary': {
+      id: '/_dashboard/customers/summary'
+      path: '/customers/summary'
+      fullPath: '/customers/summary'
+      preLoaderRoute: typeof DashboardCustomersSummaryImport
       parentRoute: typeof DashboardRouteImport
     }
     '/_dashboard/production/create': {
@@ -404,10 +376,8 @@ const DashboardBasicInfoRouteRouteWithChildren =
 interface DashboardRouteRouteChildren {
   DashboardBasicInfoRouteRoute: typeof DashboardBasicInfoRouteRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
-  DashboardPersonnelCreateRoute: typeof DashboardPersonnelCreateRoute
-  DashboardPersonnelDeleteRoute: typeof DashboardPersonnelDeleteRoute
-  DashboardPersonnelReadRoute: typeof DashboardPersonnelReadRoute
-  DashboardPersonnelUpdateRoute: typeof DashboardPersonnelUpdateRoute
+  DashboardCustomersCreateRoute: typeof DashboardCustomersCreateRoute
+  DashboardCustomersSummaryRoute: typeof DashboardCustomersSummaryRoute
   DashboardProductionCreateRoute: typeof DashboardProductionCreateRoute
   DashboardProductionDeleteRoute: typeof DashboardProductionDeleteRoute
   DashboardProductionReadRoute: typeof DashboardProductionReadRoute
@@ -421,10 +391,8 @@ interface DashboardRouteRouteChildren {
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardBasicInfoRouteRoute: DashboardBasicInfoRouteRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
-  DashboardPersonnelCreateRoute: DashboardPersonnelCreateRoute,
-  DashboardPersonnelDeleteRoute: DashboardPersonnelDeleteRoute,
-  DashboardPersonnelReadRoute: DashboardPersonnelReadRoute,
-  DashboardPersonnelUpdateRoute: DashboardPersonnelUpdateRoute,
+  DashboardCustomersCreateRoute: DashboardCustomersCreateRoute,
+  DashboardCustomersSummaryRoute: DashboardCustomersSummaryRoute,
   DashboardProductionCreateRoute: DashboardProductionCreateRoute,
   DashboardProductionDeleteRoute: DashboardProductionDeleteRoute,
   DashboardProductionReadRoute: DashboardProductionReadRoute,
@@ -445,10 +413,8 @@ export interface FileRoutesByFullPath {
   '/basic-info': typeof DashboardBasicInfoRouteRouteWithChildren
   '/': typeof DashboardIndexRoute
   '/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
-  '/personnel/create': typeof DashboardPersonnelCreateRoute
-  '/personnel/delete': typeof DashboardPersonnelDeleteRoute
-  '/personnel/read': typeof DashboardPersonnelReadRoute
-  '/personnel/update': typeof DashboardPersonnelUpdateRoute
+  '/customers/create': typeof DashboardCustomersCreateRoute
+  '/customers/summary': typeof DashboardCustomersSummaryRoute
   '/production/create': typeof DashboardProductionCreateRoute
   '/production/delete': typeof DashboardProductionDeleteRoute
   '/production/read': typeof DashboardProductionReadRoute
@@ -471,10 +437,8 @@ export interface FileRoutesByTo {
   '/basic-info': typeof DashboardBasicInfoRouteRouteWithChildren
   '/': typeof DashboardIndexRoute
   '/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
-  '/personnel/create': typeof DashboardPersonnelCreateRoute
-  '/personnel/delete': typeof DashboardPersonnelDeleteRoute
-  '/personnel/read': typeof DashboardPersonnelReadRoute
-  '/personnel/update': typeof DashboardPersonnelUpdateRoute
+  '/customers/create': typeof DashboardCustomersCreateRoute
+  '/customers/summary': typeof DashboardCustomersSummaryRoute
   '/production/create': typeof DashboardProductionCreateRoute
   '/production/delete': typeof DashboardProductionDeleteRoute
   '/production/read': typeof DashboardProductionReadRoute
@@ -499,10 +463,8 @@ export interface FileRoutesById {
   '/_dashboard/basic-info': typeof DashboardBasicInfoRouteRouteWithChildren
   '/_dashboard/': typeof DashboardIndexRoute
   '/_dashboard/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
-  '/_dashboard/personnel/create': typeof DashboardPersonnelCreateRoute
-  '/_dashboard/personnel/delete': typeof DashboardPersonnelDeleteRoute
-  '/_dashboard/personnel/read': typeof DashboardPersonnelReadRoute
-  '/_dashboard/personnel/update': typeof DashboardPersonnelUpdateRoute
+  '/_dashboard/customers/create': typeof DashboardCustomersCreateRoute
+  '/_dashboard/customers/summary': typeof DashboardCustomersSummaryRoute
   '/_dashboard/production/create': typeof DashboardProductionCreateRoute
   '/_dashboard/production/delete': typeof DashboardProductionDeleteRoute
   '/_dashboard/production/read': typeof DashboardProductionReadRoute
@@ -528,10 +490,8 @@ export interface FileRouteTypes {
     | '/basic-info'
     | '/'
     | '/basic-info/company-info'
-    | '/personnel/create'
-    | '/personnel/delete'
-    | '/personnel/read'
-    | '/personnel/update'
+    | '/customers/create'
+    | '/customers/summary'
     | '/production/create'
     | '/production/delete'
     | '/production/read'
@@ -553,10 +513,8 @@ export interface FileRouteTypes {
     | '/basic-info'
     | '/'
     | '/basic-info/company-info'
-    | '/personnel/create'
-    | '/personnel/delete'
-    | '/personnel/read'
-    | '/personnel/update'
+    | '/customers/create'
+    | '/customers/summary'
     | '/production/create'
     | '/production/delete'
     | '/production/read'
@@ -579,10 +537,8 @@ export interface FileRouteTypes {
     | '/_dashboard/basic-info'
     | '/_dashboard/'
     | '/_dashboard/basic-info/company-info'
-    | '/_dashboard/personnel/create'
-    | '/_dashboard/personnel/delete'
-    | '/_dashboard/personnel/read'
-    | '/_dashboard/personnel/update'
+    | '/_dashboard/customers/create'
+    | '/_dashboard/customers/summary'
     | '/_dashboard/production/create'
     | '/_dashboard/production/delete'
     | '/_dashboard/production/read'
@@ -630,10 +586,8 @@ export const routeTree = rootRoute
       "children": [
         "/_dashboard/basic-info",
         "/_dashboard/",
-        "/_dashboard/personnel/create",
-        "/_dashboard/personnel/delete",
-        "/_dashboard/personnel/read",
-        "/_dashboard/personnel/update",
+        "/_dashboard/customers/create",
+        "/_dashboard/customers/summary",
         "/_dashboard/production/create",
         "/_dashboard/production/delete",
         "/_dashboard/production/read",
@@ -669,20 +623,12 @@ export const routeTree = rootRoute
       "filePath": "_dashboard/basic-info/company-info.tsx",
       "parent": "/_dashboard/basic-info"
     },
-    "/_dashboard/personnel/create": {
-      "filePath": "_dashboard/personnel/create.tsx",
+    "/_dashboard/customers/create": {
+      "filePath": "_dashboard/customers/create.tsx",
       "parent": "/_dashboard"
     },
-    "/_dashboard/personnel/delete": {
-      "filePath": "_dashboard/personnel/delete.tsx",
-      "parent": "/_dashboard"
-    },
-    "/_dashboard/personnel/read": {
-      "filePath": "_dashboard/personnel/read.tsx",
-      "parent": "/_dashboard"
-    },
-    "/_dashboard/personnel/update": {
-      "filePath": "_dashboard/personnel/update.tsx",
+    "/_dashboard/customers/summary": {
+      "filePath": "_dashboard/customers/summary.tsx",
       "parent": "/_dashboard"
     },
     "/_dashboard/production/create": {
