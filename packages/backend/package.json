@@ -8,7 +8,7 @@
     "db:reset:prod": "NODE_ENV=prod pnpm tsx src/db/reset.ts",
     "db:reset:localprod": "NODE_ENV=localprod pnpm tsx src/db/reset.ts",
     "db:push:dev": "pnpm --filter @myapp/shared build && NODE_ENV=dev pnpm drizzle-kit push",
-    "db:push:prod": "pnpm --filter @myapp/shared build && NODE_ENV=prod pnpm drizzle-kit push",
+    "db:push:prod": "NODE_ENV=prod pnpm --filter @myapp/shared build && NODE_ENV=prod pnpm drizzle-kit push",
     "db:push:localprod": "pnpm --filter @myapp/shared build && NODE_ENV=localprod pnpm drizzle-kit push",
     "db:seed:dev": "NODE_ENV=dev pnpm tsx src/db/seed.ts",
     "db:seed:prod": "NODE_ENV=prod pnpm tsx src/db/seed.ts",
