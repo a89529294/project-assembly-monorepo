@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { genDepartmentColumns } from "@/features/departments/data-table/columns";
+import { genSelectableDepartmentColumns } from "@/features/departments/data-table/columns";
 import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
@@ -23,7 +23,7 @@ import { toast } from "sonner";
 
 // TODO: add mutation to add departments to role
 
-export const DialogAddDepartment = ({
+export const DialogAddDepartmentsToRole = ({
   roleName,
   disabled,
 }: {
@@ -125,7 +125,7 @@ export const DialogAddDepartment = ({
             >
               {isSuccess ? (
                 <DataTable
-                  columns={genDepartmentColumns({
+                  columns={genSelectableDepartmentColumns({
                     toggleAll,
                     isAllSelected,
                     isPartialSelected,

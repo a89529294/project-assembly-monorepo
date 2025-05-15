@@ -68,10 +68,10 @@ export function CollapsibleSidebarMenu({
           <CollapsibleContent>
             <SidebarGroupContent>
               <SidebarMenu>
-                {items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    {item.linkOptions
-                      ? showLink(item.roleNames) && (
+                {items.map((item) =>
+                  item.linkOptions
+                    ? showLink(item.roleNames) && (
+                        <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton asChild>
                             <Link
                               to={item.linkOptions.to}
@@ -81,32 +81,32 @@ export function CollapsibleSidebarMenu({
                               <span>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
-                        )
-                      : showLink(item.roleNames) && (
-                          <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton>
-                              <item.icon />
-                              <span>{item.title}</span>
-                            </SidebarMenuButton>
-                            <SidebarMenuSub>
-                              {item.subs.map((sub) => (
-                                <SidebarMenuSubItem key={sub.title}>
-                                  <SidebarMenuSubButton asChild>
-                                    <Link
-                                      to={sub.linkOptions.to}
-                                      className="[&.active]:font-bold"
-                                    >
-                                      <sub.icon />
-                                      <span>{sub.title}</span>
-                                    </Link>
-                                  </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                              ))}
-                            </SidebarMenuSub>
-                          </SidebarMenuItem>
-                        )}
-                  </SidebarMenuItem>
-                ))}
+                        </SidebarMenuItem>
+                      )
+                    : showLink(item.roleNames) && (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </SidebarMenuButton>
+                          <SidebarMenuSub>
+                            {item.subs.map((sub) => (
+                              <SidebarMenuSubItem key={sub.title}>
+                                <SidebarMenuSubButton asChild>
+                                  <Link
+                                    to={sub.linkOptions.to}
+                                    className="[&.active]:font-bold"
+                                  >
+                                    <sub.icon />
+                                    <span>{sub.title}</span>
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </SidebarMenuItem>
+                      )
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </CollapsibleContent>

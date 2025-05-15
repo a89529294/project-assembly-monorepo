@@ -5,6 +5,7 @@ import {
   LucideBadgePlus,
   LucideFileLock2,
   LucideHandshake,
+  LucideLandmark,
   LucideMonitorPlay,
   LucideRocket,
   LucideRows4,
@@ -13,8 +14,8 @@ import {
   RefreshCcw,
 } from "lucide-react";
 
-import { RegisteredRouter, ValidateLinkOptions } from "@tanstack/react-router";
 import { RoleName } from "@myapp/shared";
+import { RegisteredRouter, ValidateLinkOptions } from "@tanstack/react-router";
 
 export interface NavItemBase {
   title: string;
@@ -88,6 +89,13 @@ export const paths = {
       basePath: "/basic-info/erp-permissions",
       roleNames: ["PersonnelPermissionManagement", "AdminManagement"],
       subs: [
+        {
+          title: "部門管理",
+          linkOptions: {
+            to: "/basic-info/erp-permissions/departments",
+          },
+          icon: LucideLandmark,
+        },
         {
           title: "ERP操作權限",
           linkOptions: {

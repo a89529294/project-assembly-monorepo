@@ -14,6 +14,7 @@ import { useEffect } from "react";
 
 export const Route = createFileRoute("/_dashboard")({
   async beforeLoad({ context, location }) {
+    console.log(context.auth);
     if (!context.auth.isAuthenticated) {
       throw redirect({
         to: "/login",
@@ -23,11 +24,11 @@ export const Route = createFileRoute("/_dashboard")({
       });
     }
   },
-  component: RouteComponent,
+  component: RouteComponent3,
   errorComponent: ErrorComponent,
 });
 
-function RouteComponent() {
+function RouteComponent3() {
   const router = useRouter();
   const navigate = Route.useNavigate();
 
@@ -87,6 +88,7 @@ function ErrorComponent({ error }: { error: Error }) {
     const redirect = location.pathname + location.search;
     if (error instanceof TRPCClientError) {
       if (error.message === "UNAUTHORIZED") {
+        console.log("wtd");
         clearAuth();
         navigate({ to: "/login", search: { redirect } });
       } else if (error.message === "FORBIDDEN") {

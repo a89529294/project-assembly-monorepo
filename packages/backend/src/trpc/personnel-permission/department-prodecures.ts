@@ -37,6 +37,57 @@ export const readDepartmentsProcedure = protectedProcedure([
     });
   });
 
+export const createDepartmentProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
+  .input(departmentSummarySchema.omit({ id: true }))
+  .output(departmentSummarySchema)
+  .mutation(async ({ input }) => {
+    // Check for duplicate name or prefix
+    const exists = await db
+      .select({ id: departmentsTable.id })
+      .from(departmentsTable)
+      .where(
+        or(
+          eq(departmentsTable.name, input.name),
+          eq(departmentsTable.enPrefix, input.enPrefix),
+          eq(departmentsTable.zhPrefix, input.zhPrefix)
+        )
+      );
+    if (exists.length > 0) {
+      throw new Error("部門名稱或前綴已存在");
+    }
+    const [created] = await db
+      .insert(departmentsTable)
+      .values(input)
+      .returning();
+    if (!created) {
+      throw new Error("部門創建失敗");
+    }
+    const { createdAt, updatedAt, ...rest } = created;
+    return rest;
+  });
+
+export const readDepartmentByIdProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
+  .input(z.object({ departmentId: z.string() }))
+  .output(departmentSummarySchema)
+  .query(async ({ input }) => {
+    const department = await db
+      .select()
+      .from(departmentsTable)
+      .where(eq(departmentsTable.id, input.departmentId))
+      .then((rows) => rows[0]);
+
+    if (!department) throw new Error("部門不存在");
+
+    const { updatedAt, createdAt, ...rest } = department;
+    return rest;
+  });
+
 export const readUnassignedDepartmentsProcedure = protectedProcedure([
   "PersonnelPermissionManagement",
 ])
@@ -258,6 +309,62 @@ export const readDepartmentUsersProcedure = protectedProcedure([
       .select()
       .from(usersTable)
       .where(inArray(usersTable.employeeId, employeeIds));
+  });
+
+export const updateDepartmentProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
+  .input(departmentSummarySchema)
+  .mutation(async ({ input }) => {
+    // 1. Check if department exists
+    const department = await db
+      .select()
+      .from(departmentsTable)
+      .where(eq(departmentsTable.id, input.id))
+      .then((rows) => rows[0]);
+    if (!department) {
+      throw new Error("Department not found");
+    }
+    // 2. Update department
+    const [updated] = await db
+      .update(departmentsTable)
+      .set({
+        name: input.name,
+        enPrefix: input.enPrefix,
+        zhPrefix: input.zhPrefix,
+      })
+      .where(eq(departmentsTable.id, input.id))
+      .returning();
+    if (!updated) {
+      throw new Error("Failed to update department");
+    }
+    // 3. Return updated department without createdAt/updatedAt
+    const { createdAt, updatedAt, ...rest } = updated;
+    return rest;
+  });
+
+export const deleteDepartmentProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
+  .input(z.object({ departmentId: z.string().uuid() }))
+  .mutation(async ({ input }) => {
+    const { departmentId } = input;
+
+    const department = await db
+      .select()
+      .from(departmentsTable)
+      .where(eq(departmentsTable.id, departmentId))
+      .then((rows) => rows[0]);
+    if (!department) {
+      throw new Error("Department not found");
+    }
+    // 2. Delete department (will cascade to employeeDepartmentsTable if FK is set)
+    await db
+      .delete(departmentsTable)
+      .where(eq(departmentsTable.id, departmentId));
+    return { success: true };
   });
 
 export const updateUserDepartmentRelationProcedure = protectedProcedure([

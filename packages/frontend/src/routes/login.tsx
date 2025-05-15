@@ -43,9 +43,7 @@ function Login() {
         await router.invalidate();
 
         // may need this if auth state hasnt updated yet
-        // await new Promise(r=>setTimeout(r,1000))
 
-        console.log(search.redirect);
         await navigate({ to: search.redirect || "/" });
         setLogginIn(false);
       },

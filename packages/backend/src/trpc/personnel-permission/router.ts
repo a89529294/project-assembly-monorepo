@@ -8,11 +8,15 @@ import {
 import {
   addDepartmentsToRoleProcedure,
   readAssignedDepartmentsProcedure,
+  readDepartmentByIdProcedure,
   readDepartmentsProcedure,
+  createDepartmentProcedure,
   readDepartmentUsersProcedure,
   readUnassignedDepartmentsProcedure,
   removeDepartmentsFromRoleProcedure,
   updateUserDepartmentRelationProcedure,
+  updateDepartmentProcedure,
+  deleteDepartmentProcedure,
 } from "./department-prodecures.js";
 import {
   createUsersFromEmployeesProcedure,
@@ -34,6 +38,10 @@ export const personnelPermissionRouter = router({
   deleteAppUsersPermission: deleteAppUsersPermissionProcedure,
   grantEmployeeOrAppUserPermission: grantPermissionMutationProcedure,
   readDepartments: readDepartmentsProcedure,
+  createDepartment: createDepartmentProcedure,
+  readDepartmentById: readDepartmentByIdProcedure,
+  updateDepartment: updateDepartmentProcedure,
+  deleteDepartment: deleteDepartmentProcedure,
   readUnassignedDepartments: readUnassignedDepartmentsProcedure,
   readAssignedDepartments: readAssignedDepartmentsProcedure,
   addDepartmentsToRole: addDepartmentsToRoleProcedure,

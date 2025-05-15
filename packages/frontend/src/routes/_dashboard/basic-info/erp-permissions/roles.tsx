@@ -1,4 +1,4 @@
-import { DialogAddDepartment } from "@/components/dialogs/add-department";
+import { DialogAddDepartmentsToRole } from "@/components/dialogs/add-departments-to-role";
 import { PendingComponent } from "@/components/pending-component";
 import SelectionActionButtons from "@/components/selection-action-buttons";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -80,7 +80,10 @@ function Section({ title, roleName }: { title: string; roleName: RoleName }) {
           onClear={clearAll}
           onRemove={removeDepartments}
         >
-          <DialogAddDepartment disabled={isPending} roleName={roleName} />
+          <DialogAddDepartmentsToRole
+            disabled={isPending}
+            roleName={roleName}
+          />
         </SelectionActionButtons>
       </CardHeader>
       <CardContent>

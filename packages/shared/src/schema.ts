@@ -120,10 +120,10 @@ export const employeeDepartmentsTable = pgTable("employee_departments", {
   id: uuid("id").primaryKey().defaultRandom(),
   employeeId: uuid("employee_id")
     .notNull()
-    .references(() => employeesTable.id),
+    .references(() => employeesTable.id, { onDelete: "cascade" }),
   departmentId: uuid("department_id")
     .notNull()
-    .references(() => departmentsTable.id),
+    .references(() => departmentsTable.id, { onDelete: "cascade" }),
   jobTitle: varchar("job_title", { length: 100 }),
   inheritsDepartmentRoles: boolean("inherits_department_roles").default(true),
   ...timestamps,
@@ -155,7 +155,7 @@ export const roleDepartmentsTable = pgTable("role_departments", {
     .references(() => rolesTable.id),
   departmentId: uuid("department_id")
     .notNull()
-    .references(() => departmentsTable.id),
+    .references(() => departmentsTable.id, { onDelete: "cascade" }),
   ...timestamps,
 });
 
