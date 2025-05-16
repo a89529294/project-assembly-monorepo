@@ -1,6 +1,7 @@
 import { createSelectSchema } from "drizzle-zod";
 import { departmentsTable } from "./schema";
 import { z } from "zod";
+import { trimThenValidate } from "./utils";
 
 export const departmentSummarySchema = createSelectSchema(departmentsTable)
   .omit({
@@ -8,9 +9,9 @@ export const departmentSummarySchema = createSelectSchema(departmentsTable)
     createdAt: true,
   })
   .extend({
-    name: z.string().min(1, "名稱不能為空"),
-    enPrefix: z.string().min(1, "英文前綴不能為空"),
-    zhPrefix: z.string().min(1, "中文前綴不能為空"),
+    name: trimThenValidate("名稱不能為空"),
+    enPrefix: trimThenValidate("英文前綴不能為空"),
+    zhPrefix: trimThenValidate("中文前綴不能為空"),
   });
 
 export type DepartmentSummary = z.infer<typeof departmentSummarySchema>;

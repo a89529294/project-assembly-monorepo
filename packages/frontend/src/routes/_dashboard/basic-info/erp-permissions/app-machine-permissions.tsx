@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/data-table";
 import { DialogAddAppUser } from "@/components/dialog-add-app-user";
 import { PendingComponent } from "@/components/pending-component";
-import { SearchBar } from "@/components/search-bar";
+import { SearchBar, SearchBarImperativeHandle } from "@/components/search-bar";
 import SelectionActionButtons from "@/components/selection-action-buttons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { APP_USER_PERMISSION_TABS } from "@/features/app-users";
@@ -11,7 +11,6 @@ import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
-import { SearchBarImperativeHandle } from "@/types";
 import {
   AppUserPermission,
   getAppUsersByPermissionInputSchema,
@@ -109,6 +108,7 @@ export function RouteComponent() {
             });
           }}
           initSearchTerm={searchTerm}
+          isUpdating={loading}
         />
 
         <SelectionActionButtons

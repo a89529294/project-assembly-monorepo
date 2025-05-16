@@ -1,8 +1,10 @@
 import { trpc } from "@/trpc";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
-export function useSuspendedDepartments() {
+export function useSuspendedDepartments(searchTerm: string) {
   return useSuspenseQuery(
-    trpc.personnelPermission.readDepartments.queryOptions()
+    trpc.personnelPermission.readDepartments.queryOptions({
+      searchTerm,
+    })
   );
 }

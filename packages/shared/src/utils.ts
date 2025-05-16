@@ -98,3 +98,10 @@ export const summaryQueryNestedInputSchemaGenerator = <
     searchTerm: z.string().default(""),
   });
 };
+
+export function trimThenValidate(msg: string) {
+  return z
+    .string()
+    .transform((s) => s.trim())
+    .refine((s) => s.length > 0, msg);
+}

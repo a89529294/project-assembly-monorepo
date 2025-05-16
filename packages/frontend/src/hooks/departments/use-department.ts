@@ -1,25 +1,24 @@
 import { trpc } from "@/trpc";
-import { queryClient } from "@/query-client";
 import { useQuery } from "@tanstack/react-query";
 
-export function useDepartment(departmentId: string) {
-  const departmentsQueryKey =
-    trpc.personnelPermission.readDepartments.queryOptions().queryKey;
-
-  const cachedDepartments = queryClient.getQueryData(departmentsQueryKey);
-
-  const cachedDepartment = cachedDepartments
-    ? cachedDepartments.find((dept) => dept.id === departmentId)
-    : undefined;
-
-  const queryOptions = trpc.personnelPermission.readDepartmentById.queryOptions(
-    { departmentId }
+export function useDepartment(departmentId?: string) {
+  // Get all departments to use as a fallback
+  const { data: departments } = useQuery(
+    trpc.personnelPermission.readDepartments.queryOptions({
+      searchTerm: "",
+    })
   );
 
-  // Use the query with placeholderData to show cached data immediately
+  // Find the department in the cached departments if we have it
+  const cachedDepartment = departments?.find(
+    (dept) => dept.id === departmentId
+  );
+
   const { data: department, ...rest } = useQuery({
-    ...queryOptions,
-    placeholderData: cachedDepartment,
+    ...trpc.personnelPermission.readDepartmentById.queryOptions({
+      departmentId: departmentId!,
+    }),
+    initialData: cachedDepartment,
     enabled: !!departmentId,
   });
 

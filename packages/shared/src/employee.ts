@@ -50,20 +50,3 @@ export const employeeDetailedSchema = employeeSummarySchema
   });
 
 export type EmployeeDetail = z.infer<typeof employeeDetailedSchema>;
-
-// export const employeesSummaryQueryInputSchema = z.object({
-//   page: z.number().int().min(1).default(1),
-//   pageSize: z.number().int().min(1).max(100).default(20),
-//   orderBy: z
-//     .enum(
-//       Object.keys(employeeSummarySchema.shape) as [
-//         EmployeeSummaryKey,
-//         ...EmployeeSummaryKey[],
-//       ]
-//     )
-//     .default("idNumber"),
-//   orderDirection: z
-//     .enum(["DESC", "ASC"] as [OrderDirection, ...OrderDirection[]])
-//     .default("DESC"),
-//   searchTerm: z.string().optional(),
-// });

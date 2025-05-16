@@ -18,6 +18,7 @@ import {
   ilike,
   or,
   notInArray,
+  desc,
 } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
@@ -27,9 +28,29 @@ export const readDepartmentsProcedure = protectedProcedure([
   "BasicInfoManagement",
   "PersonnelPermissionManagement",
 ])
+  .input(
+    z
+      .object({
+        searchTerm: z.string(),
+      })
+      .optional()
+  )
   .output(z.array(departmentSummarySchema))
-  .query(async () => {
-    const departments = await db.select().from(departmentsTable);
+  .query(async ({ input }) => {
+    let query = db.select().from(departmentsTable).$dynamic();
+
+    if (input?.searchTerm) {
+      const search = `%${input.searchTerm}%`;
+      query.where(
+        or(
+          ilike(departmentsTable.name, search),
+          ilike(departmentsTable.enPrefix, search),
+          ilike(departmentsTable.zhPrefix, search)
+        )
+      );
+    }
+
+    const departments = await query.orderBy(desc(departmentsTable.updatedAt));
 
     return departments.map((e) => {
       const { updatedAt, createdAt, ...rest } = e;

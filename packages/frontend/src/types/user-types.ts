@@ -2,8 +2,14 @@
  * Types for user-related data and operations
  */
 
-export type UserOrderByField = "id" | "name" | "account" | "employeeId" | "passwordHash";
-export type OrderDirection = "ASC" | "DESC";
+import { OrderDirection } from "@myapp/shared";
+
+export type UserOrderByField =
+  | "id"
+  | "name"
+  | "account"
+  | "employeeId"
+  | "passwordHash";
 
 export interface UserQueryParams {
   page: number;

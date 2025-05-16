@@ -23,9 +23,10 @@ import {
 import { LucidePen, LucidePlus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+
 export function DialogDepartment({ id }: { id?: string }) {
   const [open, setOpen] = useState(false);
-  const { department } = useDepartment(id || "");
+  const { department } = useDepartment(id);
   const { updateDepartment, isPending: isUpdatePending } = useUpdateDepartment(
     id || ""
   );
@@ -35,6 +36,9 @@ export function DialogDepartment({ id }: { id?: string }) {
   const isEditing = typeof id === "string";
 
   const isPending = isEditing ? isUpdatePending : isCreatePending;
+
+  console.log(id);
+  console.log(department);
 
   // if in edit mode, department is guaranteed to exist
   const defaultValues = isEditing

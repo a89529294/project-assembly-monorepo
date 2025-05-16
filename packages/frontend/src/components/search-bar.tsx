@@ -1,19 +1,30 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDecouncedValue } from "@/hooks/use-debounced-value";
-import { SearchBarImperativeHandle } from "@/types";
 import { LucideSearch } from "lucide-react";
-import { Ref, useEffect, useImperativeHandle, useRef, useState } from "react";
+import {
+  Ref,
+  RefObject,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
 interface SearchBarProps {
   placeholder?: string;
-  onSearchChange: (s: string) => void;
+  onSearchChange: (s: string, ref: RefObject<HTMLInputElement | null>) => void;
   className?: string;
   hideIcon?: boolean;
   initSearchTerm?: string;
   disabled?: boolean;
   ref?: Ref<SearchBarImperativeHandle>;
+  isUpdating: boolean;
 }
+
+export type SearchBarImperativeHandle = {
+  resetInput: () => void;
+};
 
 export function SearchBar({
   placeholder = "搜尋...",
@@ -23,12 +34,13 @@ export function SearchBar({
   initSearchTerm,
   disabled,
   ref,
+  isUpdating,
 }: SearchBarProps) {
   const [input, setInput] = useState(initSearchTerm ?? "");
   const debouncedInput = useDecouncedValue(input);
   const onSearchChangeRef = useRef(onSearchChange);
   onSearchChangeRef.current = onSearchChange;
-  const isComponentMounted = useRef(true);
+  const searchBarRef = useRef<HTMLInputElement>(null);
 
   useImperativeHandle(ref, () => {
     return {
@@ -39,21 +51,16 @@ export function SearchBar({
   }, []);
 
   useEffect(() => {
-    // TODO both (isComponentMounted.current && typeof debouncedInput === "string") and the next useEffect are needed to prevent navigation revert when quickly navigating between pages
-    // Need to investigate why
-    // TEST: remove the following if check and the next useEffect then navigate between basic-info/employees and /basic-info/company-info to see the issue
-    if (isComponentMounted.current && typeof debouncedInput === "string") {
-      onSearchChangeRef.current(debouncedInput);
+    if (debouncedInput !== initSearchTerm) {
+      onSearchChangeRef.current(debouncedInput, searchBarRef);
     }
-  }, [debouncedInput]);
+  }, [debouncedInput, initSearchTerm]);
 
   useEffect(() => {
-    isComponentMounted.current = true;
-
-    return () => {
-      isComponentMounted.current = false;
-    };
-  }, []);
+    if (!isUpdating && searchBarRef.current) {
+      searchBarRef.current.focus();
+    }
+  }, [isUpdating]);
 
   return (
     <form className={`flex items-center gap-2 ${className}`} role="search">
@@ -65,6 +72,7 @@ export function SearchBar({
         className="flex-1"
         aria-label={placeholder}
         disabled={disabled}
+        ref={searchBarRef}
       />
       {!hideIcon && (
         <Button type="submit" variant="outline" size="icon" aria-label="搜尋">

@@ -1,148 +1,148 @@
 import { DataTable } from "@/components/data-table";
+import { PageShell } from "@/components/page-shell";
 import { SmartPagination } from "@/components/pagination";
+import { PendingComponent } from "@/components/pending-component";
+import { SearchBar } from "@/components/search-bar";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { genCustomerColumns } from "@/features/customers/data-table/columns";
+import { useDeferredTableControls } from "@/hooks/use-deferred-table-controls";
+import { useSelection } from "@/hooks/use-selection";
+import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
+import {
+  customersSummaryQueryInputSchema,
+  CustomerSummaryKey,
+} from "@myapp/shared";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import type { ColumnDef } from "@tanstack/react-table";
-
-// Define the customer type based on the schema
-export type Customer = {
-  id: string; // Assuming an ID for selection purposes
-  customerNumber: string;
-  name: string;
-  nickname: string;
-  category?: string | null;
-  principal?: string | null;
-  taxDeductionCategory?: string | null;
-  taxId: string;
-  phone: string;
-  fax?: string | null;
-};
-
-// Generate columns for the customer table
-export const genCustomerColumns = (): ColumnDef<Customer>[] => [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "customerNumber",
-    header: "Customer Number",
-  },
-  {
-    accessorKey: "name",
-    header: "Name",
-  },
-  {
-    accessorKey: "nickname",
-    header: "Nickname",
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-  },
-  {
-    accessorKey: "principal",
-    header: "Principal",
-  },
-  {
-    accessorKey: "taxDeductionCategory",
-    header: "Tax Deduction Category",
-  },
-  {
-    accessorKey: "taxId",
-    header: "Tax ID",
-  },
-  {
-    accessorKey: "phone",
-    header: "Phone",
-  },
-  {
-    accessorKey: "fax",
-    header: "Fax",
-  },
-  // Add an actions column if needed in the future
-  // {
-  //   id: "actions",
-  //   cell: ({ row }) => {
-  //     const customer = row.original;
-  //     return (
-  //       // Placeholder for action buttons (e.g., Edit, Delete)
-  //       <Button variant="ghost" size="sm">Actions</Button>
-  //     );
-  //   },
-  // },
-];
 
 export const Route = createFileRoute("/_dashboard/customers/summary")({
-  loader() {
+  validateSearch: customersSummaryQueryInputSchema,
+  loaderDeps: ({
+    search: { orderBy, orderDirection, page, pageSize, searchTerm },
+  }) => ({
+    orderBy,
+    orderDirection,
+    page,
+    pageSize,
+    searchTerm,
+  }),
+  loader({ deps }) {
     queryClient.ensureQueryData(
-      trpc.basicInfo.readCustomers.queryOptions({
-        page: 1,
-      })
+      trpc.basicInfo.readCustomers.queryOptions(deps)
     );
   },
+  pendingComponent: PendingComponent,
   component: RouteComponent,
 });
 
-const columns = genCustomerColumns();
-
 function RouteComponent() {
+  const search = Route.useSearch();
+
+  const { deferredValues, isUpdatingTableData, handleSortChange } =
+    useDeferredTableControls(search);
   const { data } = useSuspenseQuery(
-    trpc.basicInfo.readCustomers.queryOptions({
-      page: 1,
-    })
+    trpc.basicInfo.readCustomers.queryOptions(deferredValues)
   );
+  const navigate = Route.useNavigate();
+  const {
+    onSelectionChange,
+    onSelectAllChange,
+    selection,
+    selectedCount,
+    rowSelection,
+    resetSelection,
+    // data: selectedCustomers,
+  } = useSelection({
+    totalFilteredCount: data.total,
+    pageIds: data.data.map((e) => e.id),
+  });
+  const disableInputs = isUpdatingTableData;
+
+  const handleSort = (columnId: CustomerSummaryKey) => {
+    const newSearch = handleSortChange(
+      columnId,
+      deferredValues.orderBy,
+      deferredValues.orderDirection
+    );
+    navigate({
+      search: newSearch,
+      replace: true,
+    });
+  };
 
   return (
-    <div className="p-6 pb-0 bg-white flex flex-col rounded-lg shadow-lg h-full">
+    <PageShell>
       <h2 className="text-xl font-bold mb-4 flex justify-between items-center">
-        Customer List
-        <Button asChild>
-          {/* Placeholder Link - Update route as needed */}
-          <Link to="/customers/create">Add Customer</Link>
-        </Button>
+        <div className="flex gap-3 items-center">
+          客戶清單
+          <SearchBar
+            onSearchChange={(searchTerm) => {
+              navigate({
+                search: { searchTerm },
+                replace: true,
+              });
+              resetSelection();
+            }}
+            initSearchTerm={search.searchTerm}
+            disabled={disableInputs}
+            isUpdating={disableInputs}
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          {selectedCount > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-normal">
+                已選擇 {selectedCount} 個客戶
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {}}
+                disabled={disableInputs}
+              >
+                移除客戶
+              </Button>
+            </div>
+          )}
+          <Button asChild>
+            {/* Placeholder Link - Update route as needed */}
+            <Link to="/customers/create">Add Customer</Link>
+          </Button>
+        </div>
       </h2>
       <div className="flex-1 relative">
         <div className="absolute inset-0 bottom-10">
-          <ScrollArea className="rounded-md border p-0 h-full">
+          <ScrollArea
+            className={cn(
+              "rounded-md border p-0 h-full",
+              isUpdatingTableData && "opacity-50"
+            )}
+          >
             <DataTable
-              columns={columns}
+              columns={genCustomerColumns({
+                selection,
+                onSelectAllChange,
+                orderBy: search.orderBy,
+                orderDirection: search.orderDirection,
+                clickOnCurrentHeader: (columnId) => handleSort(columnId),
+                clickOnOtherHeader: (columnId) => handleSort(columnId),
+              })}
               data={data.data}
-              // rowSelection={{}} // Manage rowSelection state if needed
-              // setRowSelection={() => {}} // Manage rowSelection state if needed
+              rowSelection={rowSelection}
+              setRowSelection={onSelectionChange}
             />
           </ScrollArea>
         </div>
         <SmartPagination
           className="absolute bottom-0 h-10 flex items-center"
-          totalPages={0}
-          currentPage={0}
-          onPageChange={() => {}}
+          totalPages={data.totalPages}
+          currentPage={data.page}
+          onPageChange={(page) => navigate({ search: { page } })}
         />
       </div>
-    </div>
+    </PageShell>
   );
 }
