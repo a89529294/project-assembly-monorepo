@@ -1,12 +1,13 @@
 import { useDeferredValue, useMemo } from "react";
-import { OrderDirection, SortChangeResult } from "@/types/user-types";
+import { SortChangeResult } from "@/types/user-types";
+import { OrderDirection } from "@myapp/shared";
 
 interface DeferredTableControlsParams<T extends string = string> {
   page: number;
   pageSize: number;
   orderBy: T;
   orderDirection: OrderDirection;
-  searchTerm?: string;
+  searchTerm: string;
 }
 
 interface DeferredTableControlsReturn<T extends string = string> {
@@ -15,7 +16,7 @@ interface DeferredTableControlsReturn<T extends string = string> {
     pageSize: number;
     orderBy: T;
     orderDirection: OrderDirection;
-    searchTerm?: string;
+    searchTerm: string;
   };
   isUpdatingTableData: boolean;
   handleSortChange: (
