@@ -1,7 +1,6 @@
-import { useDeferredTableControls } from "@/hooks/use-deferred-table-controls";
+import { DeferredPaginatedTableControlsReturn } from "@/hooks/use-deferred-paginated-table-controls";
 import { SelectionState, useSelection } from "@/hooks/use-selection";
 import { OrderDirection } from "@myapp/shared";
-import { useNavigate } from "@tanstack/react-router";
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import {
   createContext,
@@ -11,15 +10,15 @@ import {
   useContext,
 } from "react";
 
-type SearchParams = {
+type SearchParams<X extends string> = {
   page: number;
   pageSize: number;
-  orderBy: string;
-  orderDirection: "ASC" | "DESC";
+  orderBy: X;
+  orderDirection: OrderDirection;
   searchTerm: string;
 };
 
-type SearchState = Partial<SearchParams>;
+type SearchState<X extends string> = Partial<SearchParams<X>>;
 
 type SummaryResponse<T> = {
   data: T[];
@@ -28,8 +27,8 @@ type SummaryResponse<T> = {
   page: number;
 };
 
-type SummaryPageContextType<T> = {
-  search: SearchParams;
+type SummaryPageContextType<T, X extends string> = {
+  search: SearchParams<X>;
   isUpdatingTableData: boolean;
   selectedCount: number;
   disableInputs: boolean;
@@ -42,7 +41,7 @@ type SummaryPageContextType<T> = {
   searchTerm: string;
   rowSelection: Record<string, boolean>;
   columns: ColumnDef<T>[];
-  handleSort: (columnId: string) => void;
+  handleSort: (columnId: X) => void;
   handleSearch: (searchTerm: string) => void;
   handlePageChange: (page: number) => void;
   handleSelectionChange: Dispatch<SetStateAction<RowSelectionState>>;
@@ -50,15 +49,27 @@ type SummaryPageContextType<T> = {
   resetSelection: () => void;
 };
 
-// Create a type-safe context without using 'any'
-const SummaryPageContext = createContext<SummaryPageContextType<unknown>>(
-  {} as SummaryPageContextType<unknown>
-);
+// Context factory to create typed contexts
+export function createSummaryPageContext<T, X extends string>() {
+  return createContext<SummaryPageContextType<T, X> | undefined>(undefined);
+}
 
-type SummaryPageProviderProps<T, U extends keyof T> = {
+// Default context for common use cases
+interface DefaultType {
+  id: string;
+  [key: string]: unknown; // Flexible to accommodate any properties
+}
+export const DefaultSummaryPageContext = createSummaryPageContext<
+  DefaultType,
+  string
+>();
+
+type SummaryPageProviderProps<T, U extends string & keyof T> = {
   children: React.ReactNode;
   data: SummaryResponse<T>;
-  initialSearch: SearchParams;
+  // initialSearch: SearchParams<U>;
+  deferredTableControlsReturn: DeferredPaginatedTableControlsReturn<U>;
+  navigate: (options: { search: Partial<SearchParams<U>> }) => void;
   columnsGeneratorFunction: ({
     orderBy,
     orderDirection,
@@ -78,16 +89,20 @@ type SummaryPageProviderProps<T, U extends keyof T> = {
 
 export function SummaryPageProvider<
   T extends { id: string },
-  U extends keyof T,
+  U extends string & keyof T,
 >({
   children,
   data,
-  initialSearch,
+  // initialSearch,
+  deferredTableControlsReturn,
+  navigate,
   columnsGeneratorFunction,
 }: SummaryPageProviderProps<T, U>) {
-  const navigate = useNavigate();
-  const { deferredValues, isUpdatingTableData, handleSortChange } =
-    useDeferredTableControls(initialSearch);
+  // const { deferredValues, isUpdatingTableData, handleSortChange } =
+  //   useDeferredTableControls(initialSearch);
+
+  const { deferredValues, handleSortChange, isUpdatingTableData } =
+    deferredTableControlsReturn;
 
   const {
     onSelectionChange,
@@ -102,28 +117,27 @@ export function SummaryPageProvider<
   });
 
   const updateSearch = useCallback(
-    (updates: SearchState) => {
+    (updates: SearchState<U>) => {
       navigate({
-        search: (prev: SearchParams) => ({
-          ...prev,
-          ...updates,
-        }),
+        search: { ...updates },
       });
     },
     [navigate]
   );
 
   const handleSort = useCallback(
-    (columnId: string) => {
+    (columnId: U) => {
       const { orderBy, orderDirection } = handleSortChange(
-        columnId,
+        columnId, // Cast if handleSortChange expects string
         deferredValues.orderBy,
         deferredValues.orderDirection
       );
+
       updateSearch({
         page: 1,
-        orderBy,
+        orderBy: orderBy,
         orderDirection,
+        searchTerm: deferredValues.searchTerm,
       });
     },
     [deferredValues, handleSortChange, updateSearch]
@@ -139,9 +153,19 @@ export function SummaryPageProvider<
 
   const handlePageChange = useCallback(
     (page: number) => {
-      updateSearch({ page });
+      updateSearch({
+        page,
+        searchTerm: deferredValues.searchTerm,
+        orderBy: deferredValues.orderBy,
+        orderDirection: deferredValues.orderDirection,
+      });
     },
-    [updateSearch]
+    [
+      deferredValues.orderBy,
+      deferredValues.orderDirection,
+      deferredValues.searchTerm,
+      updateSearch,
+    ]
   );
 
   const columns = columnsGeneratorFunction({
@@ -149,11 +173,11 @@ export function SummaryPageProvider<
     onSelectAllChange,
     orderBy: deferredValues.orderBy as U,
     orderDirection: deferredValues.orderDirection,
-    clickOnCurrentHeader: (columnId) => handleSort(columnId as string),
-    clickOnOtherHeader: (columnId) => handleSort(columnId as string),
+    clickOnCurrentHeader: (columnId: U) => handleSort(columnId),
+    clickOnOtherHeader: (columnId: U) => handleSort(columnId),
   });
 
-  const value: SummaryPageContextType<T> = {
+  const value: SummaryPageContextType<T, U> = {
     search: deferredValues,
     isUpdatingTableData,
     selectedCount,
@@ -165,7 +189,6 @@ export function SummaryPageProvider<
     orderBy: deferredValues.orderBy,
     orderDirection: deferredValues.orderDirection,
     searchTerm: deferredValues.searchTerm,
-
     rowSelection,
     columns,
     handleSort,
@@ -176,19 +199,22 @@ export function SummaryPageProvider<
     resetSelection,
   };
 
-  return (
-    <SummaryPageContext.Provider value={value}>
-      {children}
-    </SummaryPageContext.Provider>
-  );
+  const context = DefaultSummaryPageContext as React.Context<
+    SummaryPageContextType<T, U> | undefined
+  >;
+
+  return <context.Provider value={value}>{children}</context.Provider>;
 }
 
-export function useSummaryPageContext<T>() {
-  const context = useContext(SummaryPageContext) as SummaryPageContextType<T>;
-  if (!context) {
+export function useSummaryPageContext<T, U extends string>() {
+  const context = DefaultSummaryPageContext as React.Context<
+    SummaryPageContextType<T, U> | undefined
+  >;
+  const ctx = useContext(context);
+  if (!ctx) {
     throw new Error(
       "useSummaryPageContext must be used within a SummaryPageProvider"
     );
   }
-  return context;
+  return ctx;
 }

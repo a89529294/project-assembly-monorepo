@@ -7,7 +7,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useRef, ReactNode } from "react";
 import { toast } from "sonner";
 import { SearchBarImperativeHandle } from "@/components/search-bar";
-import { useDeferredTableControls } from "@/hooks/use-deferred-table-controls";
+import { useDeferredTableControls } from "@/hooks/use-deferred-paginated-table-controls";
 import { useSelection } from "@/hooks/use-selection";
 import { queryClient } from "@/query-client";
 import { Link } from "@tanstack/react-router";

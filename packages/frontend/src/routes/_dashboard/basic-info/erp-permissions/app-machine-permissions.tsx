@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table";
 import { DialogAddAppUser } from "@/components/dialog-add-app-user";
+import { PageShell } from "@/components/page-shell";
 import { PendingComponent } from "@/components/pending-component";
 import { SearchBar, SearchBarImperativeHandle } from "@/components/search-bar";
 import SelectionActionButtons from "@/components/selection-action-buttons";
@@ -7,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { APP_USER_PERMISSION_TABS } from "@/features/app-users";
 
 import { genAppUsersWithAllDepartmentsColumns } from "@/features/app-users/data-table/app-users-with-all-departments";
+import { useDeferredAppPermissionControls } from "@/hooks/use-deferred-app-permission-controls";
 import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
@@ -17,7 +19,7 @@ import {
 } from "@myapp/shared";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useDeferredValue, useRef } from "react";
+import { useRef } from "react";
 
 export const Route = createFileRoute(
   "/_dashboard/basic-info/erp-permissions/app-machine-permissions"
@@ -40,23 +42,22 @@ export const Route = createFileRoute(
 });
 
 export function RouteComponent() {
-  const ref = useRef<SearchBarImperativeHandle>(null);
-  const { permission, searchTerm } = Route.useSearch();
+  const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const deferredPermission = useDeferredValue(permission);
-  const deferredSearchTerm = useDeferredValue(searchTerm);
-  const loading =
-    permission !== deferredPermission || searchTerm !== deferredSearchTerm;
-
-  const { mutate, isPending } = useMutation(
-    trpc.personnelPermission.deleteAppUsersPermission.mutationOptions()
-  );
-
+  const {
+    deferredValues: { permission, searchTerm },
+    isUpdating,
+  } = useDeferredAppPermissionControls(search);
   const { data } = useSuspenseQuery(
     trpc.personnelPermission.readAppUserByPermission.queryOptions({
-      permission: deferredPermission,
-      searchTerm: deferredSearchTerm,
+      permission,
+      searchTerm,
     })
+  );
+
+  const ref = useRef<SearchBarImperativeHandle>(null);
+  const { mutate, isPending } = useMutation(
+    trpc.personnelPermission.deleteAppUsersPermission.mutationOptions()
   );
   const {
     rowSelection,
@@ -95,7 +96,7 @@ export function RouteComponent() {
   };
 
   return (
-    <div className="p-6 bg-white flex flex-col rounded-lg shadow-lg h-full">
+    <PageShell>
       <div className="flex justify-between mb-6">
         <SearchBar
           ref={ref}
@@ -108,18 +109,19 @@ export function RouteComponent() {
             });
           }}
           initSearchTerm={searchTerm}
-          isUpdating={loading}
+          isUpdating={isUpdating}
         />
 
         <SelectionActionButtons
           hasSelection={isPartialSelected}
-          isPending={isPending}
+          isPending={isUpdating || isPending}
           onClear={clearAll}
           onRemove={onRemoveAppUsersPermission}
         >
           <DialogAddAppUser permission={permission} />
         </SelectionActionButtons>
       </div>
+
       <div className="flex border-b border-gray-200 mb-4">
         {APP_USER_PERMISSION_TABS.map((t) => (
           <button
@@ -140,7 +142,7 @@ export function RouteComponent() {
           <ScrollArea
             className={cn(
               "rounded-md border p-0 h-full",
-              loading && "opacity-50"
+              isUpdating && "opacity-50"
             )}
           >
             <DataTable
@@ -152,6 +154,6 @@ export function RouteComponent() {
           </ScrollArea>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

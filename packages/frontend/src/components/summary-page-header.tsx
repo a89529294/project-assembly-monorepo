@@ -1,6 +1,7 @@
 import { SearchBar } from "@/components/search-bar";
 import { Button } from "@/components/ui/button";
 import { useSummaryPageContext } from "@/contexts/summary-page-context";
+import { Link } from "@tanstack/react-router";
 
 export function SummaryPageHeader({
   title,
@@ -39,7 +40,7 @@ export function SummaryPageHeader({
         )}
 
         <Button asChild disabled={disableInputs}>
-          <a href={createHref}>新增</a>
+          <Link to={createHref}>新增</Link>
         </Button>
       </div>
     </h2>

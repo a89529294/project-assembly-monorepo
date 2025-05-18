@@ -4,14 +4,10 @@ import { SummaryPageDataTable } from "@/components/summary-page-data-table";
 import { SummaryPageHeader } from "@/components/summary-page-header";
 import { SummaryPageProvider } from "@/contexts/summary-page-context";
 import { genCustomerColumns } from "@/features/customers/data-table/columns";
-import { useDeferredTableControls } from "@/hooks/use-deferred-table-controls";
-import { useSelection } from "@/hooks/use-selection";
+import { useDeferredPaginatedTableControls } from "@/hooks/use-deferred-paginated-table-controls";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
-import {
-  customersSummaryQueryInputSchema,
-  CustomerSummaryKey,
-} from "@myapp/shared";
+import { customersSummaryQueryInputSchema } from "@myapp/shared";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -37,11 +33,12 @@ export const Route = createFileRoute("/_dashboard/customers/summary")({
 
 function RouteComponent() {
   const search = Route.useSearch();
-
-  const { deferredValues, isUpdatingTableData, handleSortChange } =
-    useDeferredTableControls(search);
+  const navigate = Route.useNavigate();
+  const deferredTableControlsReturn = useDeferredPaginatedTableControls(search);
   const { data } = useSuspenseQuery(
-    trpc.basicInfo.readCustomers.queryOptions(deferredValues)
+    trpc.basicInfo.readCustomers.queryOptions(
+      deferredTableControlsReturn.deferredValues
+    )
   );
 
   // const navigate = Route.useNavigate();
@@ -72,9 +69,11 @@ function RouteComponent() {
   return (
     <PageShell>
       <SummaryPageProvider
-        initialSearch={search}
+        // initialSearch={search}
         data={data}
+        deferredTableControlsReturn={deferredTableControlsReturn}
         columnsGeneratorFunction={genCustomerColumns}
+        navigate={(a) => navigate({ search: a.search })}
       >
         <SummaryPageHeader title="客戶清單" createHref="/customers/create" />
         <SummaryPageDataTable />

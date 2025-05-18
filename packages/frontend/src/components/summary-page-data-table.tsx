@@ -4,7 +4,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSummaryPageContext } from "@/contexts/summary-page-context";
 import { cn } from "@/lib/utils";
 
-export function SummaryPageDataTable() {
+export function SummaryPageDataTable<
+  T extends { id: string },
+  U extends string & keyof T,
+>() {
   const {
     search,
     disableInputs,
@@ -14,7 +17,7 @@ export function SummaryPageDataTable() {
     data,
     rowSelection,
     handleSelectionChange,
-  } = useSummaryPageContext();
+  } = useSummaryPageContext<T, U>();
 
   return (
     <div className="flex-1 relative">

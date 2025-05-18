@@ -72,7 +72,7 @@ export function EmployeeForm({
     form.watch("mailingCounty")
   );
 
-  const { control, formState } = form;
+  const { control } = form;
   const { fields, append, remove } = useFieldArray({
     control,
     name: "departments",
@@ -95,13 +95,11 @@ export function EmployeeForm({
     }
   };
 
-  console.log(formState.errors);
-
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <Button asChild>
-          <Link to="/basic-info/employees">返回</Link>
+        <Button asChild type="button">
+          <Link to={"/basic-info/employees"}>返回</Link>
         </Button>
 
         <ActionButtons form={form} />

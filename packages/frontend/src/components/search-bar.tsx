@@ -41,6 +41,8 @@ export function SearchBar({
   const onSearchChangeRef = useRef(onSearchChange);
   onSearchChangeRef.current = onSearchChange;
   const searchBarRef = useRef<HTMLInputElement>(null);
+  const fastDebouncedInputRef = useRef(input);
+  const slowDebouncedInputRef = useRef(input);
 
   useImperativeHandle(ref, () => {
     return {
@@ -51,14 +53,19 @@ export function SearchBar({
   }, []);
 
   useEffect(() => {
-    if (debouncedInput !== initSearchTerm) {
-      onSearchChangeRef.current(debouncedInput, searchBarRef);
-    }
-  }, [debouncedInput, initSearchTerm]);
+    onSearchChangeRef.current(debouncedInput, searchBarRef);
+    fastDebouncedInputRef.current = debouncedInput;
+  }, [debouncedInput]);
 
   useEffect(() => {
-    if (!isUpdating && searchBarRef.current) {
+    if (
+      !isUpdating &&
+      searchBarRef.current &&
+      fastDebouncedInputRef.current !== slowDebouncedInputRef.current
+    ) {
       searchBarRef.current.focus();
+
+      slowDebouncedInputRef.current = fastDebouncedInputRef.current;
     }
   }, [isUpdating]);
 
