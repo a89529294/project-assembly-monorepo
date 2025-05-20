@@ -11,7 +11,11 @@ import {
   updateEmployeeByIdProcedure,
 } from "./employee-procedures.js";
 import { router } from "../core.js";
-import { readCustomersProcedure } from "./customers-procedures.js";
+import {
+  createCustomerProcedure,
+  deleteCustomersProcedure,
+  readCustomersProcedure,
+} from "./customers-procedures.js";
 
 export const basicInfoRouter = router({
   createEmployee: createEmployeeProcedure,
@@ -23,4 +27,6 @@ export const basicInfoRouter = router({
   createCompanyInfo: createCompanyInfoProcedure,
   updateCompanyInfo: updateCompanyInfoProcedure,
   readCustomers: readCustomersProcedure,
+  deleteCustomers: deleteCustomersProcedure,
+  createCustomer: createCustomerProcedure,
 });

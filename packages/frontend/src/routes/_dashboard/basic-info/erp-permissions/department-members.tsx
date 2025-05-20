@@ -8,7 +8,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSuspendedDepartments } from "@/hooks/departments/use-suspended-departments";
+import { useSuspendedDepartmentsAll } from "@/hooks/departments/use-suspended-departments-all";
+
 import { useSimpleSelection } from "@/hooks/use-simple-selection";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
@@ -25,7 +26,7 @@ export const Route = createFileRoute(
 )({
   loader() {
     queryClient.ensureQueryData(
-      trpc.personnelPermission.readDepartments.queryOptions()
+      trpc.personnelPermission.readAllDepartments.queryOptions()
     );
   },
   component: RouteComponent,
@@ -33,7 +34,7 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  const { data: departments } = useSuspendedDepartments();
+  const { data: departments } = useSuspendedDepartmentsAll();
 
   return (
     <div className="absolute inset-6">
@@ -117,7 +118,7 @@ function DepartmentSection({ department }: { department: DepartmentSummary }) {
         <div className="px-6 pb-4 pt-2 flex flex-col gap-2">
           <div className="flex justify-end">
             <SelectionActionButtons
-              hasSelection={selected.length > 0}
+              selectedCount={selected.length}
               isPending={isPending}
               onClear={clearAll}
               onRemove={removeUsersFromDepartment}

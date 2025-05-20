@@ -9,7 +9,7 @@ export function useDeleteDepartment() {
       onSuccess() {
         queryClient.invalidateQueries({
           queryKey:
-            trpc.personnelPermission.readDepartments.queryOptions().queryKey,
+            trpc.personnelPermission.readAllDepartments.queryOptions().queryKey,
         });
 
         queryClient.removeQueries({

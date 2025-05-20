@@ -1,7 +1,11 @@
 import { createSelectSchema } from "drizzle-zod";
 import { departmentsTable } from "./schema";
 import { z } from "zod";
-import { trimThenValidate } from "./utils";
+import {
+  paginatedSchemaGenerator,
+  summaryQueryInputSchemaGenerator,
+  trimThenValidate,
+} from "./utils";
 
 export const departmentSummarySchema = createSelectSchema(departmentsTable)
   .omit({
@@ -21,3 +25,14 @@ export const createDepartmentSchema = updateDepartmentSchema.omit({ id: true });
 
 export type UpdateDepartment = z.infer<typeof updateDepartmentSchema>;
 export type CreateDepartment = z.infer<typeof createDepartmentSchema>;
+
+export const paginatedDepartmentSummarySchema = paginatedSchemaGenerator(
+  departmentSummarySchema
+);
+
+export const departmentsSummaryQueryInputSchema =
+  summaryQueryInputSchemaGenerator(departmentSummarySchema, "name");
+
+export type PaginatedDepartmentSummaryQueryInput = z.infer<
+  typeof departmentsSummaryQueryInputSchema
+>;

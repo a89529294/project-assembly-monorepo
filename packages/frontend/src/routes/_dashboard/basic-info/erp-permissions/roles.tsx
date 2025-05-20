@@ -73,9 +73,8 @@ function Section({ title, roleName }: { title: string; roleName: RoleName }) {
     <Card className="mb-6">
       <CardHeader className="flex flex-row items-center justify-between">
         <h2 className="text-xl font-semibold">{title}</h2>
-
         <SelectionActionButtons
-          hasSelection={selectedCount > 0}
+          selectedCount={selectedCount}
           isPending={isPending}
           onClear={clearAll}
           onRemove={removeDepartments}

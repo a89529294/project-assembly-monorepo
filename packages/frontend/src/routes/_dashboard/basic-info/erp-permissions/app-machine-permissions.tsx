@@ -2,7 +2,8 @@ import { DataTable } from "@/components/data-table";
 import { DialogAddAppUser } from "@/components/dialog-add-app-user";
 import { PageShell } from "@/components/page-shell";
 import { PendingComponent } from "@/components/pending-component";
-import { SearchBar, SearchBarImperativeHandle } from "@/components/search-bar";
+import { SearchActionHeader } from "@/components/search-action-header";
+import { SearchBarImperativeHandle } from "@/components/search-bar";
 import SelectionActionButtons from "@/components/selection-action-buttons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { APP_USER_PERMISSION_TABS } from "@/features/app-users";
@@ -59,13 +60,8 @@ export function RouteComponent() {
   const { mutate, isPending } = useMutation(
     trpc.personnelPermission.deleteAppUsersPermission.mutationOptions()
   );
-  const {
-    rowSelection,
-    setRowSelection,
-    isPartialSelected,
-    clearAll,
-    selected,
-  } = useSimpleSelection(data);
+  const { rowSelection, setRowSelection, clearAll, selected } =
+    useSimpleSelection(data);
 
   const onRemoveAppUsersPermission = () => {
     mutate(
@@ -95,32 +91,28 @@ export function RouteComponent() {
     clearAll();
   };
 
+  const disableInputs = isUpdating || isPending;
+
   return (
     <PageShell>
-      <div className="flex justify-between mb-6">
-        <SearchBar
-          ref={ref}
-          onSearchChange={(searchTerm) => {
-            navigate({
-              search: {
-                searchTerm,
-                permission,
-              },
-            });
-          }}
-          initSearchTerm={searchTerm}
-          isUpdating={isUpdating}
-        />
-
+      <SearchActionHeader
+        title="App/機台操作權限"
+        disableInputs={disableInputs}
+        initSearchTerm={searchTerm}
+        isSearching={isUpdating}
+        onSearchChange={(s) =>
+          navigate({ search: { searchTerm: s, permission } })
+        }
+      >
         <SelectionActionButtons
-          hasSelection={isPartialSelected}
-          isPending={isUpdating || isPending}
+          selectedCount={selected.length}
+          isPending={disableInputs}
           onClear={clearAll}
           onRemove={onRemoveAppUsersPermission}
         >
           <DialogAddAppUser permission={permission} />
         </SelectionActionButtons>
-      </div>
+      </SearchActionHeader>
 
       <div className="flex border-b border-gray-200 mb-4">
         {APP_USER_PERMISSION_TABS.map((t) => (

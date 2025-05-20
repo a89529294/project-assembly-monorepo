@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 
 interface DepartmentActionButtonsProps {
-  hasSelection: boolean;
+  selectedCount: number;
   onClear: () => void;
   onRemove: () => void;
   isPending: boolean;
@@ -21,16 +21,17 @@ interface DepartmentActionButtonsProps {
  * - children: the dialog component to render at the end
  */
 export const SelectionActionButtons: React.FC<DepartmentActionButtonsProps> = ({
-  hasSelection,
+  selectedCount,
   onClear,
   onRemove,
   isPending,
   children,
 }) => {
   return (
-    <div className="flex gap-1">
-      {hasSelection && (
+    <div className="flex gap-1 items-center">
+      {selectedCount > 0 && (
         <>
+          <span className="text-sm font-normal">已選中 {selectedCount}</span>
           <Button variant="secondary" onClick={onClear} disabled={isPending}>
             反選
           </Button>

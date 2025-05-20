@@ -1,25 +1,25 @@
-import { DataTable } from "@/components/data-table";
 import { DialogDepartment } from "@/components/dialogs/department";
-import { SearchBar } from "@/components/search-bar";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageShell } from "@/components/page-shell";
+import { SummaryPageDataTable } from "@/components/summary-page/summary-page-data-table";
+import { SummaryPageHeader } from "@/components/summary-page/summary-page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SummaryPageProvider } from "@/contexts/summary-page-context";
 import { genExtendedDepartmentColumns } from "@/features/departments/data-table/columns";
-import { useSuspendedDepartments } from "@/hooks/departments/use-suspended-departments";
-import { cn } from "@/lib/utils";
+import { useSuspendedDepartmentsPaginated } from "@/hooks/departments/use-suspended-departments-paginated";
+import { useDeferredPaginatedTableControls } from "@/hooks/use-deferred-paginated-table-controls";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
+import { departmentsSummaryQueryInputSchema } from "@myapp/shared";
 import { createFileRoute } from "@tanstack/react-router";
-import { useDeferredValue } from "react";
-import { z } from "zod";
 
 export const Route = createFileRoute(
   "/_dashboard/basic-info/erp-permissions/departments"
 )({
-  validateSearch: z.object({ searchTerm: z.string().default("") }),
-  loaderDeps: ({ search: { searchTerm } }) => ({ searchTerm }),
-  loader({ deps: { searchTerm } }) {
+  validateSearch: departmentsSummaryQueryInputSchema,
+  loaderDeps: ({ search }) => ({ search }),
+  loader({ deps: { search } }) {
     queryClient.ensureQueryData(
-      trpc.personnelPermission.readDepartments.queryOptions({ searchTerm })
+      trpc.personnelPermission.readPaginatedDepartments.queryOptions(search)
     );
   },
   pendingComponent: () => <Skeleton className="absolute inset-6" />,
@@ -27,39 +27,27 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  const { searchTerm } = Route.useSearch();
+  const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const deferredSearchTerm = useDeferredValue(searchTerm);
-  const { data: departments } = useSuspendedDepartments(deferredSearchTerm);
-  console.log(departments);
-
-  const isPending = searchTerm !== deferredSearchTerm;
+  const deferredSearch = useDeferredPaginatedTableControls(search);
+  const { data: departments } = useSuspendedDepartmentsPaginated(
+    deferredSearch.deferredValues
+  );
 
   return (
-    <div className="p-6 h-full flex flex-col">
-      <div className="flex justify-between items-center pb-4">
-        <div className="flex gap-2">
-          <h1 className="text-2xl font-bold">部門管理</h1>
-          <SearchBar
-            onSearchChange={(searchTerm) =>
-              navigate({ search: { searchTerm } })
-            }
-            initSearchTerm={searchTerm}
-          />
-        </div>
-        <DialogDepartment />
-      </div>
-
-      <div className="relative flex-1">
-        <div className="absolute inset-0">
-          <ScrollArea className={cn("h-full", isPending && "opacity-50")}>
-            <DataTable
-              columns={genExtendedDepartmentColumns()}
-              data={Array(1).fill(departments).flat()}
-            />
-          </ScrollArea>
-        </div>
-      </div>
-    </div>
+    <PageShell>
+      <SummaryPageProvider
+        columnsGeneratorFunction={genExtendedDepartmentColumns}
+        data={departments}
+        deferredTableControlsReturn={deferredSearch}
+        navigate={navigate}
+      >
+        <SummaryPageHeader
+          title="部門管理"
+          createAction={<DialogDepartment />}
+        />
+        <SummaryPageDataTable />
+      </SummaryPageProvider>
+    </PageShell>
   );
 }

@@ -63,23 +63,23 @@ const extendedDepartmentColumns = [
 
 const actionDepartmentColumns = [
   columnHelper.display({
-    id: "edit-department",
-    size: 50,
+    id: "delete-department",
+    size: 32,
     header() {
       return "";
     },
     cell(info) {
-      return <DialogDepartment id={info.row.original.id} />;
+      return <DialogDeleteDepartment department={info.row.original} />;
     },
   }),
   columnHelper.display({
-    id: "delete-department",
-    size: 50,
+    id: "edit-department",
+    size: 48,
     header() {
       return "";
     },
     cell(info) {
-      return <DialogDeleteDepartment id={info.row.original.id} />;
+      return <DialogDepartment department={info.row.original} />;
     },
   }),
 ];

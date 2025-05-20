@@ -1,20 +1,18 @@
-import { DataTable } from "@/components/data-table";
+import { DeleteButton } from "@/components/delete-button";
 import { DialogAddUser } from "@/components/dialogs/add-user";
-import { SmartPagination } from "@/components/pagination";
+import { PageShell } from "@/components/page-shell";
 import { PendingComponent } from "@/components/pending-component";
-import { SearchBar } from "@/components/search-bar";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { SummaryPageDataTable } from "@/components/summary-page/summary-page-data-table";
+import { SummaryPageHeader } from "@/components/summary-page/summary-page-header";
+import { SummaryPageProvider } from "@/contexts/summary-page-context";
 import { genUserColumns } from "@/features/users/data-table/columns";
-import { useSelection } from "@/hooks/use-selection";
-import { cn } from "@/lib/utils";
+import { useDeferredPaginatedTableControls } from "@/hooks/use-deferred-paginated-table-controls";
+import { useDeleteUsers } from "@/hooks/users/use-delete-users";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { UsersSummaryQueryInputSchema } from "@myapp/shared";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useDeferredValue } from "react";
-import { toast } from "sonner";
 
 export const Route = createFileRoute(
   "/_dashboard/basic-info/erp-permissions/users"
@@ -39,177 +37,38 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  const { orderBy, orderDirection, page, pageSize, searchTerm } =
-    Route.useSearch();
-
-  const deferredPage = useDeferredValue(page);
-  const deferredOrderBy = useDeferredValue(orderBy);
-  const deferredOrderDirection = useDeferredValue(orderDirection);
-  const deferredSearchTerm = useDeferredValue(searchTerm);
-
-  const loading =
-    page !== deferredPage ||
-    orderBy !== deferredOrderBy ||
-    orderDirection !== deferredOrderDirection ||
-    searchTerm !== deferredSearchTerm;
-
+  const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const deferredTableControlsReturn = useDeferredPaginatedTableControls(search);
   const { data: usersData } = useSuspenseQuery(
-    trpc.personnelPermission.readUsers.queryOptions({
-      orderBy: deferredOrderBy,
-      orderDirection: deferredOrderDirection,
-      page: deferredPage,
-      searchTerm: deferredSearchTerm,
-      pageSize,
-    })
+    trpc.personnelPermission.readUsers.queryOptions(
+      deferredTableControlsReturn.deferredValues
+    )
   );
-  const { mutate, isPending } = useMutation(
-    trpc.personnelPermission.deleteUsers.mutationOptions()
-  );
-
-  const {
-    onSelectionChange,
-    onSelectAllChange,
-    selection,
-    selectedCount,
-    rowSelection,
-    resetSelection,
-    data: selectedUsers,
-  } = useSelection({
-    totalFilteredCount: usersData.total,
-    pageIds: usersData.data.map((user) => user.id),
-  });
-
-  const onDeleteUsers = () => {
-    const config = {
-      onSuccess() {
-        queryClient.invalidateQueries({
-          queryKey: trpc.personnelPermission.readUsers.queryKey(),
-        });
-        toast.success("成功移除ERP使用者");
-        resetSelection();
-      },
-      onError() {
-        toast.error("無法移除erp使用者");
-      },
-    };
-
-    mutate(selectedUsers, config);
-  };
-
-  // This function can be used to send selected data to backend
-  // const processSelection = () => {
-  //   if (selectAll) {
-  //     // When in "select all" mode, send:
-  //     return {
-  //       selectAll: true,
-  //       excludedIds: Array.from(deselectedIds),
-  //     };
-  //   } else {
-  //     // When in normal mode, send just the selected IDs
-  //     return {
-  //       selectAll: false,
-  //       selectedIds: Array.from(selectedIds),
-  //     };
-  //   }
-  // };
 
   return (
-    <div className="p-6 pb-0 bg-white flex flex-col rounded-lg shadow-lg h-full">
-      <h2 className="text-xl font-bold mb-4 flex justify-between">
-        <div className="flex gap-3 items-center">
-          ERP使用者清單
-          <SearchBar
-            onSearchChange={(searchTerm) => {
-              navigate({
-                search: { searchTerm },
-                replace: true,
-              });
-              resetSelection();
-            }}
-            initSearchTerm={searchTerm}
-            disabled={isPending}
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          {selectedCount > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-normal">
-                已選擇 {selectedCount} 個使用者
-              </span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={onDeleteUsers}
-                disabled={isPending}
-              >
-                移除ERP使用者
-              </Button>
-            </div>
-          )}
-          <DialogAddUser disabled={isPending} />
-        </div>
-      </h2>
-      <div className="flex-1 relative">
-        <div className="absolute inset-0 bottom-10">
-          <ScrollArea
-            className={cn(
-              "rounded-md border p-0 h-full",
-              loading && "opacity-50"
-            )}
-          >
-            <DataTable
-              columns={genUserColumns({
-                orderBy,
-                orderDirection,
-                clickOnCurrentHeader: (columnId) => {
-                  navigate({
-                    search: {
-                      page: 1,
-                      pageSize,
-                      orderBy: columnId,
-                      orderDirection:
-                        orderDirection === "DESC" ? "ASC" : "DESC",
-                    },
-                  });
-                },
-                clickOnOtherHeader: (columnId) => {
-                  navigate({
-                    search: {
-                      page: 1,
-                      orderBy: columnId,
-                      orderDirection: "DESC",
-                      pageSize,
-                    },
-                  });
-                },
-                onSelectAllChange: onSelectAllChange,
-                selection,
-              })}
-              data={usersData.data}
-              rowSelection={rowSelection}
-              setRowSelection={onSelectionChange}
+    <PageShell>
+      <SummaryPageProvider
+        columnsGeneratorFunction={genUserColumns}
+        data={usersData}
+        deferredTableControlsReturn={deferredTableControlsReturn}
+        navigate={(a) => navigate({ search: a.search })}
+      >
+        <SummaryPageHeader
+          title="ERP操作權限"
+          createAction={
+            <DialogAddUser
+              disabled={deferredTableControlsReturn.isUpdatingTableData}
             />
-          </ScrollArea>
-        </div>
-        <SmartPagination
-          className="absolute bottom-0 h-10 flex items-center"
-          totalPages={usersData.totalPages}
-          currentPage={deferredPage}
-          onPageChange={(newPage) =>
-            navigate({
-              search: {
-                page: newPage,
-                pageSize,
-                orderBy,
-                orderDirection,
-                searchTerm,
-              },
-            })
           }
+          deleteAction={(props) => (
+            <DeleteButton useDeleteHook={useDeleteUsers} hookProps={props}>
+              移除ERP使用者
+            </DeleteButton>
+          )}
         />
-      </div>
-    </div>
+        <SummaryPageDataTable />
+      </SummaryPageProvider>
+    </PageShell>
   );
 }

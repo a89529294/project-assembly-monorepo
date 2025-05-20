@@ -1,61 +1,100 @@
 import {
+  departmentsSummaryQueryInputSchema,
   departmentsTable,
   departmentSummarySchema,
+  employeeDepartmentsTable,
+  employeesTable,
+  paginatedDepartmentSummarySchema,
   roleDepartmentsTable,
   roleNameEnum,
   rolesTable,
-  employeeDepartmentsTable,
-  usersTable,
-  employeesTable,
   selectionInputSchema,
+  usersTable,
 } from "@myapp/shared";
 import {
   and,
+  asc,
+  count,
   eq,
   exists,
-  notExists,
-  inArray,
   ilike,
-  or,
+  inArray,
+  notExists,
   notInArray,
-  desc,
+  or,
 } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db";
 import { protectedProcedure } from "../core";
+import { orderDirectionFn } from "../helpers";
 
-export const readDepartmentsProcedure = protectedProcedure([
+export const readAllDepartmentsProcedure = protectedProcedure([
   "BasicInfoManagement",
   "PersonnelPermissionManagement",
 ])
-  .input(
-    z
-      .object({
-        searchTerm: z.string(),
-      })
-      .optional()
-  )
   .output(z.array(departmentSummarySchema))
-  .query(async ({ input }) => {
-    let query = db.select().from(departmentsTable).$dynamic();
-
-    if (input?.searchTerm) {
-      const search = `%${input.searchTerm}%`;
-      query.where(
-        or(
-          ilike(departmentsTable.name, search),
-          ilike(departmentsTable.enPrefix, search),
-          ilike(departmentsTable.zhPrefix, search)
-        )
-      );
-    }
-
-    const departments = await query.orderBy(desc(departmentsTable.updatedAt));
+  .query(async () => {
+    const departments = await db
+      .select()
+      .from(departmentsTable)
+      .orderBy(asc(departmentsTable.name));
 
     return departments.map((e) => {
       const { updatedAt, createdAt, ...rest } = e;
       return rest;
     });
+  });
+
+export const readPaginatedDepartmentsProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
+  .input(departmentsSummaryQueryInputSchema)
+  .output(paginatedDepartmentSummarySchema)
+  .query(async ({ input }) => {
+    // Handle paginated query
+    const { page, pageSize, orderBy, orderDirection, searchTerm } = input;
+    const offset = (page - 1) * pageSize;
+
+    const countQuery = db
+      .select({ count: count() })
+      .from(departmentsTable)
+      .$dynamic();
+
+    const departmentsBaseQuery = db.select().from(departmentsTable).$dynamic();
+
+    if (searchTerm) {
+      const search = `%${searchTerm}%`;
+      const whereCondition = or(
+        ilike(departmentsTable.name, search),
+        ilike(departmentsTable.enPrefix, search),
+        ilike(departmentsTable.zhPrefix, search)
+      );
+      departmentsBaseQuery.where(whereCondition);
+      countQuery.where(whereCondition);
+    }
+
+    const [{ count: total }] = await countQuery;
+
+    const departments = await departmentsBaseQuery
+      .orderBy(orderDirectionFn(orderDirection)(departmentsTable[orderBy]))
+      .limit(pageSize)
+      .offset(offset);
+
+    const data = departments.map((e) => {
+      const { updatedAt, createdAt, ...rest } = e;
+      return rest;
+    });
+
+    const totalPages = Math.ceil(total / pageSize);
+
+    return {
+      page,
+      pageSize,
+      total,
+      totalPages,
+      data,
+    };
   });
 
 export const createDepartmentProcedure = protectedProcedure([

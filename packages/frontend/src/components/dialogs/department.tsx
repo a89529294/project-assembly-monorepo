@@ -11,12 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useCreateDepartment } from "@/hooks/departments/use-create-department";
-import { useDepartment } from "@/hooks/departments/use-department";
 import { useUpdateDepartment } from "@/hooks/departments/use-update-department";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CreateDepartment,
   createDepartmentSchema,
+  DepartmentSummary,
   UpdateDepartment,
   updateDepartmentSchema,
 } from "@myapp/shared";
@@ -24,29 +25,29 @@ import { LucidePen, LucidePlus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-export function DialogDepartment({ id }: { id?: string }) {
+export function DialogDepartment({
+  department,
+}: {
+  department?: DepartmentSummary;
+}) {
   const [open, setOpen] = useState(false);
-  const { department } = useDepartment(id);
+
   const { updateDepartment, isPending: isUpdatePending } = useUpdateDepartment(
-    id || ""
+    department?.id ?? ""
   );
   const { createDepartment, isPending: isCreatePending } =
     useCreateDepartment();
 
-  const isEditing = typeof id === "string";
+  const isEditing = !!department;
 
   const isPending = isEditing ? isUpdatePending : isCreatePending;
 
-  console.log(id);
-  console.log(department);
-
-  // if in edit mode, department is guaranteed to exist
   const defaultValues = isEditing
     ? {
-        id: department!.id,
-        name: department!.name,
-        enPrefix: department!.enPrefix,
-        zhPrefix: department!.zhPrefix,
+        id: department.id,
+        name: department.name,
+        enPrefix: department.enPrefix,
+        zhPrefix: department.zhPrefix,
       }
     : {
         name: "",
@@ -89,9 +90,13 @@ export function DialogDepartment({ id }: { id?: string }) {
     >
       <DialogTrigger asChild>
         {isEditing ? (
-          <Button variant="ghost" size="icon">
-            <LucidePen className="h-4 w-4" />
-          </Button>
+          <button
+            className={cn(
+              "place-items-center cursor-pointer hidden group-hover:grid data-[state=open]:grid"
+            )}
+          >
+            <LucidePen className={"size-4"} />
+          </button>
         ) : (
           <Button variant="outline">
             <LucidePlus className="h-4 w-4" />

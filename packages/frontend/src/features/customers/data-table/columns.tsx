@@ -1,4 +1,6 @@
+import { HoverableActionButton } from "@/components/data-table/hoverable-action-cell";
 import { SortableTableHeader } from "@/components/data-table/sortable-table-header";
+import { DialogDeleteCustomer } from "@/components/dialogs/delete-customer";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SelectionState } from "@/hooks/use-selection";
@@ -7,8 +9,14 @@ import {
   CustomerSummaryKey,
   OrderDirection,
 } from "@myapp/shared";
+import { Link } from "@tanstack/react-router";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  LucideReceiptText,
+} from "lucide-react";
 
 const columnHelper = createColumnHelper<CustomerSummary>();
 
@@ -123,24 +131,32 @@ export const genCustomerColumns = ({
     columnHelper.accessor("phone", {
       header: () => genHeader("phone", "電話"),
     }),
-    columnHelper.accessor("fax", {
-      header: () => genHeader("fax", "傳真"),
+    columnHelper.display({
+      id: "delete-customer",
+      size: 32,
+      header() {
+        return "";
+      },
+      cell(info) {
+        return <DialogDeleteCustomer customer={info.row.original} />;
+      },
     }),
-    columnHelper.accessor("address", {
-      header: () => genHeader("address", "地址"),
+    columnHelper.display({
+      id: "view-customer",
+      cell: ({ row }) => {
+        const customer = row.original;
+        console.log(customer);
+        return (
+          // Placeholder for action buttons (e.g., Edit, Delete)
+          <HoverableActionButton>
+            <Link to="/customers/create">
+              <LucideReceiptText className="size-4" />
+            </Link>
+          </HoverableActionButton>
+        );
+      },
+      size: 48,
     }),
-
-    // Add an actions column if needed in the future
-    // columnHelper.display({
-    //   id: "actions",
-    //   cell: ({ row }) => {
-    //     const customer = row.original;
-    //     return (
-    //       // Placeholder for action buttons (e.g., Edit, Delete)
-    //       <Button variant="ghost" size="sm">Actions</Button>
-    //     );
-    //   },
-    // }),
   ] as ColumnDef<CustomerSummary>[];
 };
 

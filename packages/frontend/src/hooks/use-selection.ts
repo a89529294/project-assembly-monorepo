@@ -30,6 +30,8 @@ type SelectedIdsData = {
   selectAll: false;
 };
 
+export type SelectionStateData = SelectAllData | SelectedIdsData;
+
 /**
  * Hook for managing complex selection state across paginated data.
  * Handles both individual selection and "select all" functionality.

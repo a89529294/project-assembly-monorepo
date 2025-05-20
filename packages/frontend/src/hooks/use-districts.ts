@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-export function useTowns(countycode: string | null) {
+export function useDistricts(countycode: string | null) {
   return useQuery({
     queryKey: ["towns", countycode],
     queryFn: async () => {

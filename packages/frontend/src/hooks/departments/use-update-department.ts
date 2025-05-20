@@ -8,8 +8,7 @@ export function useUpdateDepartment(departmentId: string) {
     trpc.personnelPermission.updateDepartment.mutationOptions({
       onSuccess() {
         queryClient.invalidateQueries({
-          queryKey:
-            trpc.personnelPermission.readDepartments.queryOptions().queryKey,
+          queryKey: trpc.personnelPermission.readAllDepartments.queryKey(),
         });
 
         queryClient.invalidateQueries({

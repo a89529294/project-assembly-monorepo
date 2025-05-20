@@ -10,7 +10,7 @@ export function useCreateDepartment() {
         toast.success("成功新增部門");
         queryClient.invalidateQueries({
           queryKey:
-            trpc.personnelPermission.readDepartments.queryOptions().queryKey,
+            trpc.personnelPermission.readAllDepartments.queryOptions().queryKey,
         });
       },
     })

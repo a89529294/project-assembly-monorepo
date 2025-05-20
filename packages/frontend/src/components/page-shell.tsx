@@ -11,7 +11,7 @@ export function PageShell({ children, className }: PageShellProps) {
   return (
     <div
       className={cn(
-        "p-6 pb-0 bg-white flex flex-col rounded-lg shadow-lg h-full",
+        "p-6 pb-0 bg-white flex flex-col rounded-lg shadow-lg h-full gap-4",
         className
       )}
     >

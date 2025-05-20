@@ -135,7 +135,9 @@ import { useDeferredValue, useMemo } from "react";
 import { SortChangeResult } from "@/types/user-types";
 import { OrderDirection } from "@myapp/shared";
 
-interface DeferredPaginatedTableControlsParams<T extends string = string> {
+export interface DeferredPaginatedTableControlsProps<
+  T extends string = string,
+> {
   page: number;
   pageSize: number;
   orderBy: T;
@@ -173,7 +175,7 @@ export function useDeferredPaginatedTableControls<T extends string = string>({
   orderBy,
   orderDirection,
   searchTerm,
-}: DeferredPaginatedTableControlsParams<T>): DeferredPaginatedTableControlsReturn<T> {
+}: DeferredPaginatedTableControlsProps<T>): DeferredPaginatedTableControlsReturn<T> {
   // Create deferred values for all parameters to improve UI responsiveness
   const deferredPage = useDeferredValue(page);
   const deferredPageSize = useDeferredValue(pageSize);

@@ -118,6 +118,7 @@ export const DialogAddUser = ({ disabled }: { disabled: boolean }) => {
                 resetSelection();
               }}
               hideIcon
+              isUpdating={isFetching}
             />
             <Button
               // disabled={selectedEmployeeIds.length === 0}

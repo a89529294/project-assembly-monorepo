@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export function useDepartments() {
   const { data: departments, ...rest } = useQuery(
-    trpc.personnelPermission.readDepartments.queryOptions()
+    trpc.personnelPermission.readAllDepartments.queryOptions()
   );
   const departmentOptions = departments
     ? [

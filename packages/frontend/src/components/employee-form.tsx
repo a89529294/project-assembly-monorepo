@@ -6,7 +6,7 @@ import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCounties } from "@/hooks/use-counties";
 import { useDepartments } from "@/hooks/departments/use-departments";
-import { useTowns } from "@/hooks/use-towns";
+import { useDistricts } from "@/hooks/use-districts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EmployeeDetail, employeeDetailedSchema } from "@myapp/shared";
 import { Link } from "@tanstack/react-router";
@@ -67,10 +67,9 @@ export function EmployeeForm({
     disabled: disabled,
   });
   const { data: townsForResidence, isLoading: isLoadingResidenceTown } =
-    useTowns(form.watch("residenceCounty"));
-  const { data: townsForMailing, isLoading: isLoadingMailingTown } = useTowns(
-    form.watch("mailingCounty")
-  );
+    useDistricts(form.watch("residenceCounty"));
+  const { data: townsForMailing, isLoading: isLoadingMailingTown } =
+    useDistricts(form.watch("mailingCounty"));
 
   const { control } = form;
   const { fields, append, remove } = useFieldArray({

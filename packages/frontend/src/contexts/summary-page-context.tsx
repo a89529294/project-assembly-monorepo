@@ -1,5 +1,9 @@
 import { DeferredPaginatedTableControlsReturn } from "@/hooks/use-deferred-paginated-table-controls";
-import { SelectionState, useSelection } from "@/hooks/use-selection";
+import {
+  SelectionState,
+  SelectionStateData,
+  useSelection,
+} from "@/hooks/use-selection";
 import { OrderDirection } from "@myapp/shared";
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import {
@@ -30,6 +34,8 @@ type SummaryResponse<T> = {
 type SummaryPageContextType<T, X extends string> = {
   search: SearchParams<X>;
   isUpdatingTableData: boolean;
+  selection: SelectionState;
+  selectionData: SelectionStateData;
   selectedCount: number;
   disableInputs: boolean;
   data: T[];
@@ -111,6 +117,7 @@ export function SummaryPageProvider<
     selectedCount,
     rowSelection,
     resetSelection,
+    data: selectionData,
   } = useSelection({
     totalFilteredCount: data.total,
     pageIds: data.data.map((item) => item.id),
@@ -180,6 +187,8 @@ export function SummaryPageProvider<
   const value: SummaryPageContextType<T, U> = {
     search: deferredValues,
     isUpdatingTableData,
+    selection,
+    selectionData,
     selectedCount,
     disableInputs: isUpdatingTableData,
     data: data.data,

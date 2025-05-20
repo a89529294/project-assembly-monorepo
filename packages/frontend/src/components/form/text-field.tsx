@@ -11,7 +11,7 @@ import { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 type VisibleFieldProps<T extends FieldValues> = {
   form: UseFormReturn<T>;
   name: FieldPath<T>;
-  required: boolean;
+  required?: boolean;
   label?: string;
   hidden?: false | undefined;
 };

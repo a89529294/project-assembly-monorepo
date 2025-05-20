@@ -218,8 +218,8 @@ export const projectsTable = pgTable("projects", {
 export const contactsTable = pgTable("contacts", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar({ length: 100 }).notNull(),
-  enName: varchar("en_name", { length: 100 }),
   phone: varchar({ length: 50 }).notNull(),
+  enName: varchar("en_name", { length: 100 }),
   lineId: varchar({ length: 100 }),
   weChatId: varchar({ length: 100 }),
   memo: varchar({ length: 500 }),
