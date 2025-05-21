@@ -12,24 +12,30 @@ import {
 } from "@myapp/shared";
 import { Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
+import { Ref, useImperativeHandle } from "react";
 
 interface CustomerFormProps {
   initialData?: CustomerDetail;
   onSubmit: (values: CustomerDetail) => void;
-
   disabled: boolean;
+  customerFormRef?: Ref<CustomerFormRef>;
 }
 
-export function CustomerForm({
+export interface CustomerFormRef {
+  reset: (values?: CustomerDetail) => void;
+}
+
+export const CustomerForm = ({
   disabled,
   initialData,
   onSubmit,
-}: CustomerFormProps) {
+  customerFormRef,
+}: CustomerFormProps) => {
   const {
     data: counties,
     isLoading: isLoadingCounties,
     nameToCode,
-    // codeToName,
+    codeToName,
   } = useCounties();
 
   const defaultValues: CustomerDetail = {
@@ -51,7 +57,10 @@ export function CustomerForm({
     contacts: [],
   };
 
+  console.log(initialData);
+
   const form = useForm<CustomerDetail>({
+    mode: "onChange",
     resolver: zodResolver(customerDetailedSchema),
     defaultValues: initialData
       ? {
@@ -72,25 +81,43 @@ export function CustomerForm({
     name: "contacts",
   });
 
-  const { data: districts, isLoading: isLoadingResidenceTown } = useDistricts(
+  const { data: districts, isFetching: isFetchingDistricts } = useDistricts(
     form.watch("county")
   );
-  const { data: invoiceDistricts, isLoading: isLoadingMailingTown } =
+  const { data: invoiceDistricts, isLoading: isLoadingInvoiceDistricts } =
     useDistricts(form.watch("invoiceCounty"));
+
+  useImperativeHandle(
+    customerFormRef,
+    () => ({
+      reset: (defaultValues) => form.reset(defaultValues),
+    }),
+    [form]
+  );
 
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit, (e) => {
-          console.log(e);
-        })}
-        className="space-y-8"
+        onSubmit={form.handleSubmit(
+          (data) =>
+            onSubmit({
+              ...data,
+              county: data.county ? codeToName[data.county] : data.county,
+              invoiceCounty: data.invoiceCounty
+                ? codeToName[data.invoiceCounty]
+                : data.invoiceCounty,
+            }),
+          (e) => {
+            console.log(e);
+          }
+        )}
+        className="space-y-6"
         id="customer-form"
       >
         {/* 1. Customer Number Section */}
-        <div className="rounded-lg border bg-card p-6 shadow-sm mb-6">
-          <h3 className="mb-4 text-lg font-medium">客戶編號</h3>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="space-y-4 rounded-lg border bg-card p-6 shadow-sm">
+          <h3 className="text-lg font-medium">客戶編號</h3>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <TextField
               form={form}
               name="customerNumber"
@@ -103,9 +130,9 @@ export function CustomerForm({
         </div>
 
         {/* 2. Basic Information Section */}
-        <div className="rounded-lg border bg-card p-6 shadow-sm mb-6">
-          <h3 className="mb-4 text-lg font-medium">基本資料</h3>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-4 rounded-lg border bg-card p-6 shadow-sm">
+          <h3 className="text-lg font-medium">基本資料</h3>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             <TextField
               form={form}
               name="name"
@@ -160,12 +187,12 @@ export function CustomerForm({
         </div>
 
         {/* 3. Addresses Section */}
-        <div className="rounded-lg border bg-card p-6 shadow-sm mb-6">
-          <h3 className="mb-6 text-lg font-medium">地址資料</h3>
+        <div className="space-y-6 rounded-lg border bg-card p-6 shadow-sm">
+          <h3 className="text-lg font-medium">地址資料</h3>
 
           {/* Main Address */}
-          <div className="mb-8">
-            <h4 className="mb-4 text-md font-medium">主要地址</h4>
+          <div className="space-y-4">
+            <h4 className="text-md font-medium">主要地址</h4>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
               <div className="md:col-span-4">
                 <SelectField
@@ -184,7 +211,7 @@ export function CustomerForm({
                   name="district"
                   label="鄉鎮市區"
                   required={!customerSummarySchema.shape.district.isNullable()}
-                  loading={isLoadingResidenceTown}
+                  loading={isFetchingDistricts}
                   options={districts}
                 />
               </div>
@@ -200,8 +227,8 @@ export function CustomerForm({
           </div>
 
           {/* Invoice Address */}
-          <div>
-            <h4 className="mb-4 text-md font-medium">發票地址</h4>
+          <div className="space-y-4">
+            <h4 className="text-md font-medium">發票地址</h4>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
               <div className="md:col-span-4">
                 <SelectField
@@ -224,7 +251,7 @@ export function CustomerForm({
                   required={
                     !customerSummarySchema.shape.invoiceDistrict.isNullable()
                   }
-                  loading={isLoadingMailingTown}
+                  loading={isLoadingInvoiceDistricts}
                   options={invoiceDistricts}
                 />
               </div>
@@ -243,23 +270,26 @@ export function CustomerForm({
         </div>
 
         {/* 4. Contacts Section */}
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-lg border bg-card p-6 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium">聯絡人</h3>
             <Button
+              disabled={disabled}
               type="button"
               variant="outline"
               size="sm"
-              onClick={() =>
+              onClick={async () => {
+                if (!(await form.trigger("contacts"))) return;
                 append({
+                  id: "",
                   name: "",
                   enName: "",
                   phone: "",
                   lineId: "",
                   weChatId: "",
                   memo: "",
-                })
-              }
+                });
+              }}
             >
               <Plus className="mr-2 h-4 w-4" /> 新增聯絡人
             </Button>
@@ -269,10 +299,11 @@ export function CustomerForm({
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="rounded-lg border p-4 pr-16 relative"
+                className="relative rounded-lg border p-4 pr-16"
               >
                 <div className="absolute right-4 top-4">
                   <Button
+                    disabled={disabled}
                     type="button"
                     variant="ghost"
                     size="icon"
@@ -285,6 +316,7 @@ export function CustomerForm({
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <TextField form={form} name={`contacts.${index}.id`} hidden />
                   <TextField
                     form={form}
                     name={`contacts.${index}.name`}
@@ -331,4 +363,6 @@ export function CustomerForm({
       </form>
     </Form>
   );
-}
+};
+
+CustomerForm.displayName = "CustomerForm";

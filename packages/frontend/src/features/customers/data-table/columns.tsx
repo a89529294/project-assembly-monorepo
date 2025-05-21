@@ -1,4 +1,4 @@
-import { HoverableActionButton } from "@/components/data-table/hoverable-action-cell";
+import { RevealOnHover } from "@/components/data-table/hoverable-action-cell";
 import { SortableTableHeader } from "@/components/data-table/sortable-table-header";
 import { DialogDeleteCustomer } from "@/components/dialogs/delete-customer";
 import { Button } from "@/components/ui/button";
@@ -145,68 +145,20 @@ export const genCustomerColumns = ({
       id: "view-customer",
       cell: ({ row }) => {
         const customer = row.original;
-        console.log(customer);
+
         return (
-          // Placeholder for action buttons (e.g., Edit, Delete)
-          <HoverableActionButton>
-            <Link to="/customers/create">
+          <RevealOnHover className="pr-4">
+            <Link
+              to="/customers/$customerId"
+              params={{ customerId: customer.id }}
+              search={{ mode: "read" }}
+            >
               <LucideReceiptText className="size-4" />
             </Link>
-          </HoverableActionButton>
+          </RevealOnHover>
         );
       },
       size: 48,
     }),
   ] as ColumnDef<CustomerSummary>[];
 };
-
-// import {
-//   CustomerSummary,
-//   CustomerSummaryKey,
-//   OrderDirection,
-// } from "@myapp/shared";
-// import { SelectionState } from "@/hooks/use-selection";
-// import { createColumnGenerator } from "@/features/data-table/create-column-generator";
-// const createCustomerColumns = createColumnGenerator<
-//   CustomerSummary,
-//   CustomerSummaryKey
-// >();
-
-// export const genCustomerColumns = ({
-//   orderBy,
-//   orderDirection,
-//   clickOnCurrentHeader,
-//   clickOnOtherHeader,
-//   onSelectAllChange,
-//   selection,
-// }: {
-//   orderBy: CustomerSummaryKey;
-//   orderDirection: OrderDirection;
-//   clickOnCurrentHeader: (s: CustomerSummaryKey) => void;
-//   clickOnOtherHeader: (s: CustomerSummaryKey) => void;
-//   onSelectAllChange: (checked: boolean) => void;
-//   selection: SelectionState;
-// }) => {
-//   const columnDefinitions = [
-//     { key: "customerNumber" as CustomerSummaryKey, header: "客戶編號" },
-//     { key: "name" as CustomerSummaryKey, header: "名稱" },
-//     { key: "nickname" as CustomerSummaryKey, header: "簡稱" },
-//     { key: "category" as CustomerSummaryKey, header: "類別" },
-//     { key: "principal" as CustomerSummaryKey, header: "負責人" },
-//     { key: "taxDeductionCategory" as CustomerSummaryKey, header: "扣稅類別" },
-//     { key: "taxId" as CustomerSummaryKey, header: "統一編號" },
-//     { key: "phone" as CustomerSummaryKey, header: "電話" },
-//     { key: "fax" as CustomerSummaryKey, header: "傳真" },
-//     { key: "address" as CustomerSummaryKey, header: "地址" },
-//   ];
-
-//   return createCustomerColumns({
-//     orderBy,
-//     orderDirection,
-//     clickOnCurrentHeader,
-//     clickOnOtherHeader,
-//     onSelectAllChange,
-//     selection,
-//     columnDefinitions,
-//   });
-// };

@@ -14,7 +14,9 @@ import { router } from "../core.js";
 import {
   createCustomerProcedure,
   deleteCustomersProcedure,
+  readCustomerProcedure,
   readCustomersProcedure,
+  updateCustomerProcedure,
 } from "./customers-procedures.js";
 
 export const basicInfoRouter = router({
@@ -27,6 +29,8 @@ export const basicInfoRouter = router({
   createCompanyInfo: createCompanyInfoProcedure,
   updateCompanyInfo: updateCompanyInfoProcedure,
   readCustomers: readCustomersProcedure,
-  deleteCustomers: deleteCustomersProcedure,
   createCustomer: createCustomerProcedure,
+  readCustomer: readCustomerProcedure,
+  updateCustomer: updateCustomerProcedure,
+  deleteCustomers: deleteCustomersProcedure,
 });

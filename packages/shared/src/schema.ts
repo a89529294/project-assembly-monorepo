@@ -225,7 +225,9 @@ export const contactsTable = pgTable("contacts", {
   memo: varchar({ length: 500 }),
   customerId: uuid("customer_id")
     .notNull()
-    .references(() => customersTable.id),
+    .references(() => customersTable.id, {
+      onDelete: "cascade",
+    }),
   ...timestamps,
 });
 

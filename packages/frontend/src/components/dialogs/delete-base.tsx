@@ -1,3 +1,4 @@
+import { RevealOnHover } from "@/components/data-table/hoverable-action-cell";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,7 +9,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import { LucideTrash2 } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 
@@ -30,13 +30,9 @@ export function DialogDeleteBase({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button
-          className={cn(
-            "place-items-center cursor-pointer hidden group-hover:grid data-[state=open]:grid"
-          )}
-        >
+        <RevealOnHover>
           <LucideTrash2 className="size-4" />
-        </button>
+        </RevealOnHover>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

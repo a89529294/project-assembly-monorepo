@@ -1,6 +1,6 @@
 import { DeleteButton } from "@/components/delete-button";
 import { DialogAddUser } from "@/components/dialogs/add-user";
-import { PageShell } from "@/components/page-shell";
+import { PageShell } from "@/components/layout/page-shell";
 import { PendingComponent } from "@/components/pending-component";
 import { SummaryPageDataTable } from "@/components/summary-page/summary-page-data-table";
 import { SummaryPageHeader } from "@/components/summary-page/summary-page-header";
@@ -47,28 +47,31 @@ function RouteComponent() {
   );
 
   return (
-    <PageShell>
-      <SummaryPageProvider
-        columnsGeneratorFunction={genUserColumns}
-        data={usersData}
-        deferredTableControlsReturn={deferredTableControlsReturn}
-        navigate={(a) => navigate({ search: a.search })}
+    <SummaryPageProvider
+      columnsGeneratorFunction={genUserColumns}
+      data={usersData}
+      deferredTableControlsReturn={deferredTableControlsReturn}
+      navigate={(a) => navigate({ search: a.search })}
+    >
+      <PageShell
+        header={
+          <SummaryPageHeader
+            title="ERP操作權限"
+            createAction={
+              <DialogAddUser
+                disabled={deferredTableControlsReturn.isUpdatingTableData}
+              />
+            }
+            deleteAction={(props) => (
+              <DeleteButton useDeleteHook={useDeleteUsers} hookProps={props}>
+                移除ERP使用者
+              </DeleteButton>
+            )}
+          />
+        }
       >
-        <SummaryPageHeader
-          title="ERP操作權限"
-          createAction={
-            <DialogAddUser
-              disabled={deferredTableControlsReturn.isUpdatingTableData}
-            />
-          }
-          deleteAction={(props) => (
-            <DeleteButton useDeleteHook={useDeleteUsers} hookProps={props}>
-              移除ERP使用者
-            </DeleteButton>
-          )}
-        />
         <SummaryPageDataTable />
-      </SummaryPageProvider>
-    </PageShell>
+      </PageShell>
+    </SummaryPageProvider>
   );
 }

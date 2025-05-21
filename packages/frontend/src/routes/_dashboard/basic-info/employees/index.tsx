@@ -1,5 +1,5 @@
 import { DeleteButton } from "@/components/delete-button";
-import { PageShell } from "@/components/page-shell";
+import { PageShell } from "@/components/layout/page-shell";
 import { PendingComponent } from "@/components/pending-component";
 import { SummaryPageDataTable } from "@/components/summary-page/summary-page-data-table";
 import { SummaryPageHeader } from "@/components/summary-page/summary-page-header";
@@ -39,31 +39,37 @@ function RouteComponent() {
   );
 
   return (
-    <PageShell>
-      <SummaryPageProvider
-        data={data}
-        deferredTableControlsReturn={deferredTableControlsReturn}
-        columnsGeneratorFunction={genEmployeeColumns}
-        navigate={(a) => navigate({ search: a.search })}
+    <SummaryPageProvider
+      data={data}
+      deferredTableControlsReturn={deferredTableControlsReturn}
+      columnsGeneratorFunction={genEmployeeColumns}
+      navigate={(a) => navigate({ search: a.search })}
+    >
+      <PageShell
+        header={
+          <SummaryPageHeader
+            title="客戶清單"
+            createAction={
+              <Button
+                asChild
+                disabled={deferredTableControlsReturn.isUpdatingTableData}
+              >
+                <Link to="/basic-info/employees/create">新增</Link>
+              </Button>
+            }
+            deleteAction={(props) => (
+              <DeleteButton
+                useDeleteHook={useDeleteEmployees}
+                hookProps={props}
+              >
+                移除員工
+              </DeleteButton>
+            )}
+          />
+        }
       >
-        <SummaryPageHeader
-          title="客戶清單"
-          createAction={
-            <Button
-              asChild
-              disabled={deferredTableControlsReturn.isUpdatingTableData}
-            >
-              <Link to="/basic-info/employees/create">新增</Link>
-            </Button>
-          }
-          deleteAction={(props) => (
-            <DeleteButton useDeleteHook={useDeleteEmployees} hookProps={props}>
-              移除員工
-            </DeleteButton>
-          )}
-        />
         <SummaryPageDataTable />
-      </SummaryPageProvider>
-    </PageShell>
+      </PageShell>
+    </SummaryPageProvider>
   );
 }

@@ -21,5 +21,6 @@ export function useDistricts(countycode: string | null) {
       return counties;
     },
     enabled: !!countycode,
+    staleTime: 1000 * 60 * 60,
   });
 }

@@ -1,5 +1,5 @@
 import { DeleteButton } from "@/components/delete-button";
-import { PageShell } from "@/components/page-shell";
+import { PageShell } from "@/components/layout/page-shell";
 import { PendingComponent } from "@/components/pending-component";
 import { SummaryPageDataTable } from "@/components/summary-page/summary-page-data-table";
 import { SummaryPageHeader } from "@/components/summary-page/summary-page-header";
@@ -14,7 +14,7 @@ import { customersSummaryQueryInputSchema } from "@myapp/shared";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_dashboard/customers/summary")({
+export const Route = createFileRoute("/_dashboard/customers/")({
   validateSearch: customersSummaryQueryInputSchema,
   loaderDeps: ({ search }) => ({ search }),
   loader({ deps: { search } }) {
@@ -37,32 +37,38 @@ function RouteComponent() {
   );
 
   return (
-    <PageShell>
-      <SummaryPageProvider
-        // initialSearch={search}
-        data={data}
-        deferredTableControlsReturn={deferredTableControlsReturn}
-        columnsGeneratorFunction={genCustomerColumns}
-        navigate={(a) => navigate({ search: a.search })}
+    <SummaryPageProvider
+      // initialSearch={search}
+      data={data}
+      deferredTableControlsReturn={deferredTableControlsReturn}
+      columnsGeneratorFunction={genCustomerColumns}
+      navigate={(a) => navigate({ search: a.search })}
+    >
+      <PageShell
+        header={
+          <SummaryPageHeader
+            title="客戶清單"
+            createAction={
+              <Button
+                asChild
+                disabled={deferredTableControlsReturn.isUpdatingTableData}
+              >
+                <Link to="/customers/create">新增</Link>
+              </Button>
+            }
+            deleteAction={(props) => (
+              <DeleteButton
+                useDeleteHook={useDeleteCustomers}
+                hookProps={props}
+              >
+                移除客戶
+              </DeleteButton>
+            )}
+          />
+        }
       >
-        <SummaryPageHeader
-          title="客戶清單"
-          createAction={
-            <Button
-              asChild
-              disabled={deferredTableControlsReturn.isUpdatingTableData}
-            >
-              <Link to="/customers/create">新增</Link>
-            </Button>
-          }
-          deleteAction={(props) => (
-            <DeleteButton useDeleteHook={useDeleteCustomers} hookProps={props}>
-              移除客戶
-            </DeleteButton>
-          )}
-        />
         <SummaryPageDataTable />
-      </SummaryPageProvider>
-    </PageShell>
+      </PageShell>
+    </SummaryPageProvider>
   );
 }

@@ -19,6 +19,22 @@ export const paginatedCustomerSummarySchema = paginatedSchemaGenerator(
   customerSummarySchema
 );
 
+export const contactsSchema = z.array(
+  z.object({
+    id: z.string(),
+    name: z.string().min(1, {
+      message: "聯絡人姓名 不能為空",
+    }),
+    phone: z.string().min(1, {
+      message: "聯絡人電話 不能為空",
+    }),
+    enName: z.string().nullable(),
+    lineId: z.string().nullable(),
+    weChatId: z.string().nullable(),
+    memo: z.string().nullable(),
+  })
+);
+
 export const customerDetailedSchema = customerSummarySchema
   .omit({ id: true, deletedAt: true, createdAt: true, updatedAt: true })
   .extend({
@@ -39,20 +55,7 @@ export const customerDetailedSchema = customerSummarySchema
       message: "電話 不能為空",
     }),
     // extra field
-    contacts: z.array(
-      z.object({
-        name: z.string().min(1, {
-          message: "聯絡人姓名 不能為空",
-        }),
-        phone: z.string().min(1, {
-          message: "聯絡人電話 不能為空",
-        }),
-        enName: z.string().optional(),
-        lineId: z.string().optional(),
-        weChatId: z.string().optional(),
-        memo: z.string().optional(),
-      })
-    ),
+    contacts: contactsSchema,
   });
 
 export type CustomerDetail = z.infer<typeof customerDetailedSchema>;

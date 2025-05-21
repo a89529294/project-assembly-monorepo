@@ -1,8 +1,20 @@
+import { cn } from "@/lib/utils";
 import { ReactNode } from "@tanstack/react-router";
 
-export function HoverableActionButton({ children }: { children: ReactNode }) {
+export function RevealOnHover({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="place-items-center cursor-pointer hidden group-hover:grid pr-4">
+    <div
+      className={cn(
+        "place-items-center cursor-pointer hidden group-hover:grid data-[state=open]:grid",
+        className
+      )}
+    >
       {children}
     </div>
   );

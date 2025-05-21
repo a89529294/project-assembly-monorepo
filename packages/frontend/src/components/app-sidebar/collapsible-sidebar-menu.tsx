@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-react";
 
-import { NavigationProps } from "@/components/app-sidebar/paths";
+import { NavigationProps, NavItem } from "@/components/app-sidebar/paths";
 import {
   Collapsible,
   CollapsibleContent,
@@ -26,6 +26,8 @@ export function CollapsibleSidebarMenu({
   show,
   label,
   items,
+  showSubItems,
+  exact,
 }: NavigationProps) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -68,11 +70,13 @@ export function CollapsibleSidebarMenu({
           <CollapsibleContent>
             <SidebarGroupContent>
               <SidebarMenu>
-                {items.map((item) =>
-                  item.linkOptions
-                    ? showLink(item.roleNames) && (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild>
+                {items.map(
+                  (item) =>
+                    showLink(item.roleNames) && (
+                      <SidebarMenuItem key={item.title}>
+                        {/* Main item with link if linkOptions exists */}
+                        <SidebarMenuButton asChild={!!item.linkOptions}>
+                          {item.linkOptions ? (
                             <Link
                               to={item.linkOptions.to}
                               className="[&.active]:font-bold"
@@ -80,32 +84,26 @@ export function CollapsibleSidebarMenu({
                               <item.icon />
                               <span>{item.title}</span>
                             </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      )
-                    : showLink(item.roleNames) && (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton>
-                            <item.icon />
-                            <span>{item.title}</span>
-                          </SidebarMenuButton>
+                          ) : (
+                            <>
+                              <item.icon />
+                              <span>{item.title}</span>
+                            </>
+                          )}
+                        </SidebarMenuButton>
+
+                        {/* Sub items if they exist */}
+                        {!!item.subs && (
                           <SidebarMenuSub>
-                            {item.subs.map((sub) => (
-                              <SidebarMenuSubItem key={sub.title}>
-                                <SidebarMenuSubButton asChild>
-                                  <Link
-                                    to={sub.linkOptions.to}
-                                    className="[&.active]:font-bold"
-                                  >
-                                    <sub.icon />
-                                    <span>{sub.title}</span>
-                                  </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))}
+                            <SubCollapsible
+                              item={item}
+                              showSubItems={showSubItems}
+                              exact={exact}
+                            />
                           </SidebarMenuSub>
-                        </SidebarMenuItem>
-                      )
+                        )}
+                      </SidebarMenuItem>
+                    )
                 )}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -113,5 +111,38 @@ export function CollapsibleSidebarMenu({
         </SidebarGroup>
       </Collapsible>
     )
+  );
+}
+
+function SubCollapsible({
+  item,
+  showSubItems,
+  exact,
+}: {
+  item: NavItem;
+  showSubItems?: boolean;
+  exact?: boolean;
+}) {
+  console.log(item);
+
+  return (
+    <Collapsible open={showSubItems === undefined ? true : showSubItems}>
+      <CollapsibleContent>
+        {item.subs!.map((sub) => (
+          <SidebarMenuSubItem key={sub.title}>
+            <SidebarMenuSubButton asChild>
+              <Link
+                to={sub.linkOptions.to}
+                className="[&.active]:font-bold"
+                activeOptions={{ exact, includeSearch: false }}
+              >
+                <sub.icon />
+                <span>{sub.title}</span>
+              </Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

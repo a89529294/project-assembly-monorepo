@@ -5,13 +5,15 @@ import {
   customersSummaryQueryInputSchema,
   paginatedCustomerSummarySchema,
   selectionInputSchema,
+  contactsSchema,
 } from "@myapp/shared";
-import { and, count, ilike, inArray, or, notInArray } from "drizzle-orm";
+import { and, count, eq, ilike, inArray, or, notInArray } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import { protectedProcedure } from "../core.js";
 import { orderDirectionFn } from "../helpers.js";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { TRPCError } from "@trpc/server";
 
 const genCustomersWhereCondition = (term: string) =>
   or(
@@ -20,6 +22,26 @@ const genCustomersWhereCondition = (term: string) =>
     ilike(customersTable.phone, term),
     ilike(customersTable.taxId, term)
   );
+
+export const readCustomerProcedure = protectedProcedure(["BasicInfoManagement"])
+  .input(z.string())
+  .query(async ({ input: customerId }) => {
+    const customer = await db.query.customersTable.findFirst({
+      where: eq(customersTable.id, customerId),
+      with: {
+        contacts: true,
+      },
+    });
+
+    if (!customer) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Customer not found",
+      });
+    }
+
+    return customer;
+  });
 
 export const readCustomersProcedure = protectedProcedure([
   "BasicInfoManagement",
@@ -148,4 +170,89 @@ export const createCustomerProcedure = protectedProcedure([
     });
 
     return { id: customerId };
+  });
+
+export const updateCustomerProcedure = protectedProcedure([
+  "BasicInfoManagement",
+])
+  .input(
+    z.object({
+      customerId: z.string(),
+      data: customerDetailedSchema,
+    })
+  )
+  .output(
+    z.object({
+      success: z.boolean(),
+      contacts: contactsSchema,
+    })
+  )
+  .mutation(async ({ input }) => {
+    const { customerId, data } = input;
+    const { contacts = [], ...customerData } = data;
+
+    return db.transaction(async (tx) => {
+      // 1. Update the customer
+      await tx
+        .update(customersTable)
+        .set(customerData)
+        .where(eq(customersTable.id, customerId));
+
+      // 2. Get existing contacts for this customer
+      const existingContacts = await tx
+        .select()
+        .from(contactsTable)
+        .where(eq(contactsTable.customerId, customerId));
+
+      // 3. Process contacts
+      const existingContactIds = new Set(existingContacts.map((c) => c.id));
+      const inputContactIds = new Set(
+        contacts.map((c) => c.id).filter(Boolean)
+      );
+
+      // 4. Delete contacts that are not in the input
+      const contactsToDelete = existingContacts.filter(
+        (c) => !inputContactIds.has(c.id)
+      );
+      if (contactsToDelete.length > 0) {
+        await tx.delete(contactsTable).where(
+          inArray(
+            contactsTable.id,
+            contactsToDelete.map((c) => c.id)
+          )
+        );
+      }
+
+      const updatedContacts = [];
+
+      // 5. Update or create contacts
+      for (const contact of contacts) {
+        const { id, ...contactData } = contact;
+
+        if (id && existingContactIds.has(id)) {
+          // Update existing contact
+          const [updated] = await tx
+            .update(contactsTable)
+            .set(contactData)
+            .where(eq(contactsTable.id, id))
+            .returning();
+          updatedContacts.push(updated);
+        } else {
+          // Create new contact
+          const [newContact] = await tx
+            .insert(contactsTable)
+            .values({
+              customerId,
+              ...contactData,
+            })
+            .returning();
+          updatedContacts.push(newContact);
+        }
+      }
+
+      return {
+        success: true,
+        contacts: updatedContacts,
+      };
+    });
   });

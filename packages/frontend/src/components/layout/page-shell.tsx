@@ -1,13 +1,15 @@
 // src/components/page-shell.tsx
+
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 
 interface PageShellProps {
   children: ReactNode;
+  header: ReactNode;
   className?: string;
 }
 
-export function PageShell({ children, className }: PageShellProps) {
+export function PageShell({ className, header, children }: PageShellProps) {
   return (
     <div
       className={cn(
@@ -15,6 +17,7 @@ export function PageShell({ children, className }: PageShellProps) {
         className
       )}
     >
+      {header}
       {children}
     </div>
   );

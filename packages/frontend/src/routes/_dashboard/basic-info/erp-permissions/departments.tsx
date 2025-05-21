@@ -1,5 +1,5 @@
 import { DialogDepartment } from "@/components/dialogs/department";
-import { PageShell } from "@/components/page-shell";
+import { PageShell } from "@/components/layout/page-shell";
 import { SummaryPageDataTable } from "@/components/summary-page/summary-page-data-table";
 import { SummaryPageHeader } from "@/components/summary-page/summary-page-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,19 +35,22 @@ function RouteComponent() {
   );
 
   return (
-    <PageShell>
-      <SummaryPageProvider
-        columnsGeneratorFunction={genExtendedDepartmentColumns}
-        data={departments}
-        deferredTableControlsReturn={deferredSearch}
-        navigate={navigate}
+    <SummaryPageProvider
+      columnsGeneratorFunction={genExtendedDepartmentColumns}
+      data={departments}
+      deferredTableControlsReturn={deferredSearch}
+      navigate={navigate}
+    >
+      <PageShell
+        header={
+          <SummaryPageHeader
+            title="部門管理"
+            createAction={<DialogDepartment />}
+          />
+        }
       >
-        <SummaryPageHeader
-          title="部門管理"
-          createAction={<DialogDepartment />}
-        />
         <SummaryPageDataTable />
-      </SummaryPageProvider>
-    </PageShell>
+      </PageShell>
+    </SummaryPageProvider>
   );
 }
