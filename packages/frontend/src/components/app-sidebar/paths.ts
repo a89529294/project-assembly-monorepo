@@ -39,6 +39,7 @@ export interface SubNavItem<
   title: string;
   icon: React.ComponentType;
   linkOptions: ValidateLinkOptions<TRouter, TOptions>;
+  exact?: boolean;
 }
 
 // TODO clean up show sub route implementation
@@ -125,9 +126,10 @@ export const genPaths = (customerId?: string) =>
               params: { customerId },
             },
             icon: LucideTable2,
+            exact: true,
           } as unknown as SubNavItem,
           {
-            title: "客戶專案",
+            title: "客戶專案列表",
             linkOptions: {
               to: "/customers/$customerId/projects",
               params: { customerId },

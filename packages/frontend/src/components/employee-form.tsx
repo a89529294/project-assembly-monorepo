@@ -28,7 +28,7 @@ export function EmployeeForm({
 }: EmployeeFormProps) {
   const { departments, isLoading: isLoadingDepartments } = useDepartments();
   const {
-    data: counties,
+    counties,
     isLoading: isLoadingCounties,
     nameToCode,
     codeToName,
@@ -98,7 +98,7 @@ export function EmployeeForm({
     <>
       <div className="flex justify-between items-center mb-6">
         <Button asChild type="button">
-          <Link to={"/basic-info/employees"}>返回</Link>
+          <Link to={"/basic-info/employees"}>返回列表</Link>
         </Button>
 
         <ActionButtons form={form} />
@@ -210,14 +210,11 @@ export function EmployeeForm({
                       <Button
                         onClick={() => {
                           if (departments && departments.length > 0) {
-                            append(
-                              {
-                                departmentId: departments[0].id,
-                                departmentName: departments[0].name,
-                                jobTitle: "",
-                              },
-                              {}
-                            );
+                            append({
+                              departmentId: departments[0].id,
+                              departmentName: departments[0].name,
+                              jobTitle: "",
+                            });
                           }
                         }}
                         disabled={
@@ -231,7 +228,7 @@ export function EmployeeForm({
 
                     {fields.map((dept, index) => (
                       <div
-                        key={dept.id || dept.departmentId || index}
+                        key={dept.id}
                         className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-4 items-center"
                       >
                         <SelectField

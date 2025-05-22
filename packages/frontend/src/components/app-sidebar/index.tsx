@@ -4,7 +4,8 @@ import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
 import { genPaths } from "@/components/app-sidebar/paths";
 import { isAllowed } from "@/lib/utils";
 import { Route as CustomerDetailsRoute } from "@/routes/_dashboard/customers/$customerId/index";
-import { Route as CustomerProjectsRoute } from "@/routes/_dashboard/customers/$customerId/projects";
+import { Route as CustomerProjectsRoute } from "@/routes/_dashboard/customers/$customerId/projects/";
+import { Route as CustomerProjectsCreateRoute } from "@/routes/_dashboard/customers/$customerId/projects/create";
 import { useMatch } from "@tanstack/react-router";
 import { roleNameEnum } from "../../../../backend/src/db/schema";
 import { User } from "../../../../backend/src/trpc/router";
@@ -18,9 +19,13 @@ export function AppSidebar({ user }: { user: User }) {
     from: CustomerProjectsRoute.id,
     shouldThrow: false,
   });
+  const match3 = useMatch({
+    from: CustomerProjectsCreateRoute.id,
+    shouldThrow: false,
+  });
 
   const customerId = match1?.params.customerId;
-  const showCustomerSubRoutes = !!(match1 || match2);
+  const showCustomerSubRoutes = !!(match1 || match2 || match3);
 
   return (
     <Sidebar>
@@ -46,7 +51,6 @@ export function AppSidebar({ user }: { user: User }) {
           label={"客戶管理"}
           items={genPaths(customerId).customerRoutes}
           showSubItems={showCustomerSubRoutes}
-          exact
         />
 
         <CollapsibleSidebarMenu

@@ -26,30 +26,26 @@ const nameToCode: Record<string, string> = {
 };
 
 export function useCounties() {
-  return {
-    ...useQuery({
-      queryKey: ["counties"],
-      queryFn: async () => {
-        const response = await fetch(
-          "https://api.nlsc.gov.tw/other/ListCounty"
-        );
+  const { data, ...rest } = useQuery({
+    queryKey: ["counties"],
+    queryFn: async () => {
+      const response = await fetch("https://api.nlsc.gov.tw/other/ListCounty");
 
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(
-          await response.text(),
-          "text/xml"
-        );
-        const countiesElements = Array.from(
-          xmlDoc.getElementsByTagName("countyItem")
-        );
-        return countiesElements.map((c) => ({
-          value:
-            c.getElementsByTagName("countycode")[0].childNodes[0].nodeValue!,
-          label:
-            c.getElementsByTagName("countyname")[0].childNodes[0].nodeValue!,
-        }));
-      },
-    }),
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(await response.text(), "text/xml");
+      const countiesElements = Array.from(
+        xmlDoc.getElementsByTagName("countyItem")
+      );
+      return countiesElements.map((c) => ({
+        value: c.getElementsByTagName("countycode")[0].childNodes[0].nodeValue!,
+        label: c.getElementsByTagName("countyname")[0].childNodes[0].nodeValue!,
+      }));
+    },
+  });
+
+  return {
+    counties: data,
+    ...rest,
     nameToCode,
     codeToName: Object.fromEntries(
       Object.entries(nameToCode).map(([k, v]) => [v, k])

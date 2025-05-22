@@ -14,12 +14,9 @@ import {
 import { AppUserPermission } from "./app-users";
 
 // Enums
-export const projectStatusEnum = pgEnum("project_status", [
-  "pending",
-  "in_progress",
-  "completed",
-  "cancelled",
-]);
+export const PROJECT_STATUSES = ["pending", "in_progress", "completed", "cancelled"] as const;
+
+export const projectStatusEnum = pgEnum("project_status", PROJECT_STATUSES);
 export const genderEnum = pgEnum("gender", ["male", "female"]);
 
 export const APP_PERMISSIONS = [
@@ -206,9 +203,9 @@ export const projectsTable = pgTable("projects", {
   projectNumber: varchar("project_number", { length: 50 }).notNull(),
   status: projectStatusEnum().notNull().default("pending"),
   name: varchar({ length: 255 }).notNull(),
-  county: varchar({ length: 100 }).notNull(),
-  district: varchar({ length: 100 }).notNull(),
-  address: varchar({ length: 100 }).notNull(),
+  county: varchar({ length: 100 }),
+  district: varchar({ length: 100 }),
+  address: varchar({ length: 100 }),
   customerId: uuid("customer_id")
     .notNull()
     .references(() => customersTable.id),

@@ -27,7 +27,6 @@ interface NavigationProps {
   label: string;
   items: Array<NavItem>;
   showSubItems?: boolean;
-  exact?: boolean;
 }
 
 export function CollapsibleSidebarMenu({
@@ -35,7 +34,6 @@ export function CollapsibleSidebarMenu({
   label,
   items,
   showSubItems,
-  exact,
 }: NavigationProps) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -106,7 +104,6 @@ export function CollapsibleSidebarMenu({
                             <SubCollapsible
                               item={item}
                               showSubItems={showSubItems}
-                              exact={exact}
                             />
                           </SidebarMenuSub>
                         )}
@@ -125,11 +122,9 @@ export function CollapsibleSidebarMenu({
 function SubCollapsible({
   item,
   showSubItems = true,
-  exact,
 }: {
   item: NavItem;
   showSubItems?: boolean;
-  exact?: boolean;
 }) {
   return (
     <Collapsible open={showSubItems}>
@@ -140,7 +135,7 @@ function SubCollapsible({
               <Link
                 to={sub.linkOptions.to}
                 className="[&.active]:font-bold"
-                activeOptions={{ exact, includeSearch: false }}
+                activeOptions={{ exact: sub.exact, includeSearch: false }}
               >
                 <sub.icon />
                 <span>{sub.title}</span>

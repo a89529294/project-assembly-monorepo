@@ -32,7 +32,7 @@ export const CustomerForm = ({
   customerFormRef,
 }: CustomerFormProps) => {
   const {
-    data: counties,
+    counties,
     isLoading: isLoadingCounties,
     nameToCode,
     codeToName,
