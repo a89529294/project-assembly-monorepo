@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-react";
 
-import { NavigationProps, NavItem } from "@/components/app-sidebar/paths";
+import { NavItem } from "@/components/app-sidebar/paths";
 import {
   Collapsible,
   CollapsibleContent,
@@ -21,6 +21,14 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/auth/use-auth";
 import { RoleName } from "@myapp/shared";
+
+interface NavigationProps {
+  show: boolean;
+  label: string;
+  items: Array<NavItem>;
+  showSubItems?: boolean;
+  exact?: boolean;
+}
 
 export function CollapsibleSidebarMenu({
   show,
@@ -116,17 +124,15 @@ export function CollapsibleSidebarMenu({
 
 function SubCollapsible({
   item,
-  showSubItems,
+  showSubItems = true,
   exact,
 }: {
   item: NavItem;
   showSubItems?: boolean;
   exact?: boolean;
 }) {
-  console.log(item);
-
   return (
-    <Collapsible open={showSubItems === undefined ? true : showSubItems}>
+    <Collapsible open={showSubItems}>
       <CollapsibleContent>
         {item.subs!.map((sub) => (
           <SidebarMenuSubItem key={sub.title}>

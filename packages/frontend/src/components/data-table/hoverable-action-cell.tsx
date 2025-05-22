@@ -1,21 +1,22 @@
 import { cn } from "@/lib/utils";
-import { ReactNode } from "@tanstack/react-router";
+import { ComponentProps } from "react";
+
+type RevealOnHoverProps = ComponentProps<"button">;
 
 export function RevealOnHover({
-  children,
   className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+  children,
+  ...props
+}: RevealOnHoverProps) {
   return (
-    <div
+    <button
       className={cn(
-        "place-items-center cursor-pointer hidden group-hover:grid data-[state=open]:grid",
+        "place-items-center cursor-pointer hidden group-hover:grid [tr:has(button[data-state=open])_&]:grid",
         className
       )}
+      {...props}
     >
       {children}
-    </div>
+    </button>
   );
 }

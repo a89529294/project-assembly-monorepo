@@ -18,7 +18,7 @@ export function useCreateCustomer() {
           queryKey: trpc.basicInfo.readCustomers.queryKey(),
         });
         toast.success("成功新增客戶");
-        navigate({ to: "/customers" });
+        navigate({ to: "/customers/summary" });
       },
       onError(e) {
         toast.error("無法新增客戶");

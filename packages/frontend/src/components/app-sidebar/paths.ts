@@ -41,14 +41,6 @@ export interface SubNavItem<
   linkOptions: ValidateLinkOptions<TRouter, TOptions>;
 }
 
-export interface NavigationProps {
-  show: boolean;
-  label: string;
-  items: Array<NavItem>;
-  showSubItems?: boolean;
-  exact?: boolean;
-}
-
 // TODO clean up show sub route implementation
 
 export const genPaths = (customerId?: string) =>
@@ -121,7 +113,7 @@ export const genPaths = (customerId?: string) =>
         title: "客戶列表",
         basePath: "/customers",
         linkOptions: {
-          to: "/customers",
+          to: "/customers/summary",
         },
         icon: LucideRows4,
         roleNames: ["BasicInfoManagement", "AdminManagement"],

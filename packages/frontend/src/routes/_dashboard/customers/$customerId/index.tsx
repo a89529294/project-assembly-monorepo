@@ -77,7 +77,7 @@ function RouteComponent() {
       header={
         <div className="flex justify-between">
           <Button asChild>
-            <Link to="/customers">返回列表</Link>
+            <Link to="/customers/summary">返回列表</Link>
           </Button>
 
           {isEditMode ? (

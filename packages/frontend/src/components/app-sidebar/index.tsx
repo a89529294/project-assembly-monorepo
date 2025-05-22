@@ -22,8 +22,6 @@ export function AppSidebar({ user }: { user: User }) {
   const customerId = match1?.params.customerId;
   const showCustomerSubRoutes = !!(match1 || match2);
 
-  console.log(customerId);
-
   return (
     <Sidebar>
       <SidebarContent className="py-3 px-1">
