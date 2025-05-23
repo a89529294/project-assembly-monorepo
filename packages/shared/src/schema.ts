@@ -14,7 +14,12 @@ import {
 import { AppUserPermission } from "./app-users";
 
 // Enums
-export const PROJECT_STATUSES = ["pending", "in_progress", "completed", "cancelled"] as const;
+export const PROJECT_STATUSES = [
+  "pending",
+  "in_progress",
+  "completed",
+  "cancelled",
+] as const;
 
 export const projectStatusEnum = pgEnum("project_status", PROJECT_STATUSES);
 export const genderEnum = pgEnum("gender", ["male", "female"]);
@@ -238,6 +243,29 @@ export const projectContactsTable = pgTable("project_contacts", {
     .references(() => contactsTable.id),
   ...timestamps,
 });
+
+export const projectBomImportJobRecordTable = pgTable(
+  "project_bom_import_job_record",
+  {
+    // This is both the primary key and a foreign key to projects.id
+    id: uuid("id")
+      .primaryKey()
+      .references(() => projectsTable.id),
+    bomFileEtag: varchar("bom_file_etag", { length: 255 }),
+    jobId: varchar("job_id", { length: 255 }),
+    status: varchar("status", {
+      length: 20,
+      enum: ["waiting", "processing", "done", "failed"],
+    })
+      .notNull()
+      .default("waiting"),
+    totalSteps: integer("total_steps"),
+    processedSteps: integer("processed_steps"),
+    errorMessage: varchar("error_message", { length: 1000 }),
+    latestImportedAt: timestamp("latest_imported_at", { withTimezone: true }),
+    ...timestamps,
+  }
+);
 
 export const companyInfoTable = pgTable("company_info", {
   id: integer("id").primaryKey(),

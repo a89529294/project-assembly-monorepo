@@ -10,7 +10,13 @@ import {
   ProjectFormValue,
   ProjectUpdate,
 } from "@myapp/shared";
-import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
+import { FileUp } from "lucide-react";
+import {
+  useFieldArray,
+  useForm,
+  UseFormReturn,
+  useWatch,
+} from "react-hook-form";
 
 interface ProjectFormProps {
   initialData?: ProjectUpdate;
@@ -52,7 +58,6 @@ export function ProjectForm({
   const { data: districts } = useDistricts(form.watch("county"));
 
   const handleSubmit = form.handleSubmit(onSubmit, (e) => {
-    console.log(form.getValues("customerId"));
     console.log(e);
   });
 
@@ -121,9 +126,79 @@ export function ProjectForm({
               />
             </div>
           </div>
+
+          {/* File Uploads */}
+          <div className="grid grid-cols-1 gap-4 p-6 bg-white rounded-lg shadow">
+            <h2 className="text-lg font-semibold">檔案上傳</h2>
+            <div className="space-y-4">
+              <FileUploadField
+                form={form}
+                name="bom"
+                label="BOM 檔案"
+                accept=".csv,.xlsx,.xls"
+                description="上傳 BOM 檔案 (CSV 或 Excel)"
+              />
+            </div>
+          </div>
         </div>
       </form>
     </Form>
+  );
+}
+
+interface FileUploadFieldProps {
+  form: UseFormReturn<ProjectFormValue>;
+  name: "bom";
+  label: string;
+  accept: string;
+  description?: string;
+}
+
+function FileUploadField({
+  form,
+  name,
+  label,
+  accept,
+  description,
+}: FileUploadFieldProps) {
+  const fileValue = useWatch({
+    control: form.control,
+    name: name,
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      form.setValue(name, file);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <div className="mt-1 flex items-center">
+        <label className="relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:text-blue-500">
+          <span className="flex items-center gap-2">
+            <FileUp className="h-4 w-4" />
+            選擇檔案
+          </span>
+          <input
+            type="file"
+            accept={accept}
+            className="sr-only"
+            onChange={handleFileChange}
+          />
+        </label>
+        {fileValue?.name && (
+          <span className="ml-4 text-sm text-gray-500 truncate max-w-xs">
+            已選擇: {fileValue.name}
+          </span>
+        )}
+      </div>
+      {description && (
+        <p className="mt-1 text-sm text-gray-500">{description}</p>
+      )}
+    </div>
   );
 }
 

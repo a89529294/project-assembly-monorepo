@@ -1,5 +1,6 @@
 import {
   contactsTable,
+  projectBomImportJobRecordTable,
   projectContactsTable,
   projectCreateSchema,
   projectsPaginationSchema,
@@ -12,6 +13,7 @@ import { db } from "../../db/index.js";
 import { protectedProcedure } from "../core";
 import { orderDirectionFn } from "../helpers.js";
 import { ilike } from "drizzle-orm";
+import { z } from "zod";
 
 const genProjectsWhereCondition = (term: string) => {
   const searchTerm = `%${term}%`;
@@ -77,6 +79,51 @@ export const readCustomerProjectsProcedure = protectedProcedure([
       totalPages,
       data,
     };
+  });
+
+// Create a new BOM import job record when a BOM file is successfully uploaded
+// Create a new BOM import job record when a BOM file is successfully uploaded
+export const onBomUploadSuccessProcedure = protectedProcedure([
+  "BasicInfoManagement",
+])
+  .input(
+    z.object({
+      projectId: z.string().uuid("Invalid project ID"),
+      s3Key: z.string().min(1, "S3 key is required"),
+      eTag: z.string().min(1, "ETag is required"),
+      fileSize: z
+        .number()
+        .int()
+        .positive("File size must be a positive number"),
+    })
+  )
+  .mutation(async ({ input, ctx }) => {
+    const { projectId, s3Key, eTag, fileSize } = input;
+    const fileName = "TeklaBom.csv";
+
+    const [jobRecord] = await db
+      .insert(projectBomImportJobRecordTable)
+      .values({
+        id: projectId,
+        bomFileEtag: eTag,
+        status: "waiting",
+        fileName,
+        fileSize,
+        uploadedBy: ctx.user.id,
+        s3Key,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    if (!jobRecord) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create BOM import job record",
+      });
+    }
+
+    return jobRecord;
   });
 
 export const createProjectProcedure = protectedProcedure([

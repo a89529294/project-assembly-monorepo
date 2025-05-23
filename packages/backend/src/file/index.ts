@@ -2,12 +2,15 @@ import {
   DeleteObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
+  CopyObjectCommand,
 } from "@aws-sdk/client-s3";
 import { TRPCError } from "@trpc/server";
 import { fileTypeFromBuffer } from "file-type";
 import { Hono } from "hono";
 import { s3Client } from "../s3.js";
 import { honoAuthMiddleware } from "../trpc/core.js";
+import { BOM_DIR_NAME, BOM_FILE_NAME, HISTORY_DIR_NAME } from "./constants.js";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const fileRoutes = new Hono();
 
@@ -16,7 +19,6 @@ fileRoutes.post(
   honoAuthMiddleware(["BasicInfoManagement"]),
   async (c) => {
     const body = await c.req.parseBody();
-    console.log(body["file"]); // File | string
     const file = body["file"] as File;
 
     const arrayBuffer = await file.arrayBuffer();
@@ -90,6 +92,206 @@ fileRoutes.post(
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to upload company logo.",
+      });
+    }
+  }
+);
+
+// fileRoutes.post(
+//   "/upload-bom/:projectId",
+//   honoAuthMiddleware(["BasicInfoManagement"]),
+//   async (c) => {
+//     const { projectId } = c.req.param();
+//     const body = await c.req.parseBody();
+//     const file = body["file"] as File;
+
+//     if (!file) {
+//       throw new TRPCError({
+//         code: "BAD_REQUEST",
+//         message: "No file provided",
+//       });
+//     }
+
+//     const arrayBuffer = await file.arrayBuffer();
+//     const fileBuffer = Buffer.from(arrayBuffer);
+
+//     const mimeType = file.type;
+
+//     // Validate against allowed types
+//     const validMimeTypes = [
+//       "text/csv",
+//       "application/csv",
+//       "application/vnd.ms-excel",
+//       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+//     ];
+
+//     if (!validMimeTypes.includes(mimeType)) {
+//       throw new TRPCError({
+//         code: "BAD_REQUEST",
+//         message: `Invalid file type: ${mimeType}. Only CSV and Excel files are allowed.`,
+//       });
+//     }
+
+//     const BUCKET_NAME = process.env.S3_BUCKET_NAME;
+//     const bomDirPath = `projects/${projectId}/${BOM_DIR_NAME}/`;
+//     const historyDirPath = `${bomDirPath}${HISTORY_DIR_NAME}/`;
+//     const bomFilePath = `${bomDirPath}${BOM_FILE_NAME}`;
+
+//     try {
+//       // Check if BOM file already exists
+//       const listCommand = new ListObjectsV2Command({
+//         Bucket: BUCKET_NAME,
+//         Prefix: bomFilePath,
+//       });
+
+//       const listedObjects = await s3Client.send(listCommand);
+
+//       // If BOM file exists, move it to history with timestamp
+//       if (listedObjects.Contents && listedObjects.Contents.length > 0) {
+//         // Ensure history directory exists
+//         await s3Client.send(
+//           new PutObjectCommand({
+//             Bucket: BUCKET_NAME,
+//             Key: historyDirPath,
+//             Body: Buffer.from(""),
+//           })
+//         );
+
+//         // Create timestamp for the history file
+//         const now = new Date().toISOString().replace(/[:T-]|\.\d{3}Z$/g, "");
+//         const historyFileName = `TeklaBom_${now}.csv`;
+//         const historyFilePath = `${historyDirPath}${historyFileName}`;
+
+//         // Copy existing BOM to history
+//         await s3Client.send(
+//           new CopyObjectCommand({
+//             Bucket: BUCKET_NAME,
+//             CopySource: `/${BUCKET_NAME}/${bomFilePath}`,
+//             Key: historyFilePath,
+//           })
+//         );
+
+//         // Delete the original BOM file
+//         await s3Client.send(
+//           new DeleteObjectCommand({
+//             Bucket: BUCKET_NAME,
+//             Key: bomFilePath,
+//           })
+//         );
+//       }
+
+//       // Upload the new BOM file
+//       const uploadCommand = new PutObjectCommand({
+//         Bucket: BUCKET_NAME,
+//         Key: bomFilePath,
+//         Body: fileBuffer,
+//         ContentType: mimeType,
+//       });
+
+//       await s3Client.send(uploadCommand);
+
+//       // Construct the S3 URL
+//       const baseUrl = `https://${BUCKET_NAME}.s3.amazonaws.com`;
+//       const objectUrl = `${baseUrl}/${bomFilePath}`;
+
+//       return c.json({
+//         success: true,
+//         message: "BOM file uploaded successfully",
+//         fileUrl: objectUrl,
+//         filePath: bomFilePath,
+//       });
+//     } catch (error) {
+//       console.error("S3 upload error:", error);
+//       throw new TRPCError({
+//         code: "INTERNAL_SERVER_ERROR",
+//         message: "Failed to upload BOM file",
+//         cause: error instanceof Error ? error.message : "unknown error",
+//       });
+//     }
+//   }
+// );
+
+fileRoutes.get(
+  "/presigned-url/bom-upload/:projectId",
+  honoAuthMiddleware(["BasicInfoManagement"]),
+  async (c) => {
+    const { projectId } = c.req.param();
+    const BUCKET_NAME = process.env.S3_BUCKET_NAME;
+    const bomDirPath = `projects/${projectId}/${BOM_DIR_NAME}/`;
+    const historyDirPath = `${bomDirPath}${HISTORY_DIR_NAME}/`;
+    const bomFilePath = `${bomDirPath}${BOM_FILE_NAME}`;
+
+    try {
+      // Check if BOM file already exists
+      const listCommand = new ListObjectsV2Command({
+        Bucket: BUCKET_NAME,
+        Prefix: bomFilePath,
+      });
+
+      const listedObjects = await s3Client.send(listCommand);
+      let historyFilePath = null;
+
+      // If BOM file exists, prepare to move it to history
+      if (listedObjects.Contents && listedObjects.Contents.length > 0) {
+        // Ensure history directory exists
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: historyDirPath,
+            Body: Buffer.from(""),
+          })
+        );
+
+        // Create timestamp for the history file
+        const now = new Date().toISOString().replace(/[:T-]|\.\d{3}Z$/g, "");
+        const historyFileName = `TeklaBom_${now}.csv`;
+        historyFilePath = `${historyDirPath}${historyFileName}`;
+
+        // Copy existing BOM to history
+        await s3Client.send(
+          new CopyObjectCommand({
+            Bucket: BUCKET_NAME,
+            CopySource: `/${BUCKET_NAME}/${bomFilePath}`,
+            Key: historyFilePath,
+          })
+        );
+
+        // Delete the original BOM file
+        await s3Client.send(
+          new DeleteObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: bomFilePath,
+          })
+        );
+      }
+
+      // Generate a pre-signed URL for PUT operation with required headers
+      const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: bomFilePath,
+        ContentType: "text/csv",
+        // Metadata: {
+        //   "original-filename": BOM_FILE_NAME,
+        // },
+      });
+
+      const uploadUrl = await getSignedUrl(s3Client, command, {
+        expiresIn: 3600,
+      });
+
+      return c.json({
+        success: true,
+        uploadUrl,
+        s3Key: bomFilePath,
+        // filePath: bomFilePath,
+        // historyFilePath: historyFilePath || null,
+      });
+    } catch (error) {
+      console.error("Error in pre-signed URL generation:", error);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to prepare for file upload",
+        cause: error instanceof Error ? error.message : "unknown error",
       });
     }
   }
