@@ -7,11 +7,16 @@ import {
   pgEnum,
   pgTable,
   pgView,
+  primaryKey,
   timestamp,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { AppUserPermission } from "./app-users";
+import { AppUserPermission } from "../app-users";
+import { projectAssembliesTable } from "./project-assembly";
+import { projectAssemblyProcessTable } from "./project-assembly-process";
+import { materialsTable } from "./material";
+import { processWorkTypesTable } from "./process-work-type";
 
 // Enums
 export const PROJECT_STATUSES = [
@@ -20,8 +25,20 @@ export const PROJECT_STATUSES = [
   "completed",
   "cancelled",
 ] as const;
-
 export const projectStatusEnum = pgEnum("project_status", PROJECT_STATUSES);
+
+export const BOM_PROCESS_STATUS = [
+  "waiting",
+  "processing",
+  "done",
+  "failed",
+] as const;
+export const bomProcessStatusEnum = pgEnum(
+  "bom_process_status",
+  BOM_PROCESS_STATUS
+);
+export type BomProcessStatus = (typeof BOM_PROCESS_STATUS)[number];
+
 export const genderEnum = pgEnum("gender", ["male", "female"]);
 
 export const APP_PERMISSIONS = [
@@ -32,8 +49,6 @@ export const APP_PERMISSIONS = [
 
 // Drizzle ORM enum
 export const appPermissionEnum = pgEnum("app_permission", APP_PERMISSIONS);
-
-// Zod enum
 
 // Define enum for management types
 export const roleNameEnum = pgEnum("role_name", [
@@ -487,6 +502,7 @@ export const projectsRelations = relations(projectsTable, ({ one, many }) => ({
     references: [customersTable.id],
   }),
   projectContacts: many(projectContactsTable),
+  projectAssemblies: many(projectAssembliesTable),
 }));
 
 export const contactsRelations = relations(contactsTable, ({ one, many }) => ({
@@ -615,6 +631,48 @@ export const appUserRefreshTokensRelations = relations(
   })
 );
 
+// src/schemas/employee.schema.ts
+export const employeeRelations = relations(employeesTable, ({ many }) => ({
+  employeeDepartments: many(employeeDepartmentsTable),
+  // Many-to-many with ProcessWorkType
+  processWorkTypes: many(processWorkTypeEmployee),
+
+  // One-to-many with ProjectAssemblyProcess (as worker)
+  projectAssemblyProcesses: many(projectAssemblyProcessTable),
+
+  // One-to-many with Material (as arrival confirmed employee)
+  arrivalConfirmedMaterials: many(materialsTable, {
+    relationName: "arrivalConfirmedEmployee",
+  }),
+
+  // One-to-many with Material (as stocked by employee)
+  stockedMaterials: many(materialsTable, { relationName: "stockedByEmployee" }),
+
+  // One-to-many with Material (as consumed by employee)
+  consumedMaterials: many(materialsTable, {
+    relationName: "consumedByEmployee",
+  }),
+}));
+
+// ProcessWorkType-Employee join table for many-to-many relationship
+export const processWorkTypeEmployee = pgTable(
+  "process_work_type_employee",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    processWorkTypeId: uuid("process_work_type_id")
+      .notNull()
+      .references(() => processWorkTypesTable.id, { onDelete: "cascade" }),
+    employeeId: uuid("employee_id")
+      .notNull()
+      .references(() => employeesTable.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.processWorkTypeId, table.employeeId] }),
+  ]
+);
+
 // Type definitions for database models
 export type RoleFromDb = InferSelectModel<typeof rolesTable>;
 // export type PermissionFromDb = InferSelectModel<typeof permissionsTable>;
@@ -640,3 +698,21 @@ export type AppUserRefreshTokenFromDb = InferSelectModel<
   typeof appUserRefreshTokensTable
 >;
 export type CompanyInfoFromDb = InferSelectModel<typeof companyInfoTable>;
+
+// Material
+export * from "./material";
+
+// Project Assembly
+export * from "./project-assembly";
+
+// Project Assembly Location
+export * from "./project-assembly-location";
+
+// Project Assembly Sub-Location
+export * from "./project-assembly-sub-location";
+
+// Project Assembly Process
+export * from "./project-assembly-process";
+
+// Project Part
+export * from "./project-part";

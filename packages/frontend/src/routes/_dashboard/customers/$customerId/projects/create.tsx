@@ -6,7 +6,7 @@ import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { ProjectCreate } from "@myapp/shared";
 import { privateFetch } from "@/lib/utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ScrollableBody } from "@/components/layout/scrollable-body";
@@ -22,12 +22,22 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const { customerId } = Route.useParams();
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const { mutate: startBomProcessing } = useMutation(
+    trpc.basicInfo.onBomUploadSuccess.mutationOptions()
+  );
   const { mutate } = useMutation(
     trpc.basicInfo.createProject.mutationOptions()
   );
-  const navigate = Route.useNavigate();
+  const { refetch, data: importProgress } = useQuery(
+    trpc.basicInfo.checkBomImportStatus.queryOptions(projectId!, {
+      enabled: !!projectId,
+    })
+  );
+  // const navigate = Route.useNavigate();
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleSubmit = async (data: ProjectCreate) => {
     const { bom, ...projectData } = data;
@@ -37,6 +47,8 @@ function RouteComponent() {
       onSuccess: async (project) => {
         // If there's a BOM file, upload it after project creation
         if (bom && project.id) {
+          setProjectId(project.id);
+
           try {
             // 1. Get pre-signed URL and file path from your backend
             const { uploadUrl, s3Key } = await privateFetch(
@@ -65,11 +77,43 @@ function RouteComponent() {
                     const eTag = xhr.getResponseHeader("ETag");
                     console.log(s3Key);
                     console.log(eTag);
-                    // const fileName = "TeklaBom.csv";
-                    // const fileSize = bom.size;
-                    // const uploadedBy = user.id;
 
-                    resolve(undefined);
+                    console.log(eTag);
+
+                    // Start BOM processing
+                    await startBomProcessing({
+                      eTag: eTag ? eTag.replace(/^"|"$/g, "") : "",
+                      fileSize: bom.size,
+                      projectId: project.id,
+                      s3Key,
+                    });
+
+                    // Set importing state and reset progress
+                    setIsImporting(true);
+
+                    // Start polling for import status
+                    const checkStatus = async () => {
+                      try {
+                        refetch();
+                      } catch (error) {
+                        console.error("Error checking import status:", error);
+                        clearInterval(intervalId);
+                        setIsImporting(false);
+                        reject(error);
+                      }
+                    };
+
+                    // Initial check
+                    await checkStatus();
+
+                    // Set up polling every 5 seconds
+                    const intervalId = setInterval(checkStatus, 5000);
+
+                    // Cleanup interval when component unmounts or upload is complete
+                    return () => {
+                      clearInterval(intervalId);
+                      resolve("");
+                    };
                   } catch (error) {
                     console.error("Failed to update file path:", error);
                     reject(new Error("Failed to update file information"));
@@ -93,10 +137,10 @@ function RouteComponent() {
         queryClient.invalidateQueries({
           queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),
         });
-        navigate({
-          to: "/customers/$customerId/projects",
-          params: { customerId },
-        });
+        // navigate({
+        //   to: "/customers/$customerId/projects",
+        //   params: { customerId },
+        // });
         setIsCreatingProject(false);
       },
       onError() {
@@ -120,7 +164,17 @@ function RouteComponent() {
           </Button>
           <div className="flex gap-2 items-center">
             {isCreatingProject && (
-              <Progress value={uploadProgress} className="h-2 w-60" />
+              <div className="flex items-center gap-2 w-60">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  {isImporting
+                    ? `匯入中... ${importProgress}%`
+                    : `上傳中... ${uploadProgress}%`}
+                </span>
+                <Progress
+                  value={isImporting ? importProgress || 0 : uploadProgress}
+                  className="h-2 flex-1"
+                />
+              </div>
             )}
             <Button
               type="submit"

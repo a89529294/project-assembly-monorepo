@@ -14,6 +14,7 @@ import { protectedProcedure } from "../core";
 import { orderDirectionFn } from "../helpers.js";
 import { ilike } from "drizzle-orm";
 import { z } from "zod";
+import { bomImportQueue } from "../../bom-import-queue.js";
 
 const genProjectsWhereCondition = (term: string) => {
   const searchTerm = `%${term}%`;
@@ -99,31 +100,110 @@ export const onBomUploadSuccessProcedure = protectedProcedure([
   )
   .mutation(async ({ input, ctx }) => {
     const { projectId, s3Key, eTag, fileSize } = input;
-    const fileName = "TeklaBom.csv";
 
-    const [jobRecord] = await db
-      .insert(projectBomImportJobRecordTable)
-      .values({
-        id: projectId,
-        bomFileEtag: eTag,
-        status: "waiting",
-        fileName,
-        fileSize,
-        uploadedBy: ctx.user.id,
-        s3Key,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
+    // const [jobRecord] = await db
+    //   .insert(projectBomImportJobRecordTable)
+    //   .values({
+    //     id: projectId,
+    //     bomFileEtag: eTag,
+    //     status: "waiting",
+    //   })
+    //   .returning();
 
-    if (!jobRecord) {
+    // if (!jobRecord) {
+    //   throw new TRPCError({
+    //     code: "INTERNAL_SERVER_ERROR",
+    //     message: "Failed to create BOM import job record",
+    //   });
+    // }
+
+    // return jobRecord;
+
+    return db.transaction(async (tx) => {
+      // 1. Create the job record
+      const [jobRecord] = await tx
+        .insert(projectBomImportJobRecordTable)
+        .values({
+          id: projectId,
+          bomFileEtag: eTag,
+          status: "waiting",
+        })
+        .returning();
+
+      if (!jobRecord) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create BOM import job record",
+        });
+      }
+
+      // 2. Add job to queue
+      try {
+        const job = await bomImportQueue.addJob({
+          projectId,
+          operator: ctx.user.id,
+          queuedAt: Date.now(),
+          force: false,
+          s3Key,
+          eTag,
+          fileSize,
+        });
+
+        // 3. Update job record with the queue job ID
+        await tx
+          .update(projectBomImportJobRecordTable)
+          .set({
+            jobId: String(job.id),
+          })
+          .where(eq(projectBomImportJobRecordTable.id, projectId));
+
+        return {
+          ...jobRecord,
+          jobId: String(job.id),
+        };
+      } catch (error) {
+        // If queue operation fails, update the job record
+        await tx
+          .update(projectBomImportJobRecordTable)
+          .set({
+            status: "failed",
+            errorMessage:
+              error instanceof Error ? error.message : "unknown error",
+            updatedAt: new Date(),
+          })
+          .where(eq(projectBomImportJobRecordTable.id, projectId));
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to queue BOM import job",
+          cause: error,
+        });
+      }
+    });
+  });
+
+export const checkBomImportStatusProcedure = protectedProcedure([
+  "BasicInfoManagement",
+])
+  .input(z.string().uuid("Invalid project ID"))
+  .query(async ({ input }) => {
+    const [job] = await db
+      .select()
+      .from(projectBomImportJobRecordTable)
+      .where(eq(projectBomImportJobRecordTable.id, input))
+      .limit(1);
+
+    if (!job) {
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create BOM import job record",
+        code: "NOT_FOUND",
+        message: "BOM import job not found",
       });
     }
 
-    return jobRecord;
+    if (!job.processedSteps) return 0;
+    if (!job.totalSteps || job.totalSteps === 0) return 0;
+
+    return (job.processedSteps / job.totalSteps) * 100;
   });
 
 export const createProjectProcedure = protectedProcedure([
