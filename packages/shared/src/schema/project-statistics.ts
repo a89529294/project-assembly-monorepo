@@ -18,18 +18,12 @@ export const projectStatisticsTable = pgTable("project_statistic", {
     precision: 11,
     scale: 2,
   }).notNull(),
-  projectTotalQuantity: decimal("project_total_quantity", {
-    precision: 11,
-    scale: 2,
-  }).notNull(),
+  projectTotalQuantity: integer("project_total_quantity").notNull(),
   projectCompleteTotalWeight: decimal("project_complete_total_weight", {
     precision: 11,
     scale: 2,
   }).notNull(),
-  projectCompleteTotalQuantity: decimal("project_complete_total_quantity", {
-    precision: 11,
-    scale: 2,
-  }).notNull(),
+  projectCompleteTotalQuantity: integer("project_complete_total_quantity").notNull(),
 
   // Foreign key
   projectId: uuid("project_id")

@@ -1,11 +1,11 @@
 // src/schemas/process-work-detail.schema.ts
 import { pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { baseSchema } from "./common";
+import { baseAuditSchema } from "./common";
 import { processWorkTypesTable } from "./process-work-type";
 
 export const processWorkDetailsTable = pgTable("process_work_detail", {
-  ...baseSchema,
+  ...baseAuditSchema,
   name: text("name").notNull(),
   type: text("type").notNull(),
 

@@ -1,13 +1,13 @@
 // src/schemas/project-assembly-process.schema.ts
 import { integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { baseSchema } from "./common";
+import { baseAuditSchema } from "./common";
 import { projectAssembliesTable } from "./project-assembly";
 import { processWorkTypesTable } from "./process-work-type";
 import { employeesTable } from ".";
 
 export const projectAssemblyProcessTable = pgTable("project_assembly_process", {
-  ...baseSchema,
+  ...baseAuditSchema,
   name: text("name").notNull(),
   operateDate: timestamp("operate_date"),
   detailName: text("detail_name"),

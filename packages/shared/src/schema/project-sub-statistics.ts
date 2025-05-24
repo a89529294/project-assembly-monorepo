@@ -41,7 +41,7 @@ export const projectSubStatisticsTable = pgTable(
     completeQuantity: integer("complete_quantity").notNull(),
     totalQuantity: integer("total_quantity").notNull(),
     workDuration: integer("work_duration").notNull(),
-    workDays: jsonb("work_days").notNull().$type<string[]>(),
+    workDays: text("work_days").notNull(), // Stored as JSON string
 
     // Foreign keys
     projectStatisticId: uuid("project_statistic_id")

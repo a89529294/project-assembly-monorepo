@@ -32,21 +32,21 @@ async function main() {
   console.log("Starting database seed...");
 
   // Clean all tables before seeding (order matters for FKs)
-  await db.delete(appUserRefreshTokensTable);
-  await db.delete(appUserPermissionsTable);
-  await db.delete(userRolesTable);
-  await db.delete(roleDepartmentsTable);
-  await db.delete(sessionsTable);
-  await db.delete(projectContactsTable);
-  await db.delete(employeeDepartmentsTable);
-  await db.delete(usersTable);
-  await db.delete(appUsersTable);
-  await db.delete(employeesTable);
-  await db.delete(departmentsTable);
-  await db.delete(rolesTable);
-  await db.delete(projectsTable);
-  await db.delete(contactsTable);
-  await db.delete(customersTable);
+  // await db.delete(appUserRefreshTokensTable);
+  // await db.delete(appUserPermissionsTable);
+  // await db.delete(userRolesTable);
+  // await db.delete(roleDepartmentsTable);
+  // await db.delete(sessionsTable);
+  // await db.delete(projectContactsTable);
+  // await db.delete(employeeDepartmentsTable);
+  // await db.delete(usersTable);
+  // await db.delete(appUsersTable);
+  // await db.delete(employeesTable);
+  // await db.delete(departmentsTable);
+  // await db.delete(rolesTable);
+  // await db.delete(projectsTable);
+  // await db.delete(contactsTable);
+  // await db.delete(customersTable);
 
   // Set role IDs for permissions.ts
   const {
@@ -331,21 +331,21 @@ async function main() {
   console.log("Users and employees created!");
 
   // --- Add 30 sample customers ---
-  const customers = Array.from({length: 30}, (_, i) => ({
+  const customers = Array.from({ length: 30 }, (_, i) => ({
     id: randomUUID(),
     name: `Customer ${i + 1}`,
     phone: `+852${Math.floor(1000000 + Math.random() * 9000000)}`,
-    customerNumber: `CUST-${String(i + 1).padStart(3, '0')}`,
+    customerNumber: `CUST-${String(i + 1).padStart(3, "0")}`,
     nickname: `Cust${i + 1}`,
     taxId: `TAX${Math.floor(10000 + Math.random() * 90000)}`,
     email: `customer${i + 1}@example.com`,
     contactPerson: `Contact ${i + 1}`,
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   }));
-  
+
   await db.insert(customersTable).values(customers);
-  
+
   console.log("Customers created!");
 
   console.log("Database seed completed successfully!");

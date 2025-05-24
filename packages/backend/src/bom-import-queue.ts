@@ -22,10 +22,11 @@ import {
 } from "./file/constants";
 import * as path from "path";
 import * as fs from "fs/promises";
-import { downloadFileFromS3 } from "./helpers/s3";
+import { downloadFileFromS3, getS3FileMetadata } from "./helpers/s3";
 import extract from "extract-zip";
 import bom2json from "./helpers/guanda-bom2json/index.js";
 import { chunkArray } from "./helpers/misc";
+import { processWorkTypesTable } from "../../shared/src/schema/process-work-type";
 
 // Use the existing chunkArray function from helpers/misc
 
@@ -34,6 +35,8 @@ type DeepPartial<T> = {
 };
 // type A = DeepPartial<ProjectAssembly>
 type A = any;
+
+const bucketName = process.env.S3_BUCKET_NAME;
 
 export interface ProjectBomImportQueueData {
   projectId: string;
@@ -169,6 +172,12 @@ export class BomImportQueue {
   // }
 
   private async processS3BomFile(data: ProjectBomImportQueueData) {
+    if (!this.isImportNecessary(data.projectId) && !data.force) {
+      console.log(`No need to process bom for projectId: ${data.projectId}`);
+      return;
+    }
+
+    // TODO start here next time, this corresponds to importAssembliesFromBom in guanda-erp-be
     console.log(`Processing BOM for project ${data.projectId}`);
     let tempDir: string | null = null;
 
@@ -200,8 +209,6 @@ export class BomImportQueue {
       // Update progress
       await updateProgress(10, 100);
 
-      // 1. Download the BOM file and NC file from S3
-      const bucketName = process.env.S3_BUCKET_NAME;
       if (!bucketName) {
         throw new Error("S3_BUCKET_NAME environment variable is not set");
       }
@@ -328,10 +335,20 @@ export class BomImportQueue {
       processedCount += sortResult.newAssemblies.length;
     }
 
+    const validReplacements = sortResult.replacements.filter(
+      (
+        r
+      ): r is {
+        replacedAssembly: { id: string; tagId: string; projectId: string };
+        replacementAssembly: ProjectAssembly;
+        oldReplacementAssembly?: { id: string; tagId: string };
+      } => r.replacedAssembly.id !== undefined
+    );
+
     // 5. Process replacements
-    if (sortResult.replacements.length > 0) {
+    if (validReplacements.length > 0) {
       await this.handleReplacements(
-        sortResult.replacements,
+        validReplacements,
         operator,
         updateProgress
       );
@@ -469,15 +486,41 @@ export class BomImportQueue {
         // 4. Insert assemblies with tag IDs
         const insertedAssemblies = await Promise.all(
           chunk.map(async (asm, index) => {
+            // TODO this should be fixed updating the drizzle table to use default values
+            const assemblyData = {
+              // Required fields with defaults if not provided
+              assemblyId: asm.assemblyId || "",
+              name: asm.name || "Unnamed Assembly",
+              installPosition: asm.installPosition || "",
+              installHeight: asm.installHeight || "0",
+              areaType: asm.areaType || "GENERAL",
+              drawingName: asm.drawingName || "",
+              totalWidth: asm.totalWidth || "0",
+              totalHeight: asm.totalHeight || "0",
+              totalLength: asm.totalLength || "0",
+              totalWeight: asm.totalWeight || "0",
+              totalArea: asm.totalArea || "0",
+              specification: asm.specification || "",
+              material: asm.material || "UNKNOWN",
+              type: asm.type || "UNKNOWN",
+              // Optional fields
+              transportNumber: asm.transportNumber,
+              transportDesc: asm.transportDesc,
+              tagTransportNumber: asm.tagTransportNumber,
+              memo1: asm.memo1,
+              memo2: asm.memo2,
+              vehicleIdentificationNumber: asm.vehicleIdentificationNumber,
+              shippingNumber: asm.shippingNumber,
+              shippingDate: asm.shippingDate,
+            };
+
             const [inserted] = await tx
               .insert(projectAssembliesTable)
               .values({
-                ...asm,
+                ...assemblyData,
                 tagId: tagIds[index],
                 projectId,
                 change: projectAssemblyChangeStatus.enumValues[0], // 'CREATED'
-                createdAt: new Date(),
-                updatedAt: new Date(),
                 createdBy: operator,
                 updatedBy: operator,
               })
@@ -516,9 +559,9 @@ export class BomImportQueue {
 
   private async handleReplacements(
     replacements: Array<{
-      replacedAssembly: DeepPartial<ProjectAssembly>;
-      replacementAssembly: DeepPartial<ProjectAssembly>;
-      oldReplacementAssembly?: DeepPartial<ProjectAssembly>;
+      replacedAssembly: Pick<ProjectAssembly, "id" | "tagId" | "projectId">;
+      replacementAssembly: ProjectAssembly;
+      oldReplacementAssembly?: Pick<ProjectAssembly, "id" | "tagId">;
     }>,
     operator: string,
     updateProgress: () => Promise<void>
@@ -545,7 +588,7 @@ export class BomImportQueue {
               .update(projectAssembliesTable)
               .set({
                 change: projectAssemblyChangeStatus.enumValues[2], // 'REPLACED'
-                replacedBy: replacementAssembly.assemblyId,
+                replacedId: replacementAssembly.assemblyId,
                 updatedAt: now,
                 updatedBy: operator,
               })
@@ -560,9 +603,10 @@ export class BomImportQueue {
                 .update(projectAssembliesTable)
                 .set({
                   ...replacementAssembly,
-                  change: projectAssemblyChangeStatus.enumValues[3], // 'REPLACEMENT'
+                  change: projectAssemblyChangeStatus.enumValues[3],
                   tagId: oldReplacementAssembly.tagId,
                   updatedAt: now,
+                  createdAt: now,
                   updatedBy: operator,
                 })
                 .where(eq(projectAssembliesTable.id, oldReplacementAssembly.id))
@@ -572,9 +616,9 @@ export class BomImportQueue {
             inserts.push(
               tx.insert(projectAssembliesTable).values({
                 ...replacementAssembly,
-                change: projectAssemblyChangeStatusEnum.enumValues[3], // 'REPLACEMENT'
+                change: projectAssemblyChangeStatus.enumValues[3],
                 tagId: replacedAssembly.tagId, // Keep same tag ID
-                projectId,
+                projectId: replacementAssembly.projectId,
                 createdAt: now,
                 updatedAt: now,
                 createdBy: operator,
@@ -612,7 +656,7 @@ export class BomImportQueue {
             return tx
               .update(projectAssembliesTable)
               .set({
-                change: projectAssemblyChangeStatus.enumValues[4], // 'MISSING'
+                change: projectAssemblyChangeStatus.enumValues[2], // TODO, not sure what value to use here
                 updatedAt: now,
                 updatedBy: operator,
               })
@@ -711,6 +755,64 @@ export class BomImportQueue {
 
     const maxId = parseInt(result[0]?.maxId || "0", 10);
     return Array.from({ length: count }, (_, i) => (maxId + i + 1).toString());
+  }
+
+  private isAssembliesSameSpec(
+    a1: DeepPartial<ProjectAssembly>,
+    a2: DeepPartial<ProjectAssembly>
+  ) {
+    return (
+      a1.name === a2.name &&
+      a1.installPosition === a2.installPosition &&
+      this.isNumberEqual(a1.installHeight, a2.installHeight) &&
+      a1.areaType === a2.areaType &&
+      a1.drawingName === a2.drawingName &&
+      // TODO 是否需要判斷備註不一樣是否更新 (Translation: TODO Whether to determine if different remarks need to be updated)
+      this.isNumberEqual(a1.totalWidth, a2.totalWidth) &&
+      this.isNumberEqual(a1.totalHeight, a2.totalHeight) &&
+      this.isNumberEqual(a1.totalLength, a2.totalLength) &&
+      this.isNumberEqual(a1.totalWeight, a2.totalWeight) &&
+      this.isNumberEqual(a1.totalArea, a2.totalArea) &&
+      a1.specification === a2.specification &&
+      a1.material === a2.material
+    );
+  }
+
+  private isNumberEqual(n1?: number | string, n2?: number | string) {
+    if (n1 === undefined || n2 === undefined) {
+      return n1 === n2;
+    }
+
+    return Math.abs(Number(n1) - Number(n2)) < 0.000_000_1; // 相差小於 1/10000000
+  }
+
+  private async isImportNecessary(projectId: string) {
+    const [record] = await db
+      .select()
+      .from(projectBomImportJobRecordTable)
+      .where(eq(projectBomImportJobRecordTable.id, projectId))
+      .limit(1);
+
+    // If no record exists, import is necessary
+    if (!record) {
+      return true;
+    }
+
+    // If previous import failed, allow retry
+    if (record.status === "failed") {
+      return true;
+    }
+
+    // Check if the file exists in S3 and get its metadata
+    const bomS3Key = `projects/${projectId}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`;
+    const bomMetadata = await getS3FileMetadata(bucketName!, bomS3Key);
+
+    if (!bomMetadata) {
+      throw new Error("BOM 檔案不存在");
+    }
+
+    // Compare ETags to check if the file has changed
+    return bomMetadata.etag !== record.bomFileEtag;
   }
 
   async addJob(

@@ -1,14 +1,14 @@
 // src/schemas/project-assembly-sub-location.schema.ts
 import { pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { baseSchema } from "./common";
+import { baseAuditSchema } from "./common";
 import { projectAssembliesTable } from "./project-assembly";
 import { projectAssemblyLocationsTable } from "./project-assembly-location";
 
 export const projectAssemblySubLocationsTable = pgTable(
   "project_assembly_sub_location",
   {
-    ...baseSchema,
+    ...baseAuditSchema,
     name: text("name").notNull(),
     projectAssemblyLocationId: uuid("project_assembly_location_id")
       .notNull()

@@ -16,50 +16,17 @@ import { AppUserPermission } from "../app-users";
 import { projectAssembliesTable } from "./project-assembly";
 import { projectAssemblyProcessTable } from "./project-assembly-process";
 import { materialsTable } from "./material";
-import { processWorkTypesTable } from "./process-work-type";
-
-// Enums
-export const PROJECT_STATUSES = [
-  "pending",
-  "in_progress",
-  "completed",
-  "cancelled",
-] as const;
-export const projectStatusEnum = pgEnum("project_status", PROJECT_STATUSES);
-
-export const BOM_PROCESS_STATUS = [
-  "waiting",
-  "processing",
-  "done",
-  "failed",
-] as const;
-export const bomProcessStatusEnum = pgEnum(
-  "bom_process_status",
-  BOM_PROCESS_STATUS
-);
-export type BomProcessStatus = (typeof BOM_PROCESS_STATUS)[number];
-
-export const genderEnum = pgEnum("gender", ["male", "female"]);
-
-export const APP_PERMISSIONS = [
-  "man-production", // production management
-  "ctr-gdstd", // GD-STD operations
-  "monitor-weight", // real-time monitoring
-] as const;
-
-// Drizzle ORM enum
-export const appPermissionEnum = pgEnum("app_permission", APP_PERMISSIONS);
-
-// Define enum for management types
-export const roleNameEnum = pgEnum("role_name", [
-  "AdminManagement",
-  "BasicInfoManagement", // 基本資料
-  "PersonnelPermissionManagement", // 人事權限
-  "StorageManagement", // 倉管管理
-  "ProductionManagement", // 生產管理
-]);
-
-export type RoleName = (typeof roleNameEnum.enumValues)[number];
+import {
+  processWorkTypeEmployee,
+  processWorkTypesTable,
+} from "./process-work-type";
+import { employeeColumns, employeesTable } from "./employees";
+import {
+  appPermissionEnum,
+  bomProcessStatusEnum,
+  projectStatusEnum,
+  roleNameEnum,
+} from "./enum";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
@@ -99,28 +66,6 @@ export const departmentsTable = pgTable("departments", {
   zhPrefix: varchar("zh_prefix", { length: 10 }).notNull(),
   ...timestamps,
 });
-
-const employeeColumns = {
-  id: uuid("id").primaryKey().defaultRandom(),
-  idNumber: varchar("id_number", { length: 20 }).notNull().unique(),
-  chName: varchar("ch_name", { length: 100 }).notNull(),
-  phone: varchar({ length: 30 }).notNull(),
-  gender: genderEnum().notNull(),
-  enName: varchar("en_name", { length: 100 }),
-  birthday: timestamp("birthday", { withTimezone: true, mode: "date" }),
-  maritalStatus: varchar("maritalStatus", { length: 20 }),
-  education: varchar({ length: 50 }),
-  email: varchar({ length: 100 }),
-  residenceCounty: varchar("residence_county", { length: 100 }),
-  residenceDistrict: varchar("residence_district", { length: 100 }),
-  residenceAddress: varchar("residence_address", { length: 255 }),
-  mailingCounty: varchar("mailing_county", { length: 100 }),
-  mailingDistrict: varchar("mailing_district", { length: 100 }),
-  mailingAddress: varchar("mailing_address", { length: 255 }),
-  ...timestamps,
-};
-
-export const employeesTable = pgTable("employees", employeeColumns);
 
 export const usersTable = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -268,10 +213,7 @@ export const projectBomImportJobRecordTable = pgTable(
       .references(() => projectsTable.id),
     bomFileEtag: varchar("bom_file_etag", { length: 255 }),
     jobId: varchar("job_id", { length: 255 }),
-    status: varchar("status", {
-      length: 20,
-      enum: ["waiting", "processing", "done", "failed"],
-    })
+    status: bomProcessStatusEnum("status")
       .notNull()
       .default("waiting"),
     totalSteps: integer("total_steps"),
@@ -631,7 +573,6 @@ export const appUserRefreshTokensRelations = relations(
   })
 );
 
-// src/schemas/employee.schema.ts
 export const employeeRelations = relations(employeesTable, ({ many }) => ({
   employeeDepartments: many(employeeDepartmentsTable),
   // Many-to-many with ProcessWorkType
@@ -653,25 +594,6 @@ export const employeeRelations = relations(employeesTable, ({ many }) => ({
     relationName: "consumedByEmployee",
   }),
 }));
-
-// ProcessWorkType-Employee join table for many-to-many relationship
-export const processWorkTypeEmployee = pgTable(
-  "process_work_type_employee",
-  {
-    id: uuid("id")
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
-    processWorkTypeId: uuid("process_work_type_id")
-      .notNull()
-      .references(() => processWorkTypesTable.id, { onDelete: "cascade" }),
-    employeeId: uuid("employee_id")
-      .notNull()
-      .references(() => employeesTable.id, { onDelete: "cascade" }),
-  },
-  (table) => [
-    primaryKey({ columns: [table.processWorkTypeId, table.employeeId] }),
-  ]
-);
 
 // Type definitions for database models
 export type RoleFromDb = InferSelectModel<typeof rolesTable>;
@@ -702,6 +624,8 @@ export type CompanyInfoFromDb = InferSelectModel<typeof companyInfoTable>;
 // Material
 export * from "./material";
 
+export * from "./process-work-type";
+
 // Project Assembly
 export * from "./project-assembly";
 
@@ -711,8 +635,20 @@ export * from "./project-assembly-location";
 // Project Assembly Sub-Location
 export * from "./project-assembly-sub-location";
 
+// Process Work Detail
+export * from "./process-work-detail";
+
+// Project Statistics
+export * from "./project-statistics";
+export * from "./project-sub-statistics";
+export * from "./project-sub-statistics-completed-assembly";
+
 // Project Assembly Process
 export * from "./project-assembly-process";
 
 // Project Part
 export * from "./project-part";
+
+export * from "./employees";
+
+export * from "./enum";

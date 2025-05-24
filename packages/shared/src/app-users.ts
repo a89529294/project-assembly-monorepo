@@ -1,10 +1,11 @@
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { APP_PERMISSIONS, departmentsTable, employeesTable } from "./schema";
+import { departmentsTable, employeesTable } from "./schema";
 import {
   paginatedSchemaGenerator,
   summaryQueryNestedInputSchemaGenerator,
 } from "./utils";
+import { APP_PERMISSIONS } from "./schema/enum";
 
 export const appUserPermissionEnum = z.enum(APP_PERMISSIONS);
 export type AppUserPermission = z.infer<typeof appUserPermissionEnum>;

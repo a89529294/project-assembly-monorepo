@@ -12,7 +12,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
-import { baseSchema } from "./common";
+import { baseAuditSchema } from "./common";
 
 import { projectsTable } from ".";
 import { materialsTable } from "./material";
@@ -29,10 +29,7 @@ export const projectAssemblyChangeStatus = pgEnum(
 export const projectAssembliesTable = pgTable(
   "project_assemblies",
   {
-    ...baseSchema,
-    createdBy: text("created_by").notNull(),
-    updatedBy: text("updated_by").notNull(),
-    deletedBy: text("deleted_by"),
+    ...baseAuditSchema,
 
     tagId: text("tag_id").notNull().unique(),
     assemblyId: text("assembly_id").notNull(),

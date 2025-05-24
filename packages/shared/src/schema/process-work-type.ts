@@ -9,20 +9,19 @@ import {
   primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
-import { baseSchema } from "./common";
+import { baseSoftDeleteSchema } from "./common";
 
 import { employeesTable, projectAssemblyProcessTable, projectsTable } from ".";
 import { processWorkDetailsTable } from "./process-work-detail";
 import { projectSubStatisticsTable } from "./project-sub-statistics";
 
 export const processWorkTypesTable = pgTable("process_work_type", {
-  ...baseSchema,
+  ...baseSoftDeleteSchema,
   name: text("name").notNull(),
   startAt: timestamp("start_at"),
   endAt: timestamp("end_at"),
   sequence: integer("sequence").notNull(),
   queue: integer("queue").notNull().default(20),
-  deletedAt: timestamp("deleted_at"),
 
   // Foreign keys
   projectId: uuid("project_id")
@@ -34,9 +33,6 @@ export const processWorkTypesTable = pgTable("process_work_type", {
 export const processWorkTypeEmployee = pgTable(
   "process_work_type_employee",
   {
-    id: uuid("id")
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
     processWorkTypeId: uuid("process_work_type_id")
       .notNull()
       .references(() => processWorkTypesTable.id, { onDelete: "cascade" }),

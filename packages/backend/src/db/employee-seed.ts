@@ -37,9 +37,6 @@ export async function seedEmployees(departments: DepartmentConfig[]) {
               946684800000
           ),
           gender: globalIndex % 2 === 0 ? "male" : "female",
-          marital_status: ["single", "married", "divorced"][
-            Math.floor(Math.random() * 3)
-          ],
           education: ["high school", "bachelor", "master", "phd"][
             Math.floor(Math.random() * 4)
           ],
@@ -59,6 +56,8 @@ export async function seedEmployees(departments: DepartmentConfig[]) {
             Math.floor(Math.random() * 3)
           ],
           mailingAddress: `台北市中正區${Math.floor(Math.random() * 100)}號`,
+          createdBy: "seed",
+          updatedBy: "seed",
         })
         .returning();
 

@@ -120,15 +120,47 @@ export const onBomUploadSuccessProcedure = protectedProcedure([
     // return jobRecord;
 
     return db.transaction(async (tx) => {
-      // 1. Create the job record
-      const [jobRecord] = await tx
-        .insert(projectBomImportJobRecordTable)
-        .values({
-          id: projectId,
-          bomFileEtag: eTag,
-          status: "waiting",
-        })
-        .returning();
+      // 1. Check if a job record already exists for this project
+      const [existingRecord] = await tx
+        .select()
+        .from(projectBomImportJobRecordTable)
+        .where(eq(projectBomImportJobRecordTable.id, projectId))
+        .limit(1);
+
+      // 2. If there's an existing record with status waiting/processing, throw an error
+      if (existingRecord && ["waiting", "processing"].includes(existingRecord.status)) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "BOM processing is already in progress for this project",
+        });
+      }
+
+      // 3. Either update existing record or insert a new one
+      const jobRecord = existingRecord
+        ? (
+            await tx
+              .update(projectBomImportJobRecordTable)
+              .set({
+                bomFileEtag: eTag,
+                status: "waiting",
+                processedSteps: 0,
+                totalSteps: 0,
+                errorMessage: null,
+                updatedAt: new Date(),
+              })
+              .where(eq(projectBomImportJobRecordTable.id, projectId))
+              .returning()
+          )[0]
+        : (
+            await tx
+              .insert(projectBomImportJobRecordTable)
+              .values({
+                id: projectId,
+                bomFileEtag: eTag,
+                status: "waiting",
+              })
+              .returning()
+          )[0];
 
       if (!jobRecord) {
         throw new TRPCError({
