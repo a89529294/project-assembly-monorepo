@@ -12,6 +12,7 @@ import { EmployeeDetail, employeeDetailedSchema } from "@myapp/shared";
 import { Link } from "@tanstack/react-router";
 import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
+import { useAuth } from "@/auth/use-auth";
 
 type EmployeeFormProps = {
   disabled: boolean;
@@ -26,6 +27,7 @@ export function EmployeeForm({
   onSubmit,
   ActionButtons,
 }: EmployeeFormProps) {
+  const { user } = useAuth();
   const { departments, isLoading: isLoadingDepartments } = useDepartments();
   const {
     counties,
@@ -50,6 +52,10 @@ export function EmployeeForm({
     mailingCounty: "",
     mailingDistrict: "",
     mailingAddress: "",
+    deletedBy: null,
+    deletedAt: null,
+    createdBy: user!.id,
+    updatedBy: user!.id,
   };
   const form = useForm<EmployeeDetail>({
     resolver: zodResolver(employeeDetailedSchema),

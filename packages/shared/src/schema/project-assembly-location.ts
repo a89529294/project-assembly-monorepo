@@ -1,6 +1,6 @@
 // src/schemas/project-assembly-location.schema.ts
-import { pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { pgTable, text } from "drizzle-orm/pg-core";
 import { baseAuditSchema } from "./common";
 import { projectAssemblySubLocationsTable } from "./project-assembly-sub-location";
 

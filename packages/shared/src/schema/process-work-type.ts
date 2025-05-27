@@ -1,14 +1,13 @@
 // src/schemas/process-work-type.schema.ts
+import { relations } from "drizzle-orm";
 import {
-  pgTable,
-  text,
-  uuid,
-  timestamp,
   integer,
-  boolean,
+  pgTable,
   primaryKey,
+  text,
+  timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
 import { baseSoftDeleteSchema } from "./common";
 
 import { employeesTable, projectAssemblyProcessTable, projectsTable } from ".";

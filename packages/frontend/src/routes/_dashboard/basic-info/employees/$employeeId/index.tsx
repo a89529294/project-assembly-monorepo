@@ -9,6 +9,7 @@ import { EmployeeForm } from "@/components/employee-form";
 import { PendingComponent } from "@/components/pending-component";
 import { EmployeeDetail, employeeDetailedSchema } from "@myapp/shared";
 import { toast } from "sonner";
+import { useAuth } from "@/auth/use-auth";
 
 export const Route = createFileRoute(
   "/_dashboard/basic-info/employees/$employeeId/"
@@ -29,6 +30,7 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
+  const { user } = useAuth();
   const navigate = Route.useNavigate();
   const { employeeId } = Route.useParams();
   const search = Route.useSearch();
@@ -38,7 +40,10 @@ function RouteComponent() {
   async function onSubmit(data: z.infer<typeof employeeDetailedSchema>) {
     await updateEmployee.mutateAsync({
       id: employeeId,
-      payload: data,
+      payload: {
+        ...data,
+        updatedBy: user!.id,
+      },
     });
 
     toast.success("Employee updated successfully");

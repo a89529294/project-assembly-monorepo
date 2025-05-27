@@ -4,22 +4,13 @@ import { eq, relations, sql } from "drizzle-orm";
 import {
   boolean,
   integer,
-  pgEnum,
   pgTable,
   pgView,
-  primaryKey,
   timestamp,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 import { AppUserPermission } from "../app-users";
-import { projectAssembliesTable } from "./project-assembly";
-import { projectAssemblyProcessTable } from "./project-assembly-process";
-import { materialsTable } from "./material";
-import {
-  processWorkTypeEmployee,
-  processWorkTypesTable,
-} from "./process-work-type";
 import { employeeColumns, employeesTable } from "./employees";
 import {
   appPermissionEnum,
@@ -27,6 +18,10 @@ import {
   projectStatusEnum,
   roleNameEnum,
 } from "./enum";
+import { materialsTable } from "./material";
+import { processWorkTypeEmployee } from "./process-work-type";
+import { projectAssembliesTable } from "./project-assembly";
+import { projectAssemblyProcessTable } from "./project-assembly-process";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
@@ -213,9 +208,7 @@ export const projectBomImportJobRecordTable = pgTable(
       .references(() => projectsTable.id),
     bomFileEtag: varchar("bom_file_etag", { length: 255 }),
     jobId: varchar("job_id", { length: 255 }),
-    status: bomProcessStatusEnum("status")
-      .notNull()
-      .default("waiting"),
+    status: bomProcessStatusEnum("status").notNull().default("waiting"),
     totalSteps: integer("total_steps"),
     processedSteps: integer("processed_steps"),
     errorMessage: varchar("error_message", { length: 1000 }),

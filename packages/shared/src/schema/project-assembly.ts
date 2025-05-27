@@ -1,23 +1,21 @@
 // src/schemas/project-assembly.schema.ts
+import { relations } from "drizzle-orm";
 import {
-  pgTable,
-  text,
-  uuid,
   decimal,
-  timestamp,
-  pgEnum,
-  AnyPgColumn,
-  primaryKey,
-  integer,
   index,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
 import { baseAuditSchema } from "./common";
 
 import { projectsTable } from ".";
 import { materialsTable } from "./material";
-import { projectAssemblySubLocationsTable } from "./project-assembly-sub-location";
 import { projectAssemblyProcessTable } from "./project-assembly-process";
+import { projectAssemblySubLocationsTable } from "./project-assembly-sub-location";
 import { projectPartsTable } from "./project-part";
 
 // Create enum for change status
@@ -64,21 +62,13 @@ export const projectAssembliesTable = pgTable(
       .notNull()
       .references(() => projectsTable.id),
 
-    replacedId: uuid("replaced_id").references(
-      (): AnyPgColumn => projectAssembliesTable.id,
-      { onDelete: "set null" }
-    ),
-
     projectAssemblySubLocationId: uuid(
       "project_assembly_sub_location_id"
     ).references(() => projectAssemblySubLocationsTable.id, {
       onDelete: "set null",
     }),
   },
-  (table) => [
-    index("project_assembly_project_id_idx").on(table.projectId),
-    index("project_assembly_replaced_id_idx").on(table.replacedId),
-  ]
+  (table) => [index("project_assembly_project_id_idx").on(table.projectId)]
 );
 
 // Many-to-many relationship table
@@ -105,13 +95,6 @@ export const projectAssemblyRelations = relations(
     project: one(projectsTable, {
       fields: [projectAssembliesTable.projectId],
       references: [projectsTable.id],
-    }),
-
-    // Self-referential relationship for replacements
-    replaced: one(projectAssembliesTable, {
-      fields: [projectAssembliesTable.replacedId],
-      references: [projectAssembliesTable.id],
-      relationName: "replacedBy",
     }),
 
     // Sub-location relationship

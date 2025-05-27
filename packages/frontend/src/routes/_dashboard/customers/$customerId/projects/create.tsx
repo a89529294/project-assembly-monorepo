@@ -34,7 +34,7 @@ function RouteComponent() {
       enabled: !!projectId,
     })
   );
-  // const navigate = Route.useNavigate();
+  const navigate = Route.useNavigate();
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isImporting, setIsImporting] = useState(false);
@@ -71,14 +71,11 @@ function RouteComponent() {
               };
 
               xhr.onload = async () => {
+                let intervalId = 1;
                 if (xhr.status === 200) {
                   try {
                     // 3. Notify backend about successful upload and store the file path
                     const eTag = xhr.getResponseHeader("ETag");
-                    console.log(s3Key);
-                    console.log(eTag);
-
-                    console.log(eTag);
 
                     // Start BOM processing
                     await startBomProcessing({
@@ -91,32 +88,24 @@ function RouteComponent() {
                     // Set importing state and reset progress
                     setIsImporting(true);
 
-                    // Start polling for import status
-                    const checkStatus = async () => {
-                      try {
-                        refetch();
-                      } catch (error) {
-                        console.error("Error checking import status:", error);
+                    const checkBomImportStatus = async () => {
+                      const { data: currentProgress } = await refetch();
+
+                      if (currentProgress === 100) {
                         clearInterval(intervalId);
-                        setIsImporting(false);
-                        reject(error);
+                        resolve("");
                       }
                     };
 
                     // Initial check
-                    await checkStatus();
+                    await checkBomImportStatus();
 
                     // Set up polling every 5 seconds
-                    const intervalId = setInterval(checkStatus, 5000);
+                    intervalId = window.setInterval(checkBomImportStatus, 5000);
+                  } catch (e) {
+                    console.log(e);
 
-                    // Cleanup interval when component unmounts or upload is complete
-                    return () => {
-                      clearInterval(intervalId);
-                      resolve("");
-                    };
-                  } catch (error) {
-                    console.error("Failed to update file path:", error);
-                    reject(new Error("Failed to update file information"));
+                    clearInterval(intervalId);
                   }
                 } else {
                   reject(new Error("Upload failed"));
@@ -126,6 +115,8 @@ function RouteComponent() {
               xhr.onerror = () => reject(new Error("Upload failed"));
               xhr.send(bom);
             });
+
+            navigate({ to: "/customers/$customerId/projects" });
           } catch (error) {
             console.error("Upload error:", error);
             toast.error("上傳 BOM 檔案時發生錯誤");
@@ -167,7 +158,7 @@ function RouteComponent() {
               <div className="flex items-center gap-2 w-60">
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                   {isImporting
-                    ? `匯入中... ${importProgress}%`
+                    ? `匯入中... ${importProgress ?? 0}%`
                     : `上傳中... ${uploadProgress}%`}
                 </span>
                 <Progress

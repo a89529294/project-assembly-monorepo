@@ -1,14 +1,13 @@
 // src/schemas/material.schema.ts
+import { relations } from "drizzle-orm";
 import {
+  boolean,
+  decimal,
   pgTable,
   text,
-  uuid,
-  varchar,
-  decimal,
   timestamp,
-  boolean,
+  varchar,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { baseSchema } from "./common";
 import { projectAssemblyMaterialRelation } from "./project-assembly";
 

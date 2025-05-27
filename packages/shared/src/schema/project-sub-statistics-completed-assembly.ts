@@ -1,14 +1,13 @@
 // src/schemas/project-sub-statistic-completed-assembly.schema.ts
-import {
-  pgTable,
-  uuid,
-  text,
-  decimal,
-  integer,
-  timestamp,
-  index,
-} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import {
+  decimal,
+  index,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { baseSchema } from "./common";
 import { ProjectAssemblyChangeStatus } from "./constants";
 import { projectSubStatisticsTable } from "./project-sub-statistics";

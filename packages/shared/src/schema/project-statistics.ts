@@ -1,15 +1,8 @@
 // src/schemas/project-statistic.schema.ts
-import {
-  pgTable,
-  uuid,
-  decimal,
-  integer,
-  timestamp,
-  unique,
-} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { baseSchema } from "./common";
+import { decimal, integer, pgTable, uuid } from "drizzle-orm/pg-core";
 import { projectsTable } from ".";
+import { baseSchema } from "./common";
 import { projectSubStatisticsTable } from "./project-sub-statistics";
 
 export const projectStatisticsTable = pgTable("project_statistic", {
@@ -23,7 +16,9 @@ export const projectStatisticsTable = pgTable("project_statistic", {
     precision: 11,
     scale: 2,
   }).notNull(),
-  projectCompleteTotalQuantity: integer("project_complete_total_quantity").notNull(),
+  projectCompleteTotalQuantity: integer(
+    "project_complete_total_quantity"
+  ).notNull(),
 
   // Foreign key
   projectId: uuid("project_id")

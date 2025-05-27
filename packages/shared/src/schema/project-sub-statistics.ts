@@ -1,18 +1,16 @@
 // src/schemas/project-sub-statistic.schema.ts
+import { relations } from "drizzle-orm";
 import {
-  pgTable,
-  uuid,
-  text,
   decimal,
   integer,
-  jsonb,
-  timestamp,
+  pgTable,
+  text,
   unique,
+  uuid,
 } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
 import { baseSchema } from "./common";
-import { projectStatisticsTable } from "./project-statistics";
 import { processWorkTypesTable } from "./process-work-type";
+import { projectStatisticsTable } from "./project-statistics";
 import { projectSubStatisticCompletedAssemblyTable } from "./project-sub-statistics-completed-assembly";
 
 export const projectSubStatisticsTable = pgTable(

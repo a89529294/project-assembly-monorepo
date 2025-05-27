@@ -84,6 +84,7 @@ export const readCustomerProjectsProcedure = protectedProcedure([
 
 // Create a new BOM import job record when a BOM file is successfully uploaded
 // Create a new BOM import job record when a BOM file is successfully uploaded
+
 export const onBomUploadSuccessProcedure = protectedProcedure([
   "BasicInfoManagement",
 ])
@@ -101,117 +102,35 @@ export const onBomUploadSuccessProcedure = protectedProcedure([
   .mutation(async ({ input, ctx }) => {
     const { projectId, s3Key, eTag, fileSize } = input;
 
-    // const [jobRecord] = await db
-    //   .insert(projectBomImportJobRecordTable)
-    //   .values({
-    //     id: projectId,
-    //     bomFileEtag: eTag,
-    //     status: "waiting",
-    //   })
-    //   .returning();
+    try {
+      const { job, jobRecord, skipped } = await bomImportQueue.addJob({
+        projectId,
+        operator: ctx.user.id,
+        queuedAt: Date.now(),
+        force: false,
+        s3Key,
+        eTag,
+        fileSize,
+      });
 
-    // if (!jobRecord) {
-    //   throw new TRPCError({
-    //     code: "INTERNAL_SERVER_ERROR",
-    //     message: "Failed to create BOM import job record",
-    //   });
-    // }
-
-    // return jobRecord;
-
-    return db.transaction(async (tx) => {
-      // 1. Check if a job record already exists for this project
-      const [existingRecord] = await tx
-        .select()
-        .from(projectBomImportJobRecordTable)
-        .where(eq(projectBomImportJobRecordTable.id, projectId))
-        .limit(1);
-
-      // 2. If there's an existing record with status waiting/processing, throw an error
-      if (existingRecord && ["waiting", "processing"].includes(existingRecord.status)) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "BOM processing is already in progress for this project",
-        });
-      }
-
-      // 3. Either update existing record or insert a new one
-      const jobRecord = existingRecord
-        ? (
-            await tx
-              .update(projectBomImportJobRecordTable)
-              .set({
-                bomFileEtag: eTag,
-                status: "waiting",
-                processedSteps: 0,
-                totalSteps: 0,
-                errorMessage: null,
-                updatedAt: new Date(),
-              })
-              .where(eq(projectBomImportJobRecordTable.id, projectId))
-              .returning()
-          )[0]
-        : (
-            await tx
-              .insert(projectBomImportJobRecordTable)
-              .values({
-                id: projectId,
-                bomFileEtag: eTag,
-                status: "waiting",
-              })
-              .returning()
-          )[0];
-
-      if (!jobRecord) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create BOM import job record",
-        });
-      }
-
-      // 2. Add job to queue
-      try {
-        const job = await bomImportQueue.addJob({
-          projectId,
-          operator: ctx.user.id,
-          queuedAt: Date.now(),
-          force: false,
-          s3Key,
-          eTag,
-          fileSize,
-        });
-
-        // 3. Update job record with the queue job ID
-        await tx
-          .update(projectBomImportJobRecordTable)
-          .set({
-            jobId: String(job.id),
-          })
-          .where(eq(projectBomImportJobRecordTable.id, projectId));
-
+      if (skipped) {
         return {
-          ...jobRecord,
-          jobId: String(job.id),
+          status: "skipped",
+          message: "BOM import skipped - no changes detected",
         };
-      } catch (error) {
-        // If queue operation fails, update the job record
-        await tx
-          .update(projectBomImportJobRecordTable)
-          .set({
-            status: "failed",
-            errorMessage:
-              error instanceof Error ? error.message : "unknown error",
-            updatedAt: new Date(),
-          })
-          .where(eq(projectBomImportJobRecordTable.id, projectId));
-
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to queue BOM import job",
-          cause: error,
-        });
       }
-    });
+
+      return {
+        ...jobRecord,
+        jobId: job?.id.toString(),
+      };
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to queue BOM import job",
+        cause: error,
+      });
+    }
   });
 
 export const checkBomImportStatusProcedure = protectedProcedure([

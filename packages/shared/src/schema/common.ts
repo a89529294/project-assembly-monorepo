@@ -2,11 +2,11 @@ import { text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const baseSchema = {
   id: uuid("id").primaryKey().defaultRandom(),
-  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
-    .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
 };

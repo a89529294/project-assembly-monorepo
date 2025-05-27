@@ -1,40 +1,35 @@
-import Queue from "bull";
-import { queueOptions } from "./redis";
-import { db } from "./db";
 import {
   BomProcessStatus,
-  projectBomImportJobRecordTable,
-  projectAssembliesTable,
-  projectAssemblyProcessTable,
-  projectAssemblyChangeStatus,
   ProjectAssembly,
+  processWorkTypesTable,
+  projectAssembliesTable,
+  projectAssemblyChangeStatus,
+  projectAssemblyProcessTable,
+  projectBomImportJobRecordTable,
 } from "@myapp/shared";
+import Queue from "bull";
+import { db } from "./db";
+import { queueOptions } from "./redis";
 
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
+import extract from "extract-zip";
+import * as fs from "fs/promises";
 import { mkdtemp, rm } from "fs/promises";
-import { join } from "path";
 import { tmpdir } from "os";
+import { join } from "path";
 import {
   BOM_DIR_NAME,
   BOM_FILE_NAME,
   NC_DIR_NAME,
   NC_FILE_NAME,
 } from "./file/constants";
-import * as path from "path";
-import * as fs from "fs/promises";
-import { downloadFileFromS3, getS3FileMetadata } from "./helpers/s3";
-import extract from "extract-zip";
 import bom2json from "./helpers/guanda-bom2json/index.js";
 import { chunkArray } from "./helpers/misc";
-import { processWorkTypesTable } from "../../shared/src/schema/process-work-type";
+import { downloadFileFromS3, getS3FileMetadata } from "./helpers/s3";
 
-// Use the existing chunkArray function from helpers/misc
-
-type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
-};
-// type A = DeepPartial<ProjectAssembly>
-type A = any;
+// type DeepPartial<T> = {
+//   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+// };
 
 const bucketName = process.env.S3_BUCKET_NAME;
 
@@ -55,6 +50,18 @@ export interface BomImportJobResult {
   completedAt: number;
 }
 
+interface ProjectBomImportProgress {
+  processedAssemblies: number;
+  totalAssemblies: number;
+}
+
+interface AddJobResult {
+  job: Queue.Job<ProjectBomImportQueueData> | null;
+  jobRecord: any | null;
+  skipped: boolean;
+  error?: Error;
+}
+
 export class BomImportQueue {
   private queue: Queue.Queue<ProjectBomImportQueueData>;
 
@@ -68,8 +75,7 @@ export class BomImportQueue {
   }
 
   private setupProcessors() {
-    // Process BOM import jobs
-    this.queue.process("process-bom-import", 5, async (job) => {
+    this.queue.process("process-bom-import", 1, async (job) => {
       return this.processBomImport(job);
     });
   }
@@ -91,14 +97,18 @@ export class BomImportQueue {
   private async processBomImport(
     job: Queue.Job<ProjectBomImportQueueData>
   ): Promise<BomImportJobResult> {
-    const { projectId, operator, force } = job.data;
+    const { projectId, operator } = job.data;
 
     try {
       // Update job status to processing
       await this.updateJobStatus(projectId, "processing");
 
-      // Your BOM processing logic here
-      const result = await this.processS3BomFile(job.data);
+      // Process the BOM import
+      const result = await this.importAssembliesFromBom(
+        job,
+        projectId,
+        operator
+      );
 
       // Update job status to completed
       await this.updateJobStatus(projectId, "done");
@@ -115,422 +125,233 @@ export class BomImportQueue {
         "failed",
         error instanceof Error ? error.message : "unknown error"
       );
-
       throw error;
     }
   }
 
-  // This is where you'll implement your actual BOM processing logic
-  // 1. Download file from S3
-  // 2. Parse CSV
-  // 3. Validate data
-  // 4. Insert into database
-  // 5. Return results
-
-  // private async processS3BomFile(data: ProjectBomImportQueueData) {
-  //   console.log(`Processing BOM for project ${data.projectId}`);
-
-  //   const updateProgress = async (
-  //     processedSteps: number,
-  //     totalSteps: number
-  //   ) => {
-  //     try {
-  //       console.log(`Updating progress: ${processedSteps}/${totalSteps}`);
-  //       const result = await db
-  //         .update(projectBomImportJobRecordTable)
-  //         .set({
-  //           processedSteps,
-  //           totalSteps,
-  //         })
-  //         .where(eq(projectBomImportJobRecordTable.id, data.projectId))
-  //         .returning();
-
-  //       console.log("Update result:", result);
-  //       return result;
-  //     } catch (error) {
-  //       console.error("Error updating progress:", error);
-  //       throw error;
-  //     }
-  //   };
-
-  //   try {
-  //     // Initial update
-  //     await updateProgress(0, 100);
-
-  //     // Simulate work with progress updates
-  //     for (let i = 1; i <= 10; i++) {
-  //       await new Promise((resolve) => setTimeout(resolve, 5000)); // Simulate work
-  //       await updateProgress(i * 10, 100);
-  //     }
-
-  //     console.log(`Completed BOM import for project ${data.projectId}`);
-  //     return { processedRows: 100 };
-  //   } catch (error) {
-  //     console.error("Error in processS3BomFile:", error);
-  //     throw error;
-  //   }
-  // }
-
-  private async processS3BomFile(data: ProjectBomImportQueueData) {
-    if (!this.isImportNecessary(data.projectId) && !data.force) {
-      console.log(`No need to process bom for projectId: ${data.projectId}`);
-      return;
-    }
-
-    // TODO start here next time, this corresponds to importAssembliesFromBom in guanda-erp-be
-    console.log(`Processing BOM for project ${data.projectId}`);
-    let tempDir: string | null = null;
-
-    const updateProgress = async (
-      processedSteps: number,
-      totalSteps: number
-    ) => {
-      try {
-        const result = await db
-          .update(projectBomImportJobRecordTable)
-          .set({
-            processedSteps,
-            totalSteps,
-          })
-          .where(eq(projectBomImportJobRecordTable.id, data.projectId))
-          .returning();
-        return result;
-      } catch (error) {
-        console.error("Error updating progress:", error);
-        throw error;
-      }
-    };
-
-    try {
-      // Create a temporary directory
-      tempDir = await mkdtemp(join(tmpdir(), "bom-import-"));
-      console.log(`Created temporary directory: ${tempDir}`);
-
-      // Update progress
-      await updateProgress(10, 100);
-
-      if (!bucketName) {
-        throw new Error("S3_BUCKET_NAME environment variable is not set");
-      }
-
-      // Create necessary directories
-      const bomFilePath = join(tempDir, BOM_FILE_NAME);
-      const ncFilePath = join(tempDir, NC_FILE_NAME);
-      const ncDirPath = path.join(tempDir, "DSTV_Profile");
-      await fs.mkdir(ncDirPath, { recursive: true });
-
-      // Download BOM file
-      const bomS3Key = `projects/${data.projectId}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`;
-      await downloadFileFromS3(bucketName, bomS3Key, bomFilePath);
-      console.log("Downloaded BOM file from S3");
-
-      // Download NC file if it exists
-      try {
-        const ncS3Key = `projects/${data.projectId}/${NC_DIR_NAME}/${NC_FILE_NAME}`;
-        await downloadFileFromS3(bucketName, ncS3Key, ncFilePath);
-        console.log("Downloaded NC file from S3");
-
-        // Extract NC file
-        await extract(ncFilePath, { dir: ncDirPath });
-        console.log("Extracted NC file");
-      } catch (error) {
-        console.warn(
-          "NC file not found or failed to extract, continuing without it"
-        );
-      }
-
-      await updateProgress(30, 100);
-
-      // 2. Transform BOM file using the custom bom2json library
-      let projectBom;
-      try {
-        // Note: The actual transformation is done in two steps:
-        // 1. Create a Project instance from BOM file and NC directory
-        // 2. Transform the Project instance to the final format
-        projectBom = await bom2json.Project.fromBomFileAndNcDir(
-          bomFilePath,
-          ncDirPath,
-          {
-            encoding: "big5", // Using big5 encoding as required
-            ignoreNcSpecNotMatch: true,
-            ignoreSpecConflict: true,
-          }
-        );
-        console.log("Transformed BOM data using bom2json");
-      } catch (error) {
-        console.error("Error transforming BOM file:", error);
-        throw new Error(
-          `Failed to process BOM file: ${error instanceof Error ? error.message : "unknown error"}`
-        );
-      }
-
-      // Transform the project to the final JSON format
-      const bomJson = bom2json.transform(projectBom);
-
-      await updateProgress(60, 100);
-
-      // 3. Parse and process assembly data
-      const assemblies = this.parseAssemblyData(bomJson);
-      console.log(`Extracted ${assemblies.length} assemblies from BOM`);
-      console.log(assemblies);
-
-      await this.processAssemblies(data.projectId, assemblies, data.operator);
-
-      // Final progress update
-      await updateProgress(100, 100);
-      console.log(`Completed BOM import for project ${data.projectId}`);
-
-      return {
-        processedRows: assemblies.length,
-        assemblies, // Return the parsed assemblies for further processing
-        bomJson, // Return the transformed BOM data
-      };
-    } catch (error) {
-      console.error("Error in processS3BomFile:", error);
-      throw error;
-    } finally {
-      // Clean up temporary directory
-      if (tempDir) {
-        try {
-          await rm(tempDir, { recursive: true, force: true });
-          console.log(`Cleaned up temporary directory: ${tempDir}`);
-        } catch (cleanupError) {
-          console.error("Error cleaning up temporary directory:", cleanupError);
-        }
-      }
-    }
-  }
-
-  private async processAssemblies(
+  private async importAssembliesFromBom(
+    job: Queue.Job<ProjectBomImportQueueData>,
     projectId: string,
-    assemblies: Array<DeepPartial<ProjectAssembly>>,
     operator: string
   ) {
-    // 1. Sort assemblies into categories
-    const sortResult = await this.sortImportedAssemblies(projectId, assemblies);
+    await this.jobLog(job, "parsing bom-file");
+    const { assemblies: importedAssemblies, bomFileEtag } =
+      await this.getAssembliesFromBomFile(projectId);
 
-    // 2. Calculate total work for progress tracking
-    const totalWork =
-      sortResult.newAssemblies.length +
-      sortResult.replacements.length * 2 + // Each replacement counts as 2 (old + new)
-      sortResult.missingAssemblies.length;
-
-    // 3. Initialize progress
-    let processedCount = 0;
-    const updateProgress = async () => {
-      const progress = Math.min(
-        90,
-        Math.floor((processedCount / totalWork) * 90)
-      ); // Cap at 90%
-    };
-
-    // 4. Process new assemblies
-    if (sortResult.newAssemblies.length > 0) {
-      await this.handleNewAssemblies(
-        sortResult.newAssemblies,
-        projectId,
-        operator,
-        updateProgress
-      );
-      processedCount += sortResult.newAssemblies.length;
-    }
-
-    const validReplacements = sortResult.replacements.filter(
-      (
-        r
-      ): r is {
-        replacedAssembly: { id: string; tagId: string; projectId: string };
-        replacementAssembly: ProjectAssembly;
-        oldReplacementAssembly?: { id: string; tagId: string };
-      } => r.replacedAssembly.id !== undefined
+    await this.jobLog(job, "parsing assemblies");
+    const sortResult = await this.sortImportedAssemblies(
+      projectId,
+      importedAssemblies
     );
 
-    // 5. Process replacements
-    if (validReplacements.length > 0) {
-      await this.handleReplacements(
-        validReplacements,
-        operator,
-        updateProgress
-      );
-      processedCount += sortResult.replacements.length * 2; // Count both old and new
-    }
+    // Update job progress with actual totals
+    const totalAssemblies =
+      sortResult.newAssemblies.length +
+      sortResult.replacements.length +
+      sortResult.missingAssemblies.length;
 
-    // 6. Process missing assemblies
-    if (sortResult.missingAssemblies.length > 0) {
-      await this.handleMissingAssemblies(
-        sortResult.missingAssemblies,
-        operator,
-        updateProgress
-      );
-      processedCount += sortResult.missingAssemblies.length;
+    let jobProgress: ProjectBomImportProgress = {
+      processedAssemblies: 0,
+      totalAssemblies,
+    };
+
+    await this.updateJobProgress(job, jobProgress);
+    await this.updateJobRecord(projectId, {
+      bomFileEtag: bomFileEtag ?? null,
+      totalSteps: totalAssemblies,
+    });
+
+    try {
+      // Handle new assemblies
+      await this.handleNewAssemblies(job, projectId, sortResult, operator);
+
+      // Handle replacements
+      await this.handleReplacements(job, sortResult, operator);
+
+      // Handle missing assemblies
+      await this.handleMissingAssemblies(job, sortResult, operator);
+
+      // Update final record
+      await this.jobLog(job, "updating database record");
+      jobProgress = await this.getJobProgress(job);
+      await this.updateJobRecord(projectId, {
+        jobId: job.id.toString(),
+        status: "done" as BomProcessStatus,
+        processedSteps: jobProgress.processedAssemblies ?? null,
+        errorMessage: null,
+        latestImportedAt: new Date(),
+      });
+
+      await this.jobLog(job, "done");
+
+      return {
+        processedRows: totalAssemblies,
+      };
+    } catch (error) {
+      throw error;
     }
   }
 
-  private parseAssemblyData(bomData: any) {
-    if (!bomData || !bomData.root || !Array.isArray(bomData.root.assemblies)) {
-      return [];
+  private async getAssembliesFromBomFile(projectId: string) {
+    const { bomJson, bomFileEtag } = await this.transformBomFile(projectId);
+    const projectAssemblyTemplatesMap = new Map();
+
+    for (const assembly of bomJson.assemblyTemplates) {
+      projectAssemblyTemplatesMap.set(assembly.name, assembly);
     }
 
-    // Create a map of assembly templates for quick lookup
-    const assemblyTemplatesMap = new Map();
-    if (Array.isArray(bomData.assemblyTemplates)) {
-      for (const template of bomData.assemblyTemplates) {
-        if (template && template.name) {
-          assemblyTemplatesMap.set(template.name, template);
-        }
-      }
-    }
+    // Create imported-Assembly entities
+    const importedAssemblies = bomJson.root.assemblies
+      .map((el) => {
+        const projectAssemblyTemplate = projectAssemblyTemplatesMap.get(
+          el.name
+        );
 
-    return bomData.root.assemblies
-      .map((assembly: any) => {
-        if (!assembly || !assembly.name) return null;
+        const { specification, material, type } = el.mainPart;
 
-        const template = assemblyTemplatesMap.get(assembly.name);
-        if (!template) {
-          console.warn(`No template found for assembly: ${assembly.name}`);
+        if (!specification || !material || !type) {
           return null;
         }
 
-        // Create the assembly object with all required fields
-        const projectAssembly = {
-          // Required fields with defaults
-          tagId:
-            assembly.tagId ||
-            `TAG-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          assemblyId: assembly.id || assembly.assemblyId || "",
-          name: assembly.name,
-          installPosition: assembly.installPosition || "",
-          installHeight: assembly.installHeight?.toString() || "0",
-          areaType: assembly.areaType || "",
-          transportNumber: assembly.transportNumber || null,
-          transportDesc: assembly.transportDesc || null,
-          tagTransportNumber: assembly.tagTransportNumber || null,
-          drawingName: assembly.drawingName || template.drawingName || "",
-          totalWidth: template.totalWidth?.toString() || "0",
-          totalHeight: template.totalHeight?.toString() || "0",
-          totalLength: parseFloat(template.totalLength) || 0,
-          totalWeight: template.totalWeight?.toString() || "0",
-          totalArea: template.totalArea?.toString() || "0",
-          specification: template.specification || "",
-          material: template.material || "",
-          type: template.type || "DEFAULT",
-          memo1: assembly.memo1 || template.memo1 || null,
-          memo2: assembly.memo2 || template.memo2 || null,
-          vehicleIdentificationNumber:
-            assembly.vehicleIdentificationNumber || null,
-          shippingNumber: assembly.shippingNumber || null,
-          shippingDate: assembly.shippingDate
-            ? new Date(assembly.shippingDate)
-            : null,
-          change: assembly.change,
-          // || ProjectAssemblyChangeStatus.NEW,
-
-          // Relationships will be set by the caller
-          project: undefined, // Will be set by the caller
-          projectParts: [], // Will be populated if needed
-          projectAssemblyProcesses: [], // Will be populated based on process work types
-          materialRelations: [], // Will be populated if needed
+        return {
+          ...projectAssemblyTemplate,
+          installPosition: el.installPosition,
+          installHeight: el.installHeight,
+          areaType: el.areaType,
+          transportNumber: el.transportNumber,
+          transportDesc: null,
+          memo1: el.memo,
+          id: undefined,
+          assemblyId: el.id,
+          projectId: projectId,
+          specification,
+          material,
+          type,
         };
-
-        return projectAssembly;
       })
-      .filter((assembly: A | null): assembly is A => assembly !== null);
+      .filter((el): el is ProjectAssembly => el !== null);
+
+    return {
+      assemblies: importedAssemblies,
+      bomFileEtag,
+    };
   }
 
-  private async updateJobStatus(
-    projectId: string,
-    status: BomProcessStatus,
-    errorMessage?: string
-  ) {
-    // Update your database job record
-    // This should match your existing database update logic
+  private async transformBomFile(projectId: string) {
+    const { bomFilePath, ncDirPath, tempDir, bomFileEtag } =
+      await this.downloadRequireFilesToTempdir(projectId);
 
-    await db
-      .update(projectBomImportJobRecordTable)
-      .set({
-        status,
-        ...(errorMessage && { errorMessage }),
-        ...(status === "done" && { latestImportedAt: new Date() }),
-      })
-      .where(eq(projectBomImportJobRecordTable.id, projectId));
+    try {
+      const projectBom = await bom2json.Project.fromBomFileAndNcDir(
+        bomFilePath,
+        ncDirPath,
+        {
+          encoding: "big5",
+          ignoreNcSpecNotMatch: true,
+          ignoreSpecConflict: true,
+        }
+      );
 
-    console.log(`Updating job status for ${projectId}: ${status}`);
+      const bomJson = bom2json.transform(projectBom);
+
+      return {
+        bomJson,
+        bomFileEtag,
+      };
+    } finally {
+      tempDir.destroy().catch((error) => console.error(error));
+    }
+  }
+
+  private async downloadRequireFilesToTempdir(projectId: string) {
+    // Check if BOM file exists
+    const bomS3Key = `projects/${projectId}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`;
+    const bomMetadata = await getS3FileMetadata(bucketName!, bomS3Key);
+
+    if (!bomMetadata) {
+      throw new Error("BOM 檔案不存在");
+    }
+
+    const tempDir = await mkdtemp(join(tmpdir(), "bomtrans-"));
+    const bomFilePath = join(tempDir, BOM_FILE_NAME);
+    const ncDirPath = join(tempDir, "DSTV_Profile");
+
+    await downloadFileFromS3(bucketName!, bomS3Key, bomFilePath);
+    await fs.mkdir(ncDirPath);
+
+    // Try to download NC file
+    try {
+      const ncS3Key = `projects/${projectId}/${NC_DIR_NAME}/${NC_FILE_NAME}`;
+      const ncFilePath = join(tempDir, NC_FILE_NAME);
+
+      await downloadFileFromS3(bucketName!, ncS3Key, ncFilePath);
+      await extract(ncFilePath, { dir: ncDirPath });
+    } catch (error) {
+      console.warn("NC file not found or extraction failed:", error);
+    }
+
+    return {
+      tempDir: {
+        path: tempDir,
+        destroy: async () => rm(tempDir, { recursive: true, force: true }),
+      },
+      bomFilePath,
+      bomFileEtag: bomMetadata.etag,
+      ncDirPath,
+    };
   }
 
   private async handleNewAssemblies(
-    newAssemblies: Array<DeepPartial<ProjectAssembly>>,
+    job: Queue.Job<ProjectBomImportQueueData>,
     projectId: string,
-    operator: string,
-    updateProgress: () => Promise<void>
+    sortResult: Awaited<ReturnType<typeof this.sortImportedAssemblies>>,
+    operator: string
   ) {
-    const chunkSize = 50; // Adjust based on performance testing
-    const chunks = chunkArray(newAssemblies, chunkSize);
+    await this.jobLog(job, "updating database for new-assemblies");
 
-    for (const chunk of chunks) {
-      // 1. Get process work types for this project
-      const processWorkTypes = await db
-        .select()
-        .from(processWorkTypesTable)
-        .where(
-          and(
-            eq(processWorkTypesTable.projectId, projectId),
-            eq(processWorkTypesTable.sequence, 0)
-          )
-        );
+    const insertAssemblies = sortResult.newAssemblies.map((na) => ({
+      ...na,
+      change: projectAssemblyChangeStatus.enumValues[0], // 'NEW'
+    }));
 
-      // 2. Generate tag IDs for new assemblies
-      const tagIds = await this.generateTagIds(chunk.length);
+    const processWorkTypes = await db
+      .select()
+      .from(processWorkTypesTable)
+      .where(
+        and(
+          eq(processWorkTypesTable.projectId, projectId),
+          eq(processWorkTypesTable.sequence, 0)
+        )
+      );
 
-      // 3. Process in transaction
+    let jobProgress = await this.getJobProgress(job);
+    let progressPercentage =
+      (jobProgress.processedAssemblies / jobProgress.totalAssemblies) * 100;
+
+    const chunkSize = 100;
+    const assemblyChunks = chunkArray(insertAssemblies, chunkSize);
+
+    for (const assemblyChunk of assemblyChunks) {
+      const tagIds = await this.generateTagIds(assemblyChunk.length);
+
       await db.transaction(async (tx) => {
-        // 4. Insert assemblies with tag IDs
         const insertedAssemblies = await Promise.all(
-          chunk.map(async (asm, index) => {
-            // TODO this should be fixed updating the drizzle table to use default values
-            const assemblyData = {
-              // Required fields with defaults if not provided
-              assemblyId: asm.assemblyId || "",
-              name: asm.name || "Unnamed Assembly",
-              installPosition: asm.installPosition || "",
-              installHeight: asm.installHeight || "0",
-              areaType: asm.areaType || "GENERAL",
-              drawingName: asm.drawingName || "",
-              totalWidth: asm.totalWidth || "0",
-              totalHeight: asm.totalHeight || "0",
-              totalLength: asm.totalLength || "0",
-              totalWeight: asm.totalWeight || "0",
-              totalArea: asm.totalArea || "0",
-              specification: asm.specification || "",
-              material: asm.material || "UNKNOWN",
-              type: asm.type || "UNKNOWN",
-              // Optional fields
-              transportNumber: asm.transportNumber,
-              transportDesc: asm.transportDesc,
-              tagTransportNumber: asm.tagTransportNumber,
-              memo1: asm.memo1,
-              memo2: asm.memo2,
-              vehicleIdentificationNumber: asm.vehicleIdentificationNumber,
-              shippingNumber: asm.shippingNumber,
-              shippingDate: asm.shippingDate,
-            };
-
+          assemblyChunk.map(async (asm, index) => {
             const [inserted] = await tx
               .insert(projectAssembliesTable)
               .values({
-                ...assemblyData,
+                ...asm,
                 tagId: tagIds[index],
                 projectId,
-                change: projectAssemblyChangeStatus.enumValues[0], // 'CREATED'
                 createdBy: operator,
                 updatedBy: operator,
-              })
+              } as any)
               .returning();
             return inserted;
           })
         );
 
-        // 5. Create assembly processes
-        const assemblyProcesses = insertedAssemblies.flatMap((assembly) =>
+        const newAssemblyProcesses = insertedAssemblies.flatMap((assembly) =>
           processWorkTypes.map((workType) => ({
             name: workType.name,
             sequence: workType.sequence,
@@ -545,164 +366,157 @@ export class BomImportQueue {
           }))
         );
 
-        if (assemblyProcesses.length > 0) {
+        if (newAssemblyProcesses.length > 0) {
           await tx
             .insert(projectAssemblyProcessTable)
-            .values(assemblyProcesses);
+            .values(newAssemblyProcesses);
         }
       });
 
-      // 6. Update progress
-      await updateProgress();
+      jobProgress.processedAssemblies += assemblyChunk.length;
+      const newPercentage =
+        (jobProgress.processedAssemblies / jobProgress.totalAssemblies) * 100;
+
+      if (newPercentage === 100 || newPercentage - progressPercentage >= 10) {
+        progressPercentage = newPercentage;
+        await this.updateJobProgress(job, jobProgress);
+      }
     }
   }
 
   private async handleReplacements(
-    replacements: Array<{
-      replacedAssembly: Pick<ProjectAssembly, "id" | "tagId" | "projectId">;
-      replacementAssembly: ProjectAssembly;
-      oldReplacementAssembly?: Pick<ProjectAssembly, "id" | "tagId">;
-    }>,
-    operator: string,
-    updateProgress: () => Promise<void>
+    job: Queue.Job<ProjectBomImportQueueData>,
+    sortResult: Awaited<ReturnType<typeof this.sortImportedAssemblies>>,
+    operator: string
   ) {
-    const chunkSize = 50;
-    const chunks = chunkArray(replacements, chunkSize);
+    await this.jobLog(job, "updating database for replaced-assemblies");
 
-    for (const chunk of chunks) {
-      await db.transaction(async (tx) => {
-        const updates: any[] = [];
-        const inserts: any[] = [];
-        const now = new Date();
+    let jobProgress = await this.getJobProgress(job);
+    let progressPercentage =
+      (jobProgress.processedAssemblies / jobProgress.totalAssemblies) * 100;
 
-        for (const {
-          replacedAssembly,
-          replacementAssembly,
-          oldReplacementAssembly,
-        } of chunk) {
-          if (!replacedAssembly.id) continue;
-
-          // 1. Mark old assembly as REPLACED
-          updates.push(
-            tx
-              .update(projectAssembliesTable)
-              .set({
-                change: projectAssemblyChangeStatus.enumValues[2], // 'REPLACED'
-                replacedId: replacementAssembly.assemblyId,
-                updatedAt: now,
-                updatedBy: operator,
-              })
-              .where(eq(projectAssembliesTable.id, replacedAssembly.id))
-          );
-
-          // 2. Handle replacement assembly
-          if (oldReplacementAssembly?.id) {
-            // Update existing replacement
-            updates.push(
-              tx
-                .update(projectAssembliesTable)
-                .set({
-                  ...replacementAssembly,
-                  change: projectAssemblyChangeStatus.enumValues[3],
-                  tagId: oldReplacementAssembly.tagId,
-                  updatedAt: now,
-                  createdAt: now,
-                  updatedBy: operator,
-                })
-                .where(eq(projectAssembliesTable.id, oldReplacementAssembly.id))
-            );
-          } else {
-            // Create new replacement
-            inserts.push(
-              tx.insert(projectAssembliesTable).values({
-                ...replacementAssembly,
-                change: projectAssemblyChangeStatus.enumValues[3],
-                tagId: replacedAssembly.tagId, // Keep same tag ID
-                projectId: replacementAssembly.projectId,
-                createdAt: now,
-                updatedAt: now,
-                createdBy: operator,
-                updatedBy: operator,
-              })
-            );
-          }
-        }
-
-        // 3. Execute updates and inserts in parallel
-        await Promise.all([...updates, ...inserts]);
-      });
-
-      // 4. Update progress (count both old and new)
-      await updateProgress();
-      await updateProgress(); // Call twice since each replacement has 2 operations
-    }
-  }
-
-  private async handleMissingAssemblies(
-    missingAssemblies: Array<DeepPartial<ProjectAssembly>>,
-    operator: string,
-    updateProgress: () => Promise<void>
-  ) {
     const chunkSize = 100;
-    const chunks = chunkArray(missingAssemblies, chunkSize);
-    const now = new Date();
+    const replacementChunks = chunkArray(sortResult.replacements, chunkSize);
 
-    for (const chunk of chunks) {
+    for (const replacementChunk of replacementChunks) {
+      const updateAssemblies: Array<ProjectAssembly> = [];
+
+      for (const replacement of replacementChunk) {
+        const { replacedAssembly, replacementAssembly } = replacement;
+
+        updateAssemblies.push({
+          ...replacementAssembly,
+          id: replacedAssembly.id,
+          change: projectAssemblyChangeStatus.enumValues[3],
+          tagId: replacedAssembly.tagId,
+        });
+      }
+
       await db.transaction(async (tx) => {
-        // Process each update in parallel
         await Promise.all(
-          chunk.map(async (asm: DeepPartial<ProjectAssembly>) => {
-            if (!asm.id) return;
+          updateAssemblies.map(async (assembly) => {
+            if (!assembly.id) return;
             return tx
               .update(projectAssembliesTable)
               .set({
-                change: projectAssemblyChangeStatus.enumValues[2], // TODO, not sure what value to use here
-                updatedAt: now,
+                ...assembly,
                 updatedBy: operator,
-              })
-              .where(eq(projectAssembliesTable.id, asm.id));
+                updatedAt: new Date(),
+              } as any)
+              .where(eq(projectAssembliesTable.id, assembly.id));
           })
         );
       });
 
-      await updateProgress();
+      jobProgress.processedAssemblies += replacementChunk.length;
+      const newPercentage =
+        (jobProgress.processedAssemblies / jobProgress.totalAssemblies) * 100;
+
+      if (newPercentage === 100 || newPercentage - progressPercentage >= 10) {
+        progressPercentage = newPercentage;
+        await this.updateJobProgress(job, jobProgress);
+      }
+    }
+  }
+
+  private async handleMissingAssemblies(
+    job: Queue.Job<ProjectBomImportQueueData>,
+    sortResult: Awaited<ReturnType<typeof this.sortImportedAssemblies>>,
+    operator: string
+  ) {
+    await this.jobLog(job, "updating database for missing-assemblies");
+
+    let jobProgress = await this.getJobProgress(job);
+    let progressPercentage =
+      (jobProgress.processedAssemblies / jobProgress.totalAssemblies) * 100;
+
+    const chunkSize = 100;
+    const missingAssemblyChunks = chunkArray(
+      sortResult.missingAssemblies,
+      chunkSize
+    );
+
+    for (const missingAssemblyChunk of missingAssemblyChunks) {
+      const updateAssemblies: Array<ProjectAssembly> = [];
+
+      for (const missingAssembly of missingAssemblyChunk) {
+        updateAssemblies.push({
+          ...missingAssembly,
+          change: projectAssemblyChangeStatus.enumValues[2], // 'MISSING'
+        });
+      }
+
+      await db.transaction(async (tx) => {
+        await Promise.all(
+          updateAssemblies.map(async (assembly) => {
+            return tx
+              .update(projectAssembliesTable)
+              .set({
+                ...assembly,
+                updatedBy: operator,
+                updatedAt: new Date(),
+              })
+              .where(eq(projectAssembliesTable.id, assembly.id));
+          })
+        );
+      });
+
+      jobProgress.processedAssemblies += missingAssemblyChunk.length;
+      const newPercentage =
+        (jobProgress.processedAssemblies / jobProgress.totalAssemblies) * 100;
+
+      if (newPercentage === 100 || newPercentage - progressPercentage >= 10) {
+        progressPercentage = newPercentage;
+        await this.updateJobProgress(job, jobProgress);
+      }
     }
   }
 
   private async sortImportedAssemblies(
     projectId: string,
-    importedAssemblies: Array<DeepPartial<ProjectAssembly>>
+    importedAssemblies: Array<ProjectAssembly>
   ) {
     const result = {
-      newAssemblies: [] as Array<DeepPartial<ProjectAssembly>>,
-      missingAssemblies: [] as Array<DeepPartial<ProjectAssembly>>,
+      newAssemblies: [] as Array<ProjectAssembly>,
+      missingAssemblies: [] as Array<ProjectAssembly>,
       replacements: [] as Array<{
-        replacementAssembly: DeepPartial<ProjectAssembly>;
-        oldReplacementAssembly?: DeepPartial<ProjectAssembly>;
-        replacedAssembly: DeepPartial<ProjectAssembly>;
+        replacementAssembly: ProjectAssembly;
+        replacedAssembly: ProjectAssembly;
       }>,
     };
 
-    // Get all existing assemblies for this project
-    const oldProjectAssembly = await db
+    const oldProjectAssemblies = await db
       .select()
       .from(projectAssembliesTable)
       .where(eq(projectAssembliesTable.projectId, projectId));
 
-    const oldProjectAssemblyMap = new Map<string, any>();
-    const oldReplacementProjectAssemblyMap = new Map<string, any>();
+    const oldProjectAssemblyMap = new Map<string, ProjectAssembly>();
 
-    // Categorize existing assemblies
-    for (const assembly of oldProjectAssembly) {
-      if (assembly.change === projectAssemblyChangeStatus.enumValues[3]) {
-        // 'REPLACEMENT'
-        oldReplacementProjectAssemblyMap.set(assembly.assemblyId, assembly);
-      } else {
-        oldProjectAssemblyMap.set(assembly.assemblyId, assembly);
-      }
+    for (const assembly of oldProjectAssemblies) {
+      oldProjectAssemblyMap.set(assembly.assemblyId, assembly);
     }
 
-    // Main loop to process imported assemblies
+    // Main loop
     for (const importedAssembly of importedAssemblies) {
       if (!importedAssembly.assemblyId) {
         continue;
@@ -713,61 +527,82 @@ export class BomImportQueue {
       );
 
       if (!oldAssembly) {
-        // Completely new assembly
         result.newAssemblies.push(importedAssembly);
         continue;
       }
 
-      const replacedAssembly = !this.isAssembliesSameSpec(
+      const replacedAssembly = this.isAssembliesSameSpec(
         importedAssembly,
         oldAssembly
       )
-        ? oldAssembly
-        : undefined;
+        ? undefined
+        : oldAssembly;
 
       if (replacedAssembly) {
-        // Existing assembly with changes
         result.replacements.push({
           replacedAssembly,
           replacementAssembly: importedAssembly,
-          oldReplacementAssembly: oldReplacementProjectAssemblyMap.get(
-            replacedAssembly.assemblyId
-          ),
         });
       }
 
-      oldProjectAssemblyMap.delete(oldAssembly.assemblyId);
+      oldProjectAssemblyMap.delete(oldAssembly.assemblyId!);
     }
 
-    // Any remaining assemblies in oldProjectAssemblyMap are missing from the import
     result.missingAssemblies.push(...oldProjectAssemblyMap.values());
 
     return result;
   }
 
   private async generateTagIds(count: number): Promise<string[]> {
-    // Get the maximum numeric tag ID
-    const result = await db
-      .select({
-        maxId: sql<string>`MAX(CAST(${projectAssembliesTable.tagId} AS UNSIGNED))`,
-      })
-      .from(projectAssembliesTable);
+    const tagSet = new Set<string>(
+      Array.from({ length: count }).map(() => this.generateTagId())
+    );
 
-    const maxId = parseInt(result[0]?.maxId || "0", 10);
-    return Array.from({ length: count }, (_, i) => (maxId + i + 1).toString());
+    while (tagSet.size < count) {
+      tagSet.add(this.generateTagId());
+    }
+
+    let existTags: Array<Pick<ProjectAssembly, "tagId">>;
+    const maximumRetryTimes = 10;
+    let retryTimes = 0;
+
+    do {
+      if (retryTimes++ >= maximumRetryTimes) {
+        throw new Error(`無法成功產生足夠的 TagId (已嘗試次數: ${retryTimes})`);
+      }
+
+      existTags = await db
+        .select({ tagId: projectAssembliesTable.tagId })
+        .from(projectAssembliesTable)
+        .where(inArray(projectAssembliesTable.tagId, [...tagSet]));
+
+      for (const existTagIdAssembly of existTags) {
+        tagSet.delete(existTagIdAssembly.tagId);
+      }
+
+      while (tagSet.size < count) {
+        tagSet.add(this.generateTagId());
+      }
+    } while (existTags.length > 0);
+
+    return [...tagSet];
+  }
+
+  private generateTagId(): string {
+    // Generate a unique tag ID - implement your logic here
+    return `TAG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   }
 
   private isAssembliesSameSpec(
-    a1: DeepPartial<ProjectAssembly>,
-    a2: DeepPartial<ProjectAssembly>
-  ) {
+    a1: ProjectAssembly,
+    a2: ProjectAssembly
+  ): boolean {
     return (
       a1.name === a2.name &&
       a1.installPosition === a2.installPosition &&
       this.isNumberEqual(a1.installHeight, a2.installHeight) &&
       a1.areaType === a2.areaType &&
       a1.drawingName === a2.drawingName &&
-      // TODO 是否需要判斷備註不一樣是否更新 (Translation: TODO Whether to determine if different remarks need to be updated)
       this.isNumberEqual(a1.totalWidth, a2.totalWidth) &&
       this.isNumberEqual(a1.totalHeight, a2.totalHeight) &&
       this.isNumberEqual(a1.totalLength, a2.totalLength) &&
@@ -778,32 +613,28 @@ export class BomImportQueue {
     );
   }
 
-  private isNumberEqual(n1?: number | string, n2?: number | string) {
+  private isNumberEqual(n1?: number | string, n2?: number | string): boolean {
     if (n1 === undefined || n2 === undefined) {
       return n1 === n2;
     }
-
-    return Math.abs(Number(n1) - Number(n2)) < 0.000_000_1; // 相差小於 1/10000000
+    return Math.abs(Number(n1) - Number(n2)) < 0.0000001;
   }
 
-  private async isImportNecessary(projectId: string) {
+  private async isImportNecessary(projectId: string): Promise<boolean> {
     const [record] = await db
       .select()
       .from(projectBomImportJobRecordTable)
       .where(eq(projectBomImportJobRecordTable.id, projectId))
       .limit(1);
 
-    // If no record exists, import is necessary
     if (!record) {
       return true;
     }
 
-    // If previous import failed, allow retry
-    if (record.status === "failed") {
+    if (record.errorMessage || !record.latestImportedAt) {
       return true;
     }
 
-    // Check if the file exists in S3 and get its metadata
     const bomS3Key = `projects/${projectId}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`;
     const bomMetadata = await getS3FileMetadata(bucketName!, bomS3Key);
 
@@ -811,20 +642,138 @@ export class BomImportQueue {
       throw new Error("BOM 檔案不存在");
     }
 
-    // Compare ETags to check if the file has changed
     return bomMetadata.etag !== record.bomFileEtag;
   }
 
+  // Helper methods for job management
+  private async jobLog(job: Queue.Job, message: string): Promise<void> {
+    const date = new Date().toISOString();
+    return job.log(`[${date}] ${message}`);
+  }
+
+  private async updateJobProgress(
+    job: Queue.Job,
+    progress: ProjectBomImportProgress
+  ): Promise<void> {
+    await job.progress(progress);
+  }
+
+  private async getJobProgress(
+    job: Queue.Job
+  ): Promise<ProjectBomImportProgress> {
+    return (await job.progress()) as ProjectBomImportProgress;
+  }
+
+  private async updateJobStatus(
+    projectId: string,
+    status: BomProcessStatus,
+    errorMessage?: string
+  ): Promise<void> {
+    await db
+      .update(projectBomImportJobRecordTable)
+      .set({
+        status,
+        ...(errorMessage && { errorMessage }),
+        ...(status === "done" && { latestImportedAt: new Date() }),
+      })
+      .where(eq(projectBomImportJobRecordTable.id, projectId));
+  }
+
+  private async updateJobRecord(
+    projectId: string,
+    updates: Record<string, any>
+  ): Promise<void> {
+    await db
+      .update(projectBomImportJobRecordTable)
+      .set(updates)
+      .where(eq(projectBomImportJobRecordTable.id, projectId));
+  }
+
+  // In bom-import-queue.ts
+  private async upsertJobRecord(
+    projectId: string,
+    eTag: string,
+    jobId?: string
+  ) {
+    return db
+      .insert(projectBomImportJobRecordTable)
+      .values({
+        id: projectId,
+        bomFileEtag: eTag,
+        status: "waiting",
+        processedSteps: 0,
+        totalSteps: 0,
+        errorMessage: null,
+        jobId: jobId || null,
+      })
+      .onConflictDoUpdate({
+        target: projectBomImportJobRecordTable.id,
+        set: {
+          bomFileEtag: eTag,
+          status: "waiting",
+          processedSteps: 0,
+          totalSteps: 0,
+          errorMessage: null,
+          updatedAt: new Date(),
+          ...(jobId && { jobId }),
+        },
+      })
+      .returning();
+  }
+
+  // Public methods
   async addJob(
     data: ProjectBomImportQueueData,
     options?: Queue.JobOptions
-  ): Promise<Queue.Job<ProjectBomImportQueueData>> {
-    return this.queue.add("process-bom-import", data, {
-      jobId: `bom-import-${data.projectId}-${Date.now()}`,
-      removeOnComplete: true,
-      removeOnFail: 50,
-      ...options,
-    });
+  ): Promise<AddJobResult> {
+    try {
+      // First check if we even need to process this import
+      if (!data.force && !(await this.isImportNecessary(data.projectId))) {
+        console.log(
+          `Skipping unnecessary BOM import for project ${data.projectId}`
+        );
+        return {
+          job: null,
+          jobRecord: null,
+          skipped: true,
+        };
+      }
+
+      // Create job in the queue
+      const job = await this.queue.add("process-bom-import", data, {
+        jobId: `bom-import-${data.projectId}-${Date.now()}`,
+        removeOnComplete: true,
+        removeOnFail: 50,
+        ...options,
+      });
+
+      try {
+        // Create/update job record in the database
+        const [jobRecord] = await this.upsertJobRecord(
+          data.projectId,
+          data.eTag!,
+          job.id.toString()
+        );
+
+        return {
+          job,
+          jobRecord,
+          skipped: false,
+        };
+      } catch (error) {
+        // If we fail to create the job record, remove the job from the queue
+        await job.remove();
+        throw error;
+      }
+    } catch (error) {
+      console.error("Failed to add job to queue:", error);
+      return {
+        job: null,
+        jobRecord: null,
+        skipped: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      };
+    }
   }
 
   async getJob(
@@ -842,5 +791,4 @@ export class BomImportQueue {
   }
 }
 
-// Singleton instance
 export const bomImportQueue = new BomImportQueue();
