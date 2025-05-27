@@ -1,5 +1,16 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
+export const PROJECT_ASSEMBLY_CHANGE_STATUS = [
+  "CREATED",
+  "UPDATED",
+  "DELETED",
+] as const;
+
+export const projectAssemblyChangeStatusEnum = pgEnum(
+  "project_assembly_change_status",
+  PROJECT_ASSEMBLY_CHANGE_STATUS
+);
+
 export const PROJECT_STATUSES = [
   "pending",
   "in_progress",

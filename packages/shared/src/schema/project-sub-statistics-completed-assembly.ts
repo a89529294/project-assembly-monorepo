@@ -9,8 +9,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { baseSchema } from "./common";
-import { ProjectAssemblyChangeStatus } from "./constants";
 import { projectSubStatisticsTable } from "./project-sub-statistics";
+import { projectAssemblyChangeStatusEnum } from "./enum";
 
 export const projectSubStatisticCompletedAssemblyTable = pgTable(
   "project_sub_statistic_completed_assembly",
@@ -42,9 +42,7 @@ export const projectSubStatisticCompletedAssemblyTable = pgTable(
     vehicleIdentificationNumber: text("vehicle_identification_number"),
     shippingNumber: text("shipping_number"),
     shippingDate: timestamp("shipping_date"),
-    change: text("change", {
-      enum: Object.values(ProjectAssemblyChangeStatus) as [string, ...string[]],
-    }),
+    change: projectAssemblyChangeStatusEnum(),
 
     // Foreign key
     completedSubStatisticId: uuid("completed_sub_statistic_id")

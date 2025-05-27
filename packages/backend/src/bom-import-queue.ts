@@ -1,9 +1,9 @@
 import {
   BomProcessStatus,
+  PROJECT_ASSEMBLY_CHANGE_STATUS,
   ProjectAssembly,
   processWorkTypesTable,
   projectAssembliesTable,
-  projectAssemblyChangeStatus,
   projectAssemblyProcessTable,
   projectBomImportJobRecordTable,
 } from "@myapp/shared";
@@ -311,7 +311,7 @@ export class BomImportQueue {
 
     const insertAssemblies = sortResult.newAssemblies.map((na) => ({
       ...na,
-      change: projectAssemblyChangeStatus.enumValues[0], // 'NEW'
+      change: PROJECT_ASSEMBLY_CHANGE_STATUS[0], // 'NEW'
     }));
 
     const processWorkTypes = await db
@@ -407,7 +407,7 @@ export class BomImportQueue {
         updateAssemblies.push({
           ...replacementAssembly,
           id: replacedAssembly.id,
-          change: projectAssemblyChangeStatus.enumValues[3],
+          change: PROJECT_ASSEMBLY_CHANGE_STATUS[1],
           tagId: replacedAssembly.tagId,
         });
       }
@@ -462,7 +462,7 @@ export class BomImportQueue {
       for (const missingAssembly of missingAssemblyChunk) {
         updateAssemblies.push({
           ...missingAssembly,
-          change: projectAssemblyChangeStatus.enumValues[2], // 'MISSING'
+          change: PROJECT_ASSEMBLY_CHANGE_STATUS[2],
         });
       }
 

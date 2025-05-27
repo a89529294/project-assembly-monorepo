@@ -3,7 +3,6 @@ import { relations } from "drizzle-orm";
 import {
   decimal,
   index,
-  pgEnum,
   pgTable,
   primaryKey,
   text,
@@ -12,17 +11,11 @@ import {
 } from "drizzle-orm/pg-core";
 import { baseAuditSchema } from "./common";
 
-import { projectsTable } from ".";
+import { projectAssemblyChangeStatusEnum, projectsTable } from ".";
 import { materialsTable } from "./material";
 import { projectAssemblyProcessTable } from "./project-assembly-process";
 import { projectAssemblySubLocationsTable } from "./project-assembly-sub-location";
 import { projectPartsTable } from "./project-part";
-
-// Create enum for change status
-export const projectAssemblyChangeStatus = pgEnum(
-  "project_assembly_change_status",
-  ["CREATED", "UPDATED", "DELETED", "REPLACED"]
-);
 
 export const projectAssembliesTable = pgTable(
   "project_assemblies",
@@ -55,7 +48,7 @@ export const projectAssembliesTable = pgTable(
     vehicleIdentificationNumber: text("vehicle_identification_number"),
     shippingNumber: text("shipping_number"),
     shippingDate: timestamp("shipping_date"),
-    change: projectAssemblyChangeStatus("change"),
+    change: projectAssemblyChangeStatusEnum(),
 
     // Foreign keys
     projectId: uuid("project_id")
