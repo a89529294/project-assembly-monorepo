@@ -23,6 +23,8 @@ import {
   createProjectProcedure,
   onBomUploadSuccessProcedure,
   readCustomerProjectsProcedure,
+  readProjectContactsProcedure,
+  readProjectProcedure,
 } from "./projects-procedures.js";
 
 export const basicInfoRouter = router({
@@ -41,6 +43,8 @@ export const basicInfoRouter = router({
   deleteCustomers: deleteCustomersProcedure,
   createProject: createProjectProcedure,
   readCustomerProjects: readCustomerProjectsProcedure,
+  readProject: readProjectProcedure,
+  readProjectContacts: readProjectContactsProcedure,
   onBomUploadSuccess: onBomUploadSuccessProcedure,
   checkBomImportStatus: checkBomImportStatusProcedure,
 });

@@ -37,6 +37,7 @@ import { Route as DashboardBasicInfoEmployeesCreateImport } from './routes/_dash
 import { Route as DashboardCustomersCustomerIdProjectsIndexImport } from './routes/_dashboard/customers/$customerId/projects/index'
 import { Route as DashboardBasicInfoEmployeesEmployeeIdIndexImport } from './routes/_dashboard/basic-info/employees/$employeeId/index'
 import { Route as DashboardCustomersCustomerIdProjectsCreateImport } from './routes/_dashboard/customers/$customerId/projects/create'
+import { Route as DashboardCustomersCustomerIdProjectsProjectIdImport } from './routes/_dashboard/customers/$customerId/projects/$projectId'
 
 // Create/Update Routes
 
@@ -207,6 +208,13 @@ const DashboardCustomersCustomerIdProjectsCreateRoute =
     getParentRoute: () => DashboardRouteRoute,
   } as any)
 
+const DashboardCustomersCustomerIdProjectsProjectIdRoute =
+  DashboardCustomersCustomerIdProjectsProjectIdImport.update({
+    id: '/customers/$customerId/projects/$projectId',
+    path: '/customers/$customerId/projects/$projectId',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -372,6 +380,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCustomersCustomerIdIndexImport
       parentRoute: typeof DashboardRouteImport
     }
+    '/_dashboard/customers/$customerId/projects/$projectId': {
+      id: '/_dashboard/customers/$customerId/projects/$projectId'
+      path: '/customers/$customerId/projects/$projectId'
+      fullPath: '/customers/$customerId/projects/$projectId'
+      preLoaderRoute: typeof DashboardCustomersCustomerIdProjectsProjectIdImport
+      parentRoute: typeof DashboardRouteImport
+    }
     '/_dashboard/customers/$customerId/projects/create': {
       id: '/_dashboard/customers/$customerId/projects/create'
       path: '/customers/$customerId/projects/create'
@@ -450,6 +465,7 @@ interface DashboardRouteRouteChildren {
   DashboardStorageReadRoute: typeof DashboardStorageReadRoute
   DashboardStorageUpdateRoute: typeof DashboardStorageUpdateRoute
   DashboardCustomersCustomerIdIndexRoute: typeof DashboardCustomersCustomerIdIndexRoute
+  DashboardCustomersCustomerIdProjectsProjectIdRoute: typeof DashboardCustomersCustomerIdProjectsProjectIdRoute
   DashboardCustomersCustomerIdProjectsCreateRoute: typeof DashboardCustomersCustomerIdProjectsCreateRoute
   DashboardCustomersCustomerIdProjectsIndexRoute: typeof DashboardCustomersCustomerIdProjectsIndexRoute
 }
@@ -469,6 +485,8 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardStorageUpdateRoute: DashboardStorageUpdateRoute,
   DashboardCustomersCustomerIdIndexRoute:
     DashboardCustomersCustomerIdIndexRoute,
+  DashboardCustomersCustomerIdProjectsProjectIdRoute:
+    DashboardCustomersCustomerIdProjectsProjectIdRoute,
   DashboardCustomersCustomerIdProjectsCreateRoute:
     DashboardCustomersCustomerIdProjectsCreateRoute,
   DashboardCustomersCustomerIdProjectsIndexRoute:
@@ -503,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/basic-info/erp-permissions/users': typeof DashboardBasicInfoErpPermissionsUsersRoute
   '/basic-info/employees': typeof DashboardBasicInfoEmployeesIndexRoute
   '/customers/$customerId': typeof DashboardCustomersCustomerIdIndexRoute
+  '/customers/$customerId/projects/$projectId': typeof DashboardCustomersCustomerIdProjectsProjectIdRoute
   '/customers/$customerId/projects/create': typeof DashboardCustomersCustomerIdProjectsCreateRoute
   '/basic-info/employees/$employeeId': typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
   '/customers/$customerId/projects': typeof DashboardCustomersCustomerIdProjectsIndexRoute
@@ -531,6 +550,7 @@ export interface FileRoutesByTo {
   '/basic-info/erp-permissions/users': typeof DashboardBasicInfoErpPermissionsUsersRoute
   '/basic-info/employees': typeof DashboardBasicInfoEmployeesIndexRoute
   '/customers/$customerId': typeof DashboardCustomersCustomerIdIndexRoute
+  '/customers/$customerId/projects/$projectId': typeof DashboardCustomersCustomerIdProjectsProjectIdRoute
   '/customers/$customerId/projects/create': typeof DashboardCustomersCustomerIdProjectsCreateRoute
   '/basic-info/employees/$employeeId': typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
   '/customers/$customerId/projects': typeof DashboardCustomersCustomerIdProjectsIndexRoute
@@ -561,6 +581,7 @@ export interface FileRoutesById {
   '/_dashboard/basic-info/erp-permissions/users': typeof DashboardBasicInfoErpPermissionsUsersRoute
   '/_dashboard/basic-info/employees/': typeof DashboardBasicInfoEmployeesIndexRoute
   '/_dashboard/customers/$customerId/': typeof DashboardCustomersCustomerIdIndexRoute
+  '/_dashboard/customers/$customerId/projects/$projectId': typeof DashboardCustomersCustomerIdProjectsProjectIdRoute
   '/_dashboard/customers/$customerId/projects/create': typeof DashboardCustomersCustomerIdProjectsCreateRoute
   '/_dashboard/basic-info/employees/$employeeId/': typeof DashboardBasicInfoEmployeesEmployeeIdIndexRoute
   '/_dashboard/customers/$customerId/projects/': typeof DashboardCustomersCustomerIdProjectsIndexRoute
@@ -592,6 +613,7 @@ export interface FileRouteTypes {
     | '/basic-info/erp-permissions/users'
     | '/basic-info/employees'
     | '/customers/$customerId'
+    | '/customers/$customerId/projects/$projectId'
     | '/customers/$customerId/projects/create'
     | '/basic-info/employees/$employeeId'
     | '/customers/$customerId/projects'
@@ -619,6 +641,7 @@ export interface FileRouteTypes {
     | '/basic-info/erp-permissions/users'
     | '/basic-info/employees'
     | '/customers/$customerId'
+    | '/customers/$customerId/projects/$projectId'
     | '/customers/$customerId/projects/create'
     | '/basic-info/employees/$employeeId'
     | '/customers/$customerId/projects'
@@ -647,6 +670,7 @@ export interface FileRouteTypes {
     | '/_dashboard/basic-info/erp-permissions/users'
     | '/_dashboard/basic-info/employees/'
     | '/_dashboard/customers/$customerId/'
+    | '/_dashboard/customers/$customerId/projects/$projectId'
     | '/_dashboard/customers/$customerId/projects/create'
     | '/_dashboard/basic-info/employees/$employeeId/'
     | '/_dashboard/customers/$customerId/projects/'
@@ -693,6 +717,7 @@ export const routeTree = rootRoute
         "/_dashboard/storage/read",
         "/_dashboard/storage/update",
         "/_dashboard/customers/$customerId/",
+        "/_dashboard/customers/$customerId/projects/$projectId",
         "/_dashboard/customers/$customerId/projects/create",
         "/_dashboard/customers/$customerId/projects/"
       ]
@@ -793,6 +818,10 @@ export const routeTree = rootRoute
     },
     "/_dashboard/customers/$customerId/": {
       "filePath": "_dashboard/customers/$customerId/index.tsx",
+      "parent": "/_dashboard"
+    },
+    "/_dashboard/customers/$customerId/projects/$projectId": {
+      "filePath": "_dashboard/customers/$customerId/projects/$projectId.tsx",
       "parent": "/_dashboard"
     },
     "/_dashboard/customers/$customerId/projects/create": {

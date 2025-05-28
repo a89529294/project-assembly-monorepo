@@ -1,3 +1,5 @@
+import { RevealOnHover } from "@/components/data-table/hoverable-action-cell";
+import { DialogDeleteCustomer } from "@/components/dialogs/delete-customer";
 import { PageShell } from "@/components/layout/page-shell";
 import { PendingComponent } from "@/components/pending-component";
 import { SummaryPageDataTable } from "@/components/summary-page/summary-page-data-table";
@@ -7,34 +9,14 @@ import { SummaryPageProvider } from "@/contexts/summary-page-context";
 import { useDeferredPaginatedTableControls } from "@/hooks/use-deferred-paginated-table-controls";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
-import { projectsSearchSchema } from "@myapp/shared";
+import { projectsSearchSchema, ProjectSummary } from "@myapp/shared";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { createColumnHelper } from "@tanstack/react-table";
+import { LucideReceiptText } from "lucide-react";
 
-// Temporary project columns definition
-const projectColumns = [
-  {
-    accessorKey: "id",
-    header: "ID",
-  },
-  {
-    accessorKey: "name",
-    header: "Project Name",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-  },
-  {
-    accessorKey: "startDate",
-    header: "Start Date",
-  },
-  {
-    accessorKey: "endDate",
-    header: "End Date",
-  },
-];
+const columnHelper = createColumnHelper<ProjectSummary>();
 
 export const Route = createFileRoute(
   "/_dashboard/customers/$customerId/projects/"
@@ -68,6 +50,60 @@ function RouteComponent() {
       search: deferredTableControlsReturn.deferredValues,
     })
   );
+
+  // Temporary project columns definition
+  const projectColumns = [
+    {
+      accessorKey: "id",
+      header: "ID",
+    },
+    {
+      accessorKey: "name",
+      header: "Project Name",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+    },
+    {
+      accessorKey: "startDate",
+      header: "Start Date",
+    },
+    {
+      accessorKey: "endDate",
+      header: "End Date",
+    },
+    columnHelper.display({
+      id: "delete-customer",
+      size: 32,
+      header() {
+        return "";
+      },
+      cell(info) {
+        // @ts-expect-error 'TODO replace this with a delete project dialog'
+        return <DialogDeleteCustomer customer={info.row.original} />;
+      },
+    }),
+    columnHelper.display({
+      id: "view-customer",
+      cell: ({ row }) => {
+        const project = row.original;
+
+        return (
+          <RevealOnHover className="pr-4">
+            <Link
+              to="/customers/$customerId/projects/$projectId"
+              params={{ customerId: customerId, projectId: project.id }}
+              search={{ mode: "read" }}
+            >
+              <LucideReceiptText className="size-4" />
+            </Link>
+          </RevealOnHover>
+        );
+      },
+      size: 48,
+    }),
+  ];
 
   return (
     <SummaryPageProvider

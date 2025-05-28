@@ -87,16 +87,22 @@ function RouteComponent() {
                 variant="outline"
                 onClick={() => handleToggleEdit()}
                 disabled={isPending}
+                key="cancel-edit-button"
               >
                 取消
               </Button>
-              <Button type="submit" form="customer-form" disabled={isPending}>
+              <Button
+                type="submit"
+                form="customer-form"
+                disabled={isPending}
+                key="submit-button"
+              >
                 {isPending ? "更新中..." : "儲存"}
               </Button>
             </div>
           ) : (
             <div className="space-x-2">
-              <Button asChild variant={"secondary"}>
+              <Button asChild variant={"secondary"} key="new-project-button">
                 <Link
                   to="/customers/$customerId/projects/create"
                   params={{ customerId }}
@@ -104,7 +110,11 @@ function RouteComponent() {
                   新增專案
                 </Link>
               </Button>
-              <Button type="button" onClick={() => handleToggleEdit()}>
+              <Button
+                key="edit-button"
+                type="button"
+                onClick={() => handleToggleEdit()}
+              >
                 編輯
               </Button>
             </div>

@@ -27,7 +27,7 @@ function makeSummaryDefault<TOrderBy extends string>(orderBy: TOrderBy) {
   };
 }
 
-export const UsersSummaryQueryInputSchema = summaryQueryInputSchemaGenerator(
-  userSummarySchema,
-  "account"
-).default(makeSummaryDefault("account"));
+export const UsersSummaryQueryInputSchema = summaryQueryInputSchemaGenerator({
+  schema: userSummarySchema,
+  defaultOrderBy: "account",
+});

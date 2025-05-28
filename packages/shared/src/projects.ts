@@ -43,6 +43,7 @@ export const projectUpdateSchema = baseProjectSchema
 
 export const projectSummarySchema = baseProjectSchema
   .pick({
+    id: true,
     projectNumber: true,
     status: true,
     name: true,
@@ -50,6 +51,7 @@ export const projectSummarySchema = baseProjectSchema
   .extend({
     contacts: sharedProjectFields["contacts"],
   });
+export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type ProjectCreate = z.infer<typeof projectCreateSchema>;
 export type ProjectUpdate = z.infer<typeof projectUpdateSchema>;
 

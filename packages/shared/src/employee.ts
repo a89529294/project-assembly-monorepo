@@ -20,7 +20,10 @@ export const paginatedEmployeeSummarySchema = paginatedSchemaGenerator(
 export type EmployeeSummaryKey = keyof EmployeeSummary;
 
 export const employeesSummaryQueryInputSchema =
-  summaryQueryInputSchemaGenerator(employeeSummarySchema, "idNumber");
+  summaryQueryInputSchemaGenerator({
+    schema: employeeSummarySchema,
+    defaultOrderBy: "idNumber",
+  });
 
 export const employeeDetailedSchema = employeeSummarySchema
   .omit({ id: true })

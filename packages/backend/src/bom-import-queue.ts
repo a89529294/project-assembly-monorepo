@@ -11,7 +11,7 @@ import Queue from "bull";
 import { db } from "./db";
 import { queueOptions } from "./redis";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import extract from "extract-zip";
 import * as fs from "fs/promises";
 import { mkdtemp, rm } from "fs/promises";
@@ -554,43 +554,25 @@ export class BomImportQueue {
   }
 
   private async generateTagIds(count: number): Promise<string[]> {
-    const tagSet = new Set<string>(
-      Array.from({ length: count }).map(() => this.generateTagId())
-    );
+    // Get the maximum existing tag ID from the database
+    const maxTagResult = await db
+      .select({
+        maxTagId: sql<number>`MAX(CAST(${projectAssembliesTable.tagId} AS UNSIGNED))`,
+      })
+      .from(projectAssembliesTable)
+      .then((rows) => rows[0]?.maxTagId || 0);
 
-    while (tagSet.size < count) {
-      tagSet.add(this.generateTagId());
+    const tagIds: string[] = [];
+    let currentId = maxTagResult + 1;
+
+    for (let i = 0; i < count; i++) {
+      // Format as 7-digit string with leading zeros
+      const tagId = currentId.toString().padStart(7, "0");
+      tagIds.push(tagId);
+      currentId++;
     }
 
-    let existTags: Array<Pick<ProjectAssembly, "tagId">>;
-    const maximumRetryTimes = 10;
-    let retryTimes = 0;
-
-    do {
-      if (retryTimes++ >= maximumRetryTimes) {
-        throw new Error(`無法成功產生足夠的 TagId (已嘗試次數: ${retryTimes})`);
-      }
-
-      existTags = await db
-        .select({ tagId: projectAssembliesTable.tagId })
-        .from(projectAssembliesTable)
-        .where(inArray(projectAssembliesTable.tagId, [...tagSet]));
-
-      for (const existTagIdAssembly of existTags) {
-        tagSet.delete(existTagIdAssembly.tagId);
-      }
-
-      while (tagSet.size < count) {
-        tagSet.add(this.generateTagId());
-      }
-    } while (existTags.length > 0);
-
-    return [...tagSet];
-  }
-
-  private generateTagId(): string {
-    // Generate a unique tag ID - implement your logic here
-    return `TAG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    return tagIds;
   }
 
   private isAssembliesSameSpec(

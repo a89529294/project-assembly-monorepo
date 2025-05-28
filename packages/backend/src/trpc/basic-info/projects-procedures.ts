@@ -1,4 +1,5 @@
 import {
+  ContactFromDb,
   contactsTable,
   projectBomImportJobRecordTable,
   projectContactsTable,
@@ -6,15 +7,15 @@ import {
   projectsPaginationSchema,
   projectsQuerySchema,
   projectsTable,
+  projectUpdateSchema,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { z } from "zod";
+import { bomImportQueue } from "../../bom-import-queue.js";
 import { db } from "../../db/index.js";
 import { protectedProcedure } from "../core";
 import { orderDirectionFn } from "../helpers.js";
-import { ilike } from "drizzle-orm";
-import { z } from "zod";
-import { bomImportQueue } from "../../bom-import-queue.js";
 
 const genProjectsWhereCondition = (term: string) => {
   const searchTerm = `%${term}%`;
@@ -26,6 +27,37 @@ const genProjectsWhereCondition = (term: string) => {
     ilike(projectsTable.district, searchTerm)
   );
 };
+
+export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
+  .input(z.string())
+  .output(projectUpdateSchema)
+  .query(async ({ input }) => {
+    const [project] = await db
+      .select()
+      .from(projectsTable)
+      .where(eq(projectsTable.id, input));
+
+    if (!project) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Project not found",
+      });
+    }
+
+    const contacts = await db
+      .select()
+      .from(projectContactsTable)
+      .innerJoin(
+        contactsTable,
+        eq(contactsTable.id, projectContactsTable.contactId)
+      )
+      .where(eq(projectContactsTable.projectId, input));
+
+    return {
+      ...project,
+      contacts: contacts.map((c) => c.contacts),
+    };
+  });
 
 export const readCustomerProjectsProcedure = protectedProcedure([
   "BasicInfoManagement",
@@ -73,12 +105,38 @@ export const readCustomerProjectsProcedure = protectedProcedure([
 
     const totalPages = Math.ceil(total / pageSize);
 
+    const projectIds = data.map((project) => project.id);
+    const contacts = await db
+      .select()
+      .from(projectContactsTable)
+      .innerJoin(
+        contactsTable,
+        eq(contactsTable.id, projectContactsTable.contactId)
+      )
+      .where(inArray(projectContactsTable.projectId, projectIds));
+
+    // Group contacts by projectId
+    const contactsByProject = contacts.reduce(
+      (acc, contact) => {
+        acc[contact.project_contacts.projectId] =
+          acc[contact.project_contacts.projectId] || [];
+        acc[contact.project_contacts.projectId].push(contact.contacts);
+        return acc;
+      },
+      {} as Record<string, ContactFromDb[]>
+    );
+
+    const dataWithContacts = data.map((project) => ({
+      ...project,
+      contacts: contactsByProject[project.id] || [],
+    }));
+
     return {
       page,
       pageSize,
       total,
       totalPages,
-      data,
+      data: dataWithContacts,
     };
   });
 
@@ -130,6 +188,18 @@ export const onBomUploadSuccessProcedure = protectedProcedure([
     }
   });
 
+export const readProjectContactsProcedure = protectedProcedure([
+  "BasicInfoManagement",
+])
+  .input(z.string().uuid("Invalid customer ID"))
+  .query(async ({ input: customerId }) => {
+    const contacts = await db.query.contactsTable.findMany({
+      where: eq(contactsTable.customerId, customerId),
+    });
+
+    return contacts;
+  });
+
 export const checkBomImportStatusProcedure = protectedProcedure([
   "BasicInfoManagement",
 ])
@@ -159,8 +229,8 @@ export const createProjectProcedure = protectedProcedure([
 ])
   .input(projectCreateSchema)
   .mutation(async ({ input }) => {
-    const { contactIdObjects, ...projectData } = input;
-    const contactIds = contactIdObjects.map((v) => v.id);
+    const { contacts, ...projectData } = input;
+    const contactIds = contacts.map((v) => v.id);
     return db.transaction(async (tx) => {
       // 1. Create the project
       const [project] = await tx

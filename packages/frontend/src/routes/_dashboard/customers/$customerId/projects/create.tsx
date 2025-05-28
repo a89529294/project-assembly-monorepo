@@ -40,6 +40,7 @@ function RouteComponent() {
   const [isImporting, setIsImporting] = useState(false);
 
   const handleSubmit = async (data: ProjectCreate) => {
+    console.log(data);
     const { bom, ...projectData } = data;
 
     setIsCreatingProject(true);

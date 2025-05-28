@@ -13,7 +13,10 @@ export type CustomerSummary = z.infer<typeof customerSummarySchema>;
 export type CustomerSummaryKey = keyof CustomerSummary;
 
 export const customersSummaryQueryInputSchema =
-  summaryQueryInputSchemaGenerator(customerSummarySchema, "customerNumber");
+  summaryQueryInputSchemaGenerator({
+    schema: customerSummarySchema,
+    defaultOrderBy: "name",
+  });
 
 export const paginatedCustomerSummarySchema = paginatedSchemaGenerator(
   customerSummarySchema

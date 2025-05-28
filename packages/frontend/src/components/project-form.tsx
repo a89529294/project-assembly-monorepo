@@ -3,6 +3,7 @@ import { TextField } from "@/components/form/text-field";
 import { Form } from "@/components/ui/form";
 import { useCounties } from "@/hooks/use-counties";
 import { useDistricts } from "@/hooks/use-districts";
+import { trpc } from "@/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   PROJECT_STATUSES,
@@ -10,6 +11,7 @@ import {
   ProjectFormValue,
   ProjectUpdate,
 } from "@myapp/shared";
+import { useQuery } from "@tanstack/react-query";
 import { FileUp } from "lucide-react";
 import {
   useFieldArray,
@@ -31,12 +33,7 @@ export function ProjectForm({
   disabled,
   customerId,
 }: ProjectFormProps) {
-  console.log(customerId);
   const { counties } = useCounties();
-  const availableContacts = [
-    { id: "1", value: "1", label: "聯絡人一" },
-    { id: "2", value: "2", label: "聯絡人二" },
-  ];
 
   const form = useForm<ProjectFormValue>({
     resolver: zodResolver(projectFormSchema),
@@ -50,7 +47,7 @@ export function ProjectForm({
           county: "",
           district: "",
           address: "",
-          contactIdObjects: [],
+          contacts: [],
         },
     disabled,
   });
@@ -120,10 +117,7 @@ export function ProjectForm({
           <div className="grid grid-cols-1 gap-4 p-6 bg-white rounded-lg shadow">
             <h2 className="text-lg font-semibold">聯絡人</h2>
             <div className="space-y-4">
-              <ContactFields
-                form={form}
-                availableContacts={availableContacts}
-              />
+              <ContactFields form={form} customerId={customerId} />
             </div>
           </div>
 
@@ -203,14 +197,18 @@ function FileUploadField({
 }
 
 interface ContactFieldsProps {
-  availableContacts: Array<{ value: string; label: string; id: string }>;
+  customerId: string;
   form: UseFormReturn<ProjectFormValue>;
 }
 
-function ContactFields({ availableContacts, form }: ContactFieldsProps) {
+function ContactFields({ customerId, form }: ContactFieldsProps) {
+  const { data: availableContacts, isLoading } = useQuery(
+    trpc.basicInfo.readProjectContacts.queryOptions(customerId)
+  );
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "contactIdObjects",
+    name: "contacts",
   });
 
   return (
@@ -220,9 +218,13 @@ function ContactFields({ availableContacts, form }: ContactFieldsProps) {
           <div className="flex-1">
             <SelectField
               form={form}
-              name={`contactIdObjects.${index}.id`}
+              name={`contacts.${index}.id`}
               label={index === 0 ? "聯絡人" : ""}
-              options={availableContacts}
+              options={availableContacts?.map((v) => ({
+                value: v.id,
+                label: v.name,
+              }))}
+              loading={isLoading}
               required={false}
             />
           </div>
@@ -239,8 +241,9 @@ function ContactFields({ availableContacts, form }: ContactFieldsProps) {
       ))}
       <button
         type="button"
-        onClick={() => append(availableContacts[0])}
+        onClick={() => append(availableContacts![0])}
         className="text-blue-500 hover:text-blue-700 text-sm font-medium self-start"
+        disabled={!availableContacts || availableContacts.length === 0}
       >
         + 新增聯絡人
       </button>

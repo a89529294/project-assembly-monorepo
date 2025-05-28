@@ -31,7 +31,10 @@ export const paginatedDepartmentSummarySchema = paginatedSchemaGenerator(
 );
 
 export const departmentsSummaryQueryInputSchema =
-  summaryQueryInputSchemaGenerator(departmentSummarySchema, "name");
+  summaryQueryInputSchemaGenerator({
+    schema: departmentSummarySchema,
+    defaultOrderBy: "name",
+  });
 
 export type PaginatedDepartmentSummaryQueryInput = z.infer<
   typeof departmentsSummaryQueryInputSchema

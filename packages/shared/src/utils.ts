@@ -38,41 +38,74 @@ export const selectionInputSchema = z.union([
   }),
 ]);
 
-export const summaryQueryInputSchemaGenerator = <
+// Function overloads approach - fixed compatibility
+export function summaryQueryInputSchemaGenerator<
   T extends z.ZodRawShape,
   K extends NoUndefined<Extract<keyof T, string>>,
-  Y extends NoUndefined<Extract<keyof T, string>> = never,
->(
-  params: Y extends never
-    ? {
-        schema: z.ZodObject<T>;
-        defaultOrderBy: K;
-        excludeKey?: never;
-      }
-    : {
-        schema: z.ZodObject<T>;
-        defaultOrderBy: Exclude<K, Y>;
-        excludeKey: Y;
-      }
-) =>
-  z.object({
+>(params: {
+  schema: z.ZodObject<T>;
+  defaultOrderBy: K;
+}): z.ZodObject<{
+  page: z.ZodDefault<z.ZodNumber>;
+  pageSize: z.ZodDefault<z.ZodNumber>;
+  orderBy: z.ZodDefault<
+    z.ZodEnum<[Extract<keyof T, string>, ...Extract<keyof T, string>[]]>
+  >;
+  orderDirection: z.ZodDefault<
+    z.ZodEnum<[OrderDirection, ...OrderDirection[]]>
+  >;
+  searchTerm: z.ZodDefault<z.ZodString>;
+}>;
+
+export function summaryQueryInputSchemaGenerator<
+  T extends z.ZodRawShape,
+  Y extends NoUndefined<Extract<keyof T, string>>,
+  K extends NoUndefined<Extract<Exclude<keyof T, Y>, string>>,
+>(params: {
+  schema: z.ZodObject<T>;
+  defaultOrderBy: K;
+  excludeKey: Y;
+}): z.ZodObject<{
+  page: z.ZodDefault<z.ZodNumber>;
+  pageSize: z.ZodDefault<z.ZodNumber>;
+  orderBy: z.ZodDefault<
+    z.ZodEnum<
+      [
+        Extract<Exclude<keyof T, Y>, string>,
+        ...Extract<Exclude<keyof T, Y>, string>[],
+      ]
+    >
+  >;
+  orderDirection: z.ZodDefault<
+    z.ZodEnum<[OrderDirection, ...OrderDirection[]]>
+  >;
+  searchTerm: z.ZodDefault<z.ZodString>;
+}>;
+
+// Implementation signature must be compatible with both overloads
+export function summaryQueryInputSchemaGenerator<
+  T extends z.ZodRawShape,
+  Y extends NoUndefined<Extract<keyof T, string>> | undefined = undefined,
+  K extends string = string,
+>(params: { schema: z.ZodObject<T>; defaultOrderBy: K; excludeKey?: Y }): any {
+  const availableKeys = params.excludeKey
+    ? Object.keys(params.schema.shape).filter(
+        (key) => key !== params.excludeKey
+      )
+    : Object.keys(params.schema.shape);
+
+  return z.object({
     page: z.number().int().min(1).default(1),
     pageSize: z.number().int().min(1).max(100).default(20),
     orderBy: z
-      .enum(
-        Object.keys(params.schema.shape).filter((key) =>
-          params.excludeKey ? key !== params.excludeKey : true
-        ) as [
-          Extract<Exclude<keyof T, Y>, string>,
-          ...Extract<Exclude<keyof T, Y>, string>[],
-        ]
-      )
+      .enum(availableKeys as [string, ...string[]])
       .default(params.defaultOrderBy),
     orderDirection: z
       .enum(["DESC", "ASC"] as [OrderDirection, ...OrderDirection[]])
       .default("DESC"),
     searchTerm: z.string().default(""),
   });
+}
 
 type FirstLevelKeys<T extends z.ZodRawShape> = NoUndefined<
   Extract<keyof T, string>
