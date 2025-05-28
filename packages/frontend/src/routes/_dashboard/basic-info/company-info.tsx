@@ -317,7 +317,7 @@ function CompanyInfoPage() {
                 htmlFor="county"
                 className="block text-sm font-medium text-gray-700"
               >
-                County
+                County*
               </label>
               <input
                 id="county"
@@ -333,7 +333,7 @@ function CompanyInfoPage() {
                 htmlFor="district"
                 className="block text-sm font-medium text-gray-700"
               >
-                District
+                District*
               </label>
               <input
                 id="district"
@@ -349,7 +349,7 @@ function CompanyInfoPage() {
                 htmlFor="address"
                 className="block text-sm font-medium text-gray-700"
               >
-                Address
+                Address*
               </label>
               <input
                 id="address"
