@@ -1,4 +1,9 @@
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  redirect,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/auth/use-auth";
 import { z } from "zod";
@@ -18,7 +23,7 @@ export const Route = createFileRoute("/login")({
 
 function Login() {
   const router = useRouter();
-  const navigate = Route.useNavigate();
+  const navigate = useNavigate();
   const search = Route.useSearch();
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");

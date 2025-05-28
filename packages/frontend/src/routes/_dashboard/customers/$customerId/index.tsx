@@ -95,9 +95,19 @@ function RouteComponent() {
               </Button>
             </div>
           ) : (
-            <Button type="button" onClick={() => handleToggleEdit()}>
-              編輯
-            </Button>
+            <div className="space-x-2">
+              <Button asChild variant={"secondary"}>
+                <Link
+                  to="/customers/$customerId/projects/create"
+                  params={{ customerId }}
+                >
+                  新增專案
+                </Link>
+              </Button>
+              <Button type="button" onClick={() => handleToggleEdit()}>
+                編輯
+              </Button>
+            </div>
           )}
         </div>
       }

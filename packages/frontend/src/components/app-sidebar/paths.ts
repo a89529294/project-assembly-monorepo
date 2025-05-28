@@ -4,6 +4,7 @@ import {
   Inbox,
   LucideBadgePlus,
   LucideFileLock2,
+  LucideFilePlus,
   LucideHandshake,
   LucideLandmark,
   LucideMonitorPlay,
@@ -44,7 +45,7 @@ export interface SubNavItem<
 
 // TODO clean up show sub route implementation
 
-export const genPaths = (customerId?: string) =>
+export const genPaths = ({ customerId }: { customerId?: string }) =>
   ({
     basicInfoRoutes: [
       {
@@ -135,6 +136,16 @@ export const genPaths = (customerId?: string) =>
               params: { customerId },
             },
             icon: LucidePackageOpen,
+            exact: true,
+          } as unknown as SubNavItem,
+          {
+            title: "新增客戶專案",
+            linkOptions: {
+              to: "/customers/$customerId/projects/create",
+              params: { customerId },
+            },
+            icon: LucideFilePlus,
+            exact: true,
           } as unknown as SubNavItem,
         ],
       },

@@ -40,7 +40,7 @@ export function AppSidebar({ user }: { user: User }) {
             user.roles
           )}
           label={"設定"}
-          items={genPaths(customerId).basicInfoRoutes}
+          items={genPaths({ customerId }).basicInfoRoutes}
         />
 
         <CollapsibleSidebarMenu
@@ -49,7 +49,7 @@ export function AppSidebar({ user }: { user: User }) {
             user.roles
           )}
           label={"客戶管理"}
-          items={genPaths(customerId).customerRoutes}
+          items={genPaths({ customerId }).customerRoutes}
           showSubItems={showCustomerSubRoutes}
         />
 
@@ -59,7 +59,7 @@ export function AppSidebar({ user }: { user: User }) {
             user.roles
           )}
           label={"倉庫管理"}
-          items={genPaths(customerId).storageRoutes}
+          items={genPaths({ customerId }).storageRoutes}
         />
         <CollapsibleSidebarMenu
           show={isAllowed(
@@ -67,7 +67,7 @@ export function AppSidebar({ user }: { user: User }) {
             user.roles
           )}
           label={"生產管理"}
-          items={genPaths(customerId).productionRoutes}
+          items={genPaths({ customerId }).productionRoutes}
         />
       </SidebarContent>
     </Sidebar>

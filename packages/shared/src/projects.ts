@@ -1,5 +1,5 @@
 import { createSelectSchema } from "drizzle-zod";
-import { projectsTable } from "./schema";
+import { contactsTable, projectsTable } from "./schema";
 import {
   paginatedSchemaGenerator,
   summaryQueryInputSchemaGenerator,
@@ -8,44 +8,13 @@ import {
 import { z } from "zod";
 
 const baseProjectSchema = createSelectSchema(projectsTable);
-
-// const genProjectSchema = (type: "create" | "update") =>
-//   baseProjectSchema
-//     .omit({
-//       ...(type === "create" ? { id: true } : {}),
-//       updatedAt: true,
-//       createdAt: true,
-//       deletedAt: true,
-//     })
-//     .extend({
-//       ...(type === "create"
-//         ? {
-//             bom: z
-//               .custom<File>((file) => file instanceof File, {
-//                 message: "Invalid file object",
-//               })
-//               .optional(),
-//           }
-//         : {}),
-//       projectNumber: trimThenValidate("專案編號不能為空"),
-//       name: trimThenValidate("請輸入專案名稱"),
-//       customerId: z.string().uuid("無效的客戶ID"),
-//       contactIdObjects: z.array(
-//         z.object({
-//           id: z.string().uuid("無效的聯絡人ID"),
-//         })
-//       ),
-//     });
+const contactSchema = createSelectSchema(contactsTable);
 
 const sharedProjectFields = {
   projectNumber: trimThenValidate("專案編號不能為空"),
   name: trimThenValidate("請輸入專案名稱"),
   customerId: z.string().uuid("無效的客戶ID"),
-  contactIdObjects: z.array(
-    z.object({
-      id: z.string().uuid("無效的聯絡人ID"),
-    })
-  ),
+  contacts: z.array(contactSchema),
 };
 
 export const projectCreateSchema = baseProjectSchema
@@ -72,7 +41,15 @@ export const projectUpdateSchema = baseProjectSchema
   })
   .extend(sharedProjectFields);
 
-export const projectSchema = baseProjectSchema;
+export const projectSummarySchema = baseProjectSchema
+  .pick({
+    projectNumber: true,
+    status: true,
+    name: true,
+  })
+  .extend({
+    contacts: sharedProjectFields["contacts"],
+  });
 export type ProjectCreate = z.infer<typeof projectCreateSchema>;
 export type ProjectUpdate = z.infer<typeof projectUpdateSchema>;
 
@@ -83,16 +60,18 @@ export const projectFormSchema = z.union([
   projectUpdateSchema,
 ]);
 
-export const projectsSearchSchema = summaryQueryInputSchemaGenerator(
-  projectSchema,
-  "projectNumber"
-);
+export const projectsSearchSchema = summaryQueryInputSchemaGenerator({
+  schema: projectSummarySchema,
+  defaultOrderBy: "projectNumber",
+  excludeKey: "contacts",
+});
 
 export const projectsQuerySchema = z.object({
   customerId: z.string(),
   search: projectsSearchSchema,
 });
 
-export const projectsPaginationSchema = paginatedSchemaGenerator(projectSchema);
+export const projectsPaginationSchema =
+  paginatedSchemaGenerator(projectSummarySchema);
 
 export type ProjectsPagination = z.infer<typeof projectsPaginationSchema>;

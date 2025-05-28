@@ -82,9 +82,6 @@ export const readCustomerProjectsProcedure = protectedProcedure([
     };
   });
 
-// Create a new BOM import job record when a BOM file is successfully uploaded
-// Create a new BOM import job record when a BOM file is successfully uploaded
-
 export const onBomUploadSuccessProcedure = protectedProcedure([
   "BasicInfoManagement",
 ])
