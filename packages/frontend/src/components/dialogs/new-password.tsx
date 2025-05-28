@@ -20,10 +20,11 @@ export function DialogNewPassword({ userId }: { userId: string }) {
     trpc.personnelPermission.generatePasswordForUser.mutationOptions()
   );
 
+  const { mutate } = newUserPasswordMutation;
   useEffect(() => {
     if (!open || password) return;
 
-    newUserPasswordMutation.mutate(
+    mutate(
       {
         userId,
       },
@@ -33,7 +34,7 @@ export function DialogNewPassword({ userId }: { userId: string }) {
         },
       }
     );
-  }, [open, password, userId]);
+  }, [open, password, userId, mutate]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
