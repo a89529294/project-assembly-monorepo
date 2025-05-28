@@ -33,7 +33,7 @@ export function DialogNewPassword({ userId }: { userId: string }) {
         },
       }
     );
-  }, [newUserPasswordMutation, open, password, userId]);
+  }, [open, password, userId]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
