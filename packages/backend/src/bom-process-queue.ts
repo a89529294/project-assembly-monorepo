@@ -1,4 +1,5 @@
 import {
+  BomProcessJobRecord,
   BomProcessStatus,
   PROJECT_ASSEMBLY_CHANGE_STATUS,
   ProjectAssembly,
@@ -11,7 +12,7 @@ import Queue from "bull";
 import { db } from "./db";
 import { queueOptions } from "./redis";
 
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import extract from "extract-zip";
 import * as fs from "fs/promises";
 import { mkdtemp, rm } from "fs/promises";
@@ -33,7 +34,7 @@ import { downloadFileFromS3, getS3FileMetadata } from "./helpers/s3";
 
 const bucketName = process.env.S3_BUCKET_NAME;
 
-export interface ProjectBomImportQueueData {
+export interface ProjectBomProcessQueueData {
   projectId: string;
   operator: string;
   queuedAt: number;
@@ -43,7 +44,7 @@ export interface ProjectBomImportQueueData {
   fileSize?: number;
 }
 
-export interface BomImportJobResult {
+export interface BomProcessJobResult {
   success: boolean;
   processedRows?: number;
   errors?: string[];
@@ -56,18 +57,18 @@ interface ProjectBomImportProgress {
 }
 
 interface AddJobResult {
-  job: Queue.Job<ProjectBomImportQueueData> | null;
-  jobRecord: any | null;
+  job: Queue.Job<ProjectBomProcessQueueData> | null;
+  jobRecord: BomProcessJobRecord | null;
   skipped: boolean;
   error?: Error;
 }
 
-export class BomImportQueue {
-  private queue: Queue.Queue<ProjectBomImportQueueData>;
+export class BomProcessQueue {
+  private queue: Queue.Queue<ProjectBomProcessQueueData>;
 
   constructor() {
-    this.queue = new Queue<ProjectBomImportQueueData>(
-      "bom-import",
+    this.queue = new Queue<ProjectBomProcessQueueData>(
+      "bom-process",
       queueOptions
     );
     this.setupProcessors();
@@ -75,7 +76,7 @@ export class BomImportQueue {
   }
 
   private setupProcessors() {
-    this.queue.process("process-bom-import", 1, async (job) => {
+    this.queue.process("process-bom", 1, async (job) => {
       return this.processBomImport(job);
     });
   }
@@ -95,11 +96,13 @@ export class BomImportQueue {
   }
 
   private async processBomImport(
-    job: Queue.Job<ProjectBomImportQueueData>
-  ): Promise<BomImportJobResult> {
+    job: Queue.Job<ProjectBomProcessQueueData>
+  ): Promise<BomProcessJobResult> {
     const { projectId, operator } = job.data;
 
     try {
+      console.log(`Starting BOM import for project ${projectId}`);
+
       // Update job status to processing
       await this.updateJobStatus(projectId, "processing");
 
@@ -113,24 +116,29 @@ export class BomImportQueue {
       // Update job status to completed
       await this.updateJobStatus(projectId, "done");
 
+      console.log(`Completed BOM import for project ${projectId}`);
+
       return {
         success: true,
         processedRows: result.processedRows,
         completedAt: Date.now(),
       };
     } catch (error) {
+      console.error(`Failed BOM import for project ${projectId}:`, error);
+
       // Update job status to failed
       await this.updateJobStatus(
         projectId,
         "failed",
         error instanceof Error ? error.message : "unknown error"
       );
+
       throw error;
     }
   }
 
   private async importAssembliesFromBom(
-    job: Queue.Job<ProjectBomImportQueueData>,
+    job: Queue.Job<ProjectBomProcessQueueData>,
     projectId: string,
     operator: string
   ) {
@@ -302,7 +310,7 @@ export class BomImportQueue {
   }
 
   private async handleNewAssemblies(
-    job: Queue.Job<ProjectBomImportQueueData>,
+    job: Queue.Job<ProjectBomProcessQueueData>,
     projectId: string,
     sortResult: Awaited<ReturnType<typeof this.sortImportedAssemblies>>,
     operator: string
@@ -385,7 +393,7 @@ export class BomImportQueue {
   }
 
   private async handleReplacements(
-    job: Queue.Job<ProjectBomImportQueueData>,
+    job: Queue.Job<ProjectBomProcessQueueData>,
     sortResult: Awaited<ReturnType<typeof this.sortImportedAssemblies>>,
     operator: string
   ) {
@@ -440,7 +448,7 @@ export class BomImportQueue {
   }
 
   private async handleMissingAssemblies(
-    job: Queue.Job<ProjectBomImportQueueData>,
+    job: Queue.Job<ProjectBomProcessQueueData>,
     sortResult: Awaited<ReturnType<typeof this.sortImportedAssemblies>>,
     operator: string
   ) {
@@ -557,7 +565,7 @@ export class BomImportQueue {
     // Get the maximum existing tag ID from the database
     const maxTagResult = await db
       .select({
-        maxTagId: sql<number>`MAX(CAST(${projectAssembliesTable.tagId} AS UNSIGNED))`,
+        maxTagId: sql<number>`MAX(CAST(${projectAssembliesTable.tagId} AS INTEGER))`,
       })
       .from(projectAssembliesTable)
       .then((rows) => rows[0]?.maxTagId || 0);
@@ -705,7 +713,7 @@ export class BomImportQueue {
 
   // Public methods
   async addJob(
-    data: ProjectBomImportQueueData,
+    data: ProjectBomProcessQueueData,
     options?: Queue.JobOptions
   ): Promise<AddJobResult> {
     try {
@@ -721,34 +729,60 @@ export class BomImportQueue {
         };
       }
 
-      // Create job in the queue
-      const job = await this.queue.add("process-bom-import", data, {
-        jobId: `bom-import-${data.projectId}-${Date.now()}`,
-        removeOnComplete: true,
+      // Get S3 metadata to ensure we have the eTag
+      if (!data.eTag) {
+        const bomS3Key = `projects/${data.projectId}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`;
+        const bomMetadata = await getS3FileMetadata(bucketName!, bomS3Key);
+        if (!bomMetadata) {
+          throw new Error("BOM 檔案不存在");
+        }
+        data.eTag = bomMetadata.etag;
+      }
+
+      // Create/update job record in the database FIRST
+      const [jobRecord] = await this.upsertJobRecord(data.projectId, data.eTag);
+
+      // Create job in the queue with consistent name
+      const job = await this.queue.add("process-bom", data, {
+        jobId: `bom-process-${data.projectId}-${Date.now()}`,
+        removeOnComplete: 10, // Keep some completed jobs for debugging
         removeOnFail: 50,
+        attempts: 3, // Allow retries
+        backoff: {
+          type: "exponential",
+          delay: 2000,
+        },
         ...options,
       });
 
-      try {
-        // Create/update job record in the database
-        const [jobRecord] = await this.upsertJobRecord(
-          data.projectId,
-          data.eTag!,
-          job.id.toString()
-        );
+      // Update job record with the actual job ID
+      await this.updateJobRecord(data.projectId, {
+        jobId: job.id.toString(),
+      });
 
-        return {
-          job,
-          jobRecord,
-          skipped: false,
-        };
-      } catch (error) {
-        // If we fail to create the job record, remove the job from the queue
-        await job.remove();
-        throw error;
-      }
+      console.log(
+        `Added BOM process job ${job.id} for project ${data.projectId}`
+      );
+
+      return {
+        job,
+        jobRecord,
+        skipped: false,
+      };
     } catch (error) {
       console.error("Failed to add job to queue:", error);
+
+      // Update job record to reflect the error
+      try {
+        await this.updateJobStatus(
+          data.projectId,
+          "failed",
+          error instanceof Error ? error.message : "Failed to add job to queue"
+        );
+      } catch (updateError) {
+        console.error("Failed to update job status after error:", updateError);
+      }
+
       return {
         job: null,
         jobRecord: null,
@@ -760,7 +794,7 @@ export class BomImportQueue {
 
   async getJob(
     jobId: string
-  ): Promise<Queue.Job<ProjectBomImportQueueData> | null> {
+  ): Promise<Queue.Job<ProjectBomProcessQueueData> | null> {
     return this.queue.getJob(jobId);
   }
 
@@ -768,9 +802,9 @@ export class BomImportQueue {
     return this.queue.getJobCounts();
   }
 
-  getQueue(): Queue.Queue<ProjectBomImportQueueData> {
+  getQueue(): Queue.Queue<ProjectBomProcessQueueData> {
     return this.queue;
   }
 }
 
-export const bomImportQueue = new BomImportQueue();
+export const bomProcessQueue = new BomProcessQueue();

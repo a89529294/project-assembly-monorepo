@@ -7,6 +7,9 @@ export const queryClient = new QueryClient({
       placeholderData: (p: unknown) => p,
       retry: 1,
     },
+    mutations: {
+      retry: 1,
+    },
   },
   // TODO: Use this instead of all the individual onError for each mutation call.
   // You can simply customize the error message by throwing an erro from the backend.

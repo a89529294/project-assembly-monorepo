@@ -18,14 +18,14 @@ export const paginatedUserSummarySchema =
 
 export type UserSummaryKey = keyof UserSummary;
 
-function makeSummaryDefault<TOrderBy extends string>(orderBy: TOrderBy) {
-  return {
-    page: 1,
-    pageSize: 20,
-    orderBy,
-    orderDirection: "DESC" as const,
-  };
-}
+// function makeSummaryDefault<TOrderBy extends string>(orderBy: TOrderBy) {
+//   return {
+//     page: 1,
+//     pageSize: 20,
+//     orderBy,
+//     orderDirection: "DESC" as const,
+//   };
+// }
 
 export const UsersSummaryQueryInputSchema = summaryQueryInputSchemaGenerator({
   schema: userSummarySchema,

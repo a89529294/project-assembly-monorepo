@@ -45,7 +45,13 @@ export interface SubNavItem<
 
 // TODO clean up show sub route implementation
 
-export const genPaths = ({ customerId }: { customerId?: string }) =>
+export const genPaths = ({
+  customerId,
+  projectsRouteExact,
+}: {
+  customerId?: string;
+  projectsRouteExact: boolean;
+}) =>
   ({
     basicInfoRoutes: [
       {
@@ -136,7 +142,7 @@ export const genPaths = ({ customerId }: { customerId?: string }) =>
               params: { customerId },
             },
             icon: LucidePackageOpen,
-            exact: true,
+            exact: projectsRouteExact,
           } as unknown as SubNavItem,
           {
             title: "新增客戶專案",

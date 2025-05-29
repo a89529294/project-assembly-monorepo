@@ -614,6 +614,10 @@ export type AppUserRefreshTokenFromDb = InferSelectModel<
 >;
 export type CompanyInfoFromDb = InferSelectModel<typeof companyInfoTable>;
 
+export type BomProcessJobRecord = InferSelectModel<
+  typeof projectBomImportJobRecordTable
+>;
+
 // Material
 export * from "./material";
 

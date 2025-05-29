@@ -1,21 +1,24 @@
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
   ContactFromDb,
   contactsTable,
   projectBomImportJobRecordTable,
   projectContactsTable,
-  projectCreateSchema,
+  projectFormSchema,
   projectsPaginationSchema,
   projectsQuerySchema,
   projectsTable,
-  projectUpdateSchema,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { z } from "zod";
-import { bomImportQueue } from "../../bom-import-queue.js";
+import { bomProcessQueue } from "../../bom-process-queue.js";
 import { db } from "../../db/index.js";
+import { s3Client } from "../../s3.js";
 import { protectedProcedure } from "../core";
 import { orderDirectionFn } from "../helpers.js";
+import { BOM_DIR_NAME, BOM_FILE_NAME } from "../../file/constants.js";
 
 const genProjectsWhereCondition = (term: string) => {
   const searchTerm = `%${term}%`;
@@ -30,7 +33,7 @@ const genProjectsWhereCondition = (term: string) => {
 
 export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
   .input(z.string())
-  .output(projectUpdateSchema)
+  .output(projectFormSchema)
   .query(async ({ input }) => {
     const [project] = await db
       .select()
@@ -53,9 +56,39 @@ export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
       )
       .where(eq(projectContactsTable.projectId, input));
 
+    // Check if BOM file exists and generate presigned URL if it does
+    let bom = "";
+    const BUCKET_NAME = process.env.S3_BUCKET_NAME;
+    const bomFilePath = `projects/${input}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`;
+
+    try {
+      // Check if BOM file exists
+      const command = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: bomFilePath,
+      });
+
+      // This will throw an error if the file doesn't exist
+      await s3Client.send(
+        new GetObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: bomFilePath,
+        })
+      );
+
+      // If we get here, the file exists - generate a presigned URL
+      bom = await getSignedUrl(s3Client, command, {
+        expiresIn: 3600, // 1 hour expiration
+      });
+    } catch (error) {
+      // File doesn't exist or other S3 error - bomFileUrl remains null
+      console.debug(`No BOM file found for project ${input}`);
+    }
+
     return {
       ...project,
       contacts: contacts.map((c) => c.contacts),
+      bom,
     };
   });
 
@@ -140,7 +173,21 @@ export const readCustomerProjectsProcedure = protectedProcedure([
     };
   });
 
-export const onBomUploadSuccessProcedure = protectedProcedure([
+const onAddBomToProcessQueueOutputSchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("skipped"),
+    message: z.string(),
+  }),
+  z.object({
+    status: z.literal("failed"),
+    message: z.string(),
+  }),
+  z.object({
+    status: z.literal("waiting"),
+  }),
+]);
+
+export const onAddBomToProcessQueueProcedure = protectedProcedure([
   "BasicInfoManagement",
 ])
   .input(
@@ -154,11 +201,12 @@ export const onBomUploadSuccessProcedure = protectedProcedure([
         .positive("File size must be a positive number"),
     })
   )
+  .output(onAddBomToProcessQueueOutputSchema)
   .mutation(async ({ input, ctx }) => {
     const { projectId, s3Key, eTag, fileSize } = input;
 
     try {
-      const { job, jobRecord, skipped } = await bomImportQueue.addJob({
+      const { jobRecord, skipped } = await bomProcessQueue.addJob({
         projectId,
         operator: ctx.user.id,
         queuedAt: Date.now(),
@@ -171,13 +219,19 @@ export const onBomUploadSuccessProcedure = protectedProcedure([
       if (skipped) {
         return {
           status: "skipped",
-          message: "BOM import skipped - no changes detected",
+          message: "BOM process skipped - no changes detected",
         };
       }
 
+      // failed to create job or add job record into db
+      if (jobRecord === null)
+        return {
+          status: "failed",
+          message: "BOM process failed",
+        };
+
       return {
-        ...jobRecord,
-        jobId: job?.id.toString(),
+        status: "waiting",
       };
     } catch (error) {
       throw new TRPCError({
@@ -200,7 +254,7 @@ export const readProjectContactsProcedure = protectedProcedure([
     return contacts;
   });
 
-export const checkBomImportStatusProcedure = protectedProcedure([
+export const checkBomProcessStatusProcedure = protectedProcedure([
   "BasicInfoManagement",
 ])
   .input(z.string().uuid("Invalid project ID"))
@@ -218,6 +272,13 @@ export const checkBomImportStatusProcedure = protectedProcedure([
       });
     }
 
+    console.log(job);
+
+    if (job.status === "failed")
+      throw new TRPCError({ message: "匯入BOM表出錯", code: "PARSE_ERROR" });
+
+    if (job.status === "done") return 100;
+
     if (!job.processedSteps) return 0;
     if (!job.totalSteps || job.totalSteps === 0) return 0;
 
@@ -227,7 +288,7 @@ export const checkBomImportStatusProcedure = protectedProcedure([
 export const createProjectProcedure = protectedProcedure([
   "BasicInfoManagement",
 ])
-  .input(projectCreateSchema)
+  .input(projectFormSchema)
   .mutation(async ({ input }) => {
     const { contacts, ...projectData } = input;
     const contactIds = contacts.map((v) => v.id);
@@ -275,6 +336,72 @@ export const createProjectProcedure = protectedProcedure([
         );
       }
 
+      return project;
+    });
+  });
+
+export const updateProjectProcedure = protectedProcedure([
+  "BasicInfoManagement",
+])
+  .input(
+    z.object({
+      projectId: z.string().uuid("Invalid project ID"),
+      data: projectFormSchema,
+    })
+  )
+  .mutation(async ({ input }) => {
+    const { projectId, data } = input;
+    const { contacts, ...projectData } = data;
+    const contactIds = contacts.map((v) => v.id);
+
+    return db.transaction(async (tx) => {
+      // 1. Update the project
+      const [project] = await tx
+        .update(projectsTable)
+        .set(projectData)
+        .where(eq(projectsTable.id, projectId))
+        .returning();
+
+      if (!project) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Project not found",
+        });
+      }
+
+      // 2. Update associations
+      // Remove all old associations
+      await tx
+        .delete(projectContactsTable)
+        .where(eq(projectContactsTable.projectId, project.id));
+
+      if (contactIds.length > 0) {
+        // Verify all contact IDs exist and belong to the same customer
+        const validContacts = await tx
+          .select({ id: contactsTable.id })
+          .from(contactsTable)
+          .where(
+            and(
+              eq(contactsTable.customerId, projectData.customerId),
+              inArray(contactsTable.id, contactIds)
+            )
+          );
+
+        if (validContacts.length !== contactIds.length) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "One or more contact IDs are invalid or don't belong to the customer",
+          });
+        }
+        // Create new associations
+        await tx.insert(projectContactsTable).values(
+          contactIds.map((contactId) => ({
+            projectId: project.id,
+            contactId,
+          }))
+        );
+      }
       return project;
     });
   });

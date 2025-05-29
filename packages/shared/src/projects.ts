@@ -17,7 +17,7 @@ const sharedProjectFields = {
   contacts: z.array(contactSchema),
 };
 
-export const projectCreateSchema = baseProjectSchema
+export const projectFormSchema = baseProjectSchema
   .omit({
     id: true,
     updatedAt: true,
@@ -26,20 +26,15 @@ export const projectCreateSchema = baseProjectSchema
   })
   .extend({
     bom: z
-      .custom<File>((file) => file instanceof File, {
-        message: "Invalid file object",
-      })
+      .union([
+        z.custom<File>((file) => file instanceof File, {
+          message: "Invalid file object",
+        }),
+        z.string(),
+      ])
       .optional(),
     ...sharedProjectFields,
   });
-
-export const projectUpdateSchema = baseProjectSchema
-  .omit({
-    updatedAt: true,
-    createdAt: true,
-    deletedAt: true,
-  })
-  .extend(sharedProjectFields);
 
 export const projectSummarySchema = baseProjectSchema
   .pick({
@@ -51,16 +46,9 @@ export const projectSummarySchema = baseProjectSchema
   .extend({
     contacts: sharedProjectFields["contacts"],
   });
-export type ProjectSummary = z.infer<typeof projectSummarySchema>;
-export type ProjectCreate = z.infer<typeof projectCreateSchema>;
-export type ProjectUpdate = z.infer<typeof projectUpdateSchema>;
 
-// Extended type for form values that includes the bomFile field
-export type ProjectFormValue = ProjectUpdate | ProjectCreate;
-export const projectFormSchema = z.union([
-  projectCreateSchema,
-  projectUpdateSchema,
-]);
+export type ProjectSummary = z.infer<typeof projectSummarySchema>;
+export type ProjectFormValue = z.infer<typeof projectFormSchema>;
 
 export const projectsSearchSchema = summaryQueryInputSchemaGenerator({
   schema: projectSummarySchema,

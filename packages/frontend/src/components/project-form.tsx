@@ -1,5 +1,6 @@
 import { SelectField } from "@/components/form/select-field";
 import { TextField } from "@/components/form/text-field";
+import { FileUploadField } from "@/components/project-form/file-upload-field";
 import { Form } from "@/components/ui/form";
 import { useCounties } from "@/hooks/use-counties";
 import { useDistricts } from "@/hooks/use-districts";
@@ -9,54 +10,59 @@ import {
   PROJECT_STATUSES,
   projectFormSchema,
   ProjectFormValue,
-  ProjectUpdate,
 } from "@myapp/shared";
 import { useQuery } from "@tanstack/react-query";
-import { FileUp } from "lucide-react";
-import {
-  useFieldArray,
-  useForm,
-  UseFormReturn,
-  useWatch,
-} from "react-hook-form";
+import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
 
-interface ProjectFormProps {
-  initialData?: ProjectUpdate;
-  onSubmit: (values: ProjectFormValue) => void;
-  disabled: boolean;
+type ProjectFormProps = {
   customerId: string;
-}
+  initialData?: ProjectFormValue;
+  onSubmit: (data: ProjectFormValue) => void;
+  disabled: boolean;
+};
 
-export function ProjectForm({
-  initialData,
-  onSubmit,
-  disabled,
-  customerId,
-}: ProjectFormProps) {
+// type ProjectFormProps =
+//   | ({
+//       type: "create";
+//       onSubmit: (values: ProjectCreate) => void;
+//     } & BaseProjectFormProps)
+//   | ({
+//       type: "update";
+//       onSubmit: (values: ProjectUpdate) => void;
+//       initialData: ProjectUpdate;
+//     } & BaseProjectFormProps);
+
+export function ProjectForm(props: ProjectFormProps) {
   const { counties } = useCounties();
 
   const form = useForm<ProjectFormValue>({
     resolver: zodResolver(projectFormSchema),
-    defaultValues: initialData
-      ? initialData
+    defaultValues: props.initialData
+      ? props.initialData
       : {
-          customerId,
-          projectNumber: "",
           name: "",
+          projectNumber: "",
           status: "pending",
-          county: "",
-          district: "",
-          address: "",
+          county: null,
+          district: null,
+          address: null,
+          customerId: props.customerId,
           contacts: [],
+          bom: undefined,
         },
-    disabled,
+    disabled: props.disabled,
   });
 
   const { data: districts } = useDistricts(form.watch("county"));
 
-  const handleSubmit = form.handleSubmit(onSubmit, (e) => {
-    console.log(e);
-  });
+  const handleSubmit = form.handleSubmit(
+    (values) => {
+      props.onSubmit(values);
+    },
+    (errors) => {
+      console.log(errors);
+    }
+  );
 
   return (
     <Form {...form}>
@@ -117,7 +123,7 @@ export function ProjectForm({
           <div className="grid grid-cols-1 gap-4 p-6 bg-white rounded-lg shadow">
             <h2 className="text-lg font-semibold">聯絡人</h2>
             <div className="space-y-4">
-              <ContactFields form={form} customerId={customerId} />
+              <ContactFields form={form} customerId={props.customerId} />
             </div>
           </div>
 
@@ -140,61 +146,61 @@ export function ProjectForm({
   );
 }
 
-interface FileUploadFieldProps {
-  form: UseFormReturn<ProjectFormValue>;
-  name: "bom";
-  label: string;
-  accept: string;
-  description?: string;
-}
+// interface FileUploadFieldProps {
+//   form: UseFormReturn<ProjectFormValue>;
+//   name: "bom";
+//   label: string;
+//   accept: string;
+//   description?: string;
+// }
 
-function FileUploadField({
-  form,
-  name,
-  label,
-  accept,
-  description,
-}: FileUploadFieldProps) {
-  const fileValue = useWatch({
-    control: form.control,
-    name: name,
-  });
+// function FileUploadField({
+//   form,
+//   name,
+//   label,
+//   accept,
+//   description,
+// }: FileUploadFieldProps) {
+//   const fileValue = useWatch({
+//     control: form.control,
+//     name: name,
+//   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      form.setValue(name, file);
-    }
-  };
+//   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     const file = e.target.files?.[0];
+//     if (file) {
+//       form.setValue(name, file);
+//     }
+//   };
 
-  return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      <div className="mt-1 flex items-center">
-        <label className="relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:text-blue-500">
-          <span className="flex items-center gap-2">
-            <FileUp className="h-4 w-4" />
-            選擇檔案
-          </span>
-          <input
-            type="file"
-            accept={accept}
-            className="sr-only"
-            onChange={handleFileChange}
-          />
-        </label>
-        {fileValue?.name && (
-          <span className="ml-4 text-sm text-gray-500 truncate max-w-xs">
-            已選擇: {fileValue.name}
-          </span>
-        )}
-      </div>
-      {description && (
-        <p className="mt-1 text-sm text-gray-500">{description}</p>
-      )}
-    </div>
-  );
-}
+//   return (
+//     <div className="space-y-2">
+//       <label className="block text-sm font-medium text-gray-700">{label}</label>
+//       <div className="mt-1 flex items-center">
+//         <label className="relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:text-blue-500">
+//           <span className="flex items-center gap-2">
+//             <FileUp className="h-4 w-4" />
+//             選擇檔案
+//           </span>
+//           <input
+//             type="file"
+//             accept={accept}
+//             className="sr-only"
+//             onChange={handleFileChange}
+//           />
+//         </label>
+//         {fileValue?.name && (
+//           <span className="ml-4 text-sm text-gray-500 truncate max-w-xs">
+//             已選擇: {fileValue.name}
+//           </span>
+//         )}
+//       </div>
+//       {description && (
+//         <p className="mt-1 text-sm text-gray-500">{description}</p>
+//       )}
+//     </div>
+//   );
+// }
 
 interface ContactFieldsProps {
   customerId: string;

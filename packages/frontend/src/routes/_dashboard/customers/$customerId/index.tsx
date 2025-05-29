@@ -110,6 +110,14 @@ function RouteComponent() {
                   新增專案
                 </Link>
               </Button>
+              <Button asChild variant={"secondary"} key="list-projects-button">
+                <Link
+                  to="/customers/$customerId/projects"
+                  params={{ customerId }}
+                >
+                  專案列表
+                </Link>
+              </Button>
               <Button
                 key="edit-button"
                 type="button"
