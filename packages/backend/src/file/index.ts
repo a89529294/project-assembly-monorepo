@@ -221,19 +221,29 @@ fileRoutes.get(
     const historyDirPath = `${bomDirPath}${HISTORY_DIR_NAME}/`;
     const bomFilePath = `${bomDirPath}${BOM_FILE_NAME}`;
 
+    console.log("[bom-upload] Handler start. projectId:", projectId);
+    console.log("[bom-upload] BUCKET_NAME:", BUCKET_NAME);
+    console.log("[bom-upload] bomDirPath:", bomDirPath);
+    console.log("[bom-upload] bomFilePath:", bomFilePath);
+    console.log("[bom-upload] historyDirPath:", historyDirPath);
+
     try {
       // Check if BOM file already exists
+      console.log("[bom-upload] Listing objects for:", bomFilePath);
       const listCommand = new ListObjectsV2Command({
         Bucket: BUCKET_NAME,
         Prefix: bomFilePath,
       });
 
       const listedObjects = await s3Client.send(listCommand);
+      console.log("[bom-upload] Listed objects:", listedObjects);
       let historyFilePath = null;
 
       // If BOM file exists, prepare to move it to history
       if (listedObjects.Contents && listedObjects.Contents.length > 0) {
+        console.log("[bom-upload] BOM exists, preparing to move to history.");
         // Ensure history directory exists
+        console.log("[bom-upload] Ensuring history directory exists:", historyDirPath);
         await s3Client.send(
           new PutObjectCommand({
             Bucket: BUCKET_NAME,
@@ -241,13 +251,16 @@ fileRoutes.get(
             Body: Buffer.from(""),
           })
         );
+        console.log("[bom-upload] History directory ensured.");
 
         // Create timestamp for the history file
         const now = new Date().toISOString().replace(/[:T-]|\.\d{3}Z$/g, "");
         const historyFileName = `TeklaBom_${now}.csv`;
         historyFilePath = `${historyDirPath}${historyFileName}`;
+        console.log("[bom-upload] historyFilePath:", historyFilePath);
 
         // Copy existing BOM to history
+        console.log("[bom-upload] Copying BOM to history:", historyFilePath);
         await s3Client.send(
           new CopyObjectCommand({
             Bucket: BUCKET_NAME,
@@ -255,17 +268,23 @@ fileRoutes.get(
             Key: historyFilePath,
           })
         );
+        console.log("[bom-upload] BOM copied to history.");
 
         // Delete the original BOM file
+        console.log("[bom-upload] Deleting original BOM:", bomFilePath);
         await s3Client.send(
           new DeleteObjectCommand({
             Bucket: BUCKET_NAME,
             Key: bomFilePath,
           })
         );
+        console.log("[bom-upload] Original BOM deleted.");
+      } else {
+        console.log("[bom-upload] No existing BOM file found.");
       }
 
       // Generate a pre-signed URL for PUT operation with required headers
+      console.log("[bom-upload] Generating presigned URL for:", bomFilePath);
       const command = new PutObjectCommand({
         Bucket: BUCKET_NAME,
         Key: bomFilePath,
@@ -278,7 +297,9 @@ fileRoutes.get(
       const uploadUrl = await getSignedUrl(s3Client, command, {
         expiresIn: 3600,
       });
+      console.log("[bom-upload] Presigned URL generated:", uploadUrl);
 
+      console.log("[bom-upload] Returning JSON response.");
       return c.json({
         success: true,
         uploadUrl,
@@ -287,7 +308,7 @@ fileRoutes.get(
         // historyFilePath: historyFilePath || null,
       });
     } catch (error) {
-      console.error("Error in pre-signed URL generation:", error);
+      console.error("[bom-upload] Error in pre-signed URL generation:", error);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to prepare for file upload",

@@ -4,6 +4,7 @@ export const PROJECT_ASSEMBLY_CHANGE_STATUS = [
   "CREATED",
   "UPDATED",
   "DELETED",
+  "",
 ] as const;
 
 export const projectAssemblyChangeStatusEnum = pgEnum(

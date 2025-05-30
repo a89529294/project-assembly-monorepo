@@ -125,6 +125,7 @@ function RouteComponent() {
                 <Link
                   to="/customers/$customerId/projects/create"
                   params={{ customerId }}
+                  key="customer-projects-page-new-project-button"
                 >
                   新增專案
                 </Link>

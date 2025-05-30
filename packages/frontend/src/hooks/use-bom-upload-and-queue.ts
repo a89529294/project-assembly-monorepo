@@ -37,6 +37,8 @@ export function useBomUploadAndQueue({
     })
   );
 
+  console.log(processProgress);
+
   const invalidateQueryAndNavigate = () => {
     queryClient.invalidateQueries({
       queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),

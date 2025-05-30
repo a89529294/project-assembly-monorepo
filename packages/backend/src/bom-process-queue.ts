@@ -152,11 +152,14 @@ export class BomProcessQueue {
       importedAssemblies
     );
 
+    console.log(sortResult);
+
     // Update job progress with actual totals
     const totalAssemblies =
       sortResult.newAssemblies.length +
       sortResult.replacements.length +
-      sortResult.missingAssemblies.length;
+      sortResult.missingAssemblies.length +
+      sortResult.unchangedAssemblies.length;
 
     let jobProgress: ProjectBomImportProgress = {
       processedAssemblies: 0,
@@ -178,6 +181,9 @@ export class BomProcessQueue {
 
       // Handle missing assemblies
       await this.handleMissingAssemblies(job, sortResult, operator);
+
+      // Handle unchanged assemblies
+      await this.handleUnchangedAssemblies(job, sortResult, operator);
 
       // Update final record
       await this.jobLog(job, "updating database record");
@@ -450,6 +456,65 @@ export class BomProcessQueue {
     }
   }
 
+  private async handleUnchangedAssemblies(
+    job: Queue.Job<ProjectBomProcessQueueData>,
+    sortResult: Awaited<ReturnType<typeof this.sortImportedAssemblies>>,
+    operator: string
+  ) {
+    // TODO remove this later
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await this.jobLog(job, "updating database for unchanged-assemblies");
+
+    let jobProgress = await this.getJobProgress(job);
+    let progressPercentage =
+      (jobProgress.processedAssemblies / jobProgress.totalAssemblies) * 100;
+
+    const chunkSize = 100;
+    const unchangedAssemblyChunks = chunkArray(
+      sortResult.unchangedAssemblies,
+      chunkSize
+    );
+
+    for (const unchangedAssemblyChunk of unchangedAssemblyChunks) {
+      const updateAssemblies: Array<ProjectAssembly> = [];
+
+      for (const unchangedAssembly of unchangedAssemblyChunk) {
+        updateAssemblies.push({
+          ...unchangedAssembly,
+          change: PROJECT_ASSEMBLY_CHANGE_STATUS[3],
+        });
+      }
+
+      console.log("unchanged assemblies");
+      console.log(updateAssemblies);
+
+      await db.transaction(async (tx) => {
+        await Promise.all(
+          updateAssemblies.map(async (assembly) => {
+            return tx
+              .update(projectAssembliesTable)
+              .set({
+                ...assembly,
+                updatedBy: operator,
+                updatedAt: new Date(),
+              })
+              .where(eq(projectAssembliesTable.id, assembly.id));
+          })
+        );
+      });
+
+      jobProgress.processedAssemblies += unchangedAssemblyChunk.length;
+      const newPercentage =
+        (jobProgress.processedAssemblies / jobProgress.totalAssemblies) * 100;
+
+      if (newPercentage === 100 || newPercentage - progressPercentage >= 10) {
+        progressPercentage = newPercentage;
+        await this.updateJobProgress(job, jobProgress);
+      }
+    }
+  }
+
   private async handleMissingAssemblies(
     job: Queue.Job<ProjectBomProcessQueueData>,
     sortResult: Awaited<ReturnType<typeof this.sortImportedAssemblies>>,
@@ -514,6 +579,7 @@ export class BomProcessQueue {
         replacementAssembly: ProjectAssembly;
         replacedAssembly: ProjectAssembly;
       }>,
+      unchangedAssemblies: [] as Array<ProjectAssembly>,
     };
 
     const oldProjectAssemblies = await db
@@ -554,6 +620,8 @@ export class BomProcessQueue {
           replacedAssembly,
           replacementAssembly: importedAssembly,
         });
+      } else {
+        result.unchangedAssemblies.push(oldAssembly);
       }
 
       oldProjectAssemblyMap.delete(oldAssembly.assemblyId!);

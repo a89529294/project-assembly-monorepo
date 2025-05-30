@@ -316,11 +316,11 @@ export const checkBomProcessStatusProcedure = protectedProcedure([
       }),
       z.object({
         status: z.literal(BOM_PROCESS_STATUS[0]),
-        progress: z.number().min(0).max(99.99),
+        progress: z.number(),
       }),
       z.object({
         status: z.literal(BOM_PROCESS_STATUS[1]),
-        progress: z.number().min(0).max(99.99),
+        progress: z.number(),
       }),
     ])
   )
@@ -367,6 +367,14 @@ export const checkBomProcessStatusProcedure = protectedProcedure([
         status: "failed",
       };
     }
+
+    if (
+      Number.isNaN(jobProgress.processedAssemblies) ||
+      Number.isNaN(jobProgress.totalAssemblies)
+    )
+      return {
+        status: "failed",
+      };
 
     return {
       status: isActive ? "processing" : "waiting",

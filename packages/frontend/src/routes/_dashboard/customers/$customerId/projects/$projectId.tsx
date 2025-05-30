@@ -71,6 +71,7 @@ function RouteComponent() {
 
   const progressBar = (() => {
     console.log(state, processProgress);
+
     if (state === "idle") return null;
 
     let progress = 0;
