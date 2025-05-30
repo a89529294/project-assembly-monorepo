@@ -251,7 +251,7 @@ fileRoutes.get(
         await s3Client.send(
           new CopyObjectCommand({
             Bucket: BUCKET_NAME,
-            CopySource: `/${BUCKET_NAME}/${bomFilePath}`,
+            CopySource: `${encodeURIComponent(BUCKET_NAME!)}/${encodeURIComponent(bomFilePath)}`,
             Key: historyFilePath,
           })
         );

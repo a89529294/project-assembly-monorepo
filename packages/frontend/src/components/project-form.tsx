@@ -16,6 +16,7 @@ import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
 
 type ProjectFormProps = {
   customerId: string;
+  projectId?: string;
   initialData?: ProjectFormValue;
   onSubmit: (data: ProjectFormValue) => void;
   disabled: boolean;
@@ -136,7 +137,7 @@ export function ProjectForm(props: ProjectFormProps) {
                 name="bom"
                 label="BOM 檔案"
                 accept=".csv,.xlsx,.xls"
-                description="上傳 BOM 檔案 (CSV 或 Excel)"
+                projectId={props.projectId}
               />
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { createSelectSchema } from "drizzle-zod";
-import { contactsTable, projectsTable } from "./schema";
+import { BOM_PROCESS_STATUS, contactsTable, projectsTable } from "./schema";
 import {
   paginatedSchemaGenerator,
   summaryQueryInputSchemaGenerator,
@@ -16,6 +16,16 @@ const sharedProjectFields = {
   customerId: z.string().uuid("無效的客戶ID"),
   contacts: z.array(contactSchema),
 };
+
+const projectMetaFields = {
+  bomProcess: z.object({
+    jobStatus: z.union([z.enum(BOM_PROCESS_STATUS), z.null()]),
+    jobProgress: z.union([z.number(), z.null()]),
+    projectId: z.string(),
+  }),
+};
+
+export type BomProcessInfo = z.infer<(typeof projectMetaFields)["bomProcess"]>;
 
 export const projectFormSchema = baseProjectSchema
   .omit({
@@ -46,6 +56,9 @@ export const projectSummarySchema = baseProjectSchema
   .extend({
     contacts: sharedProjectFields["contacts"],
   });
+
+export const readProjectOutputSchema =
+  projectFormSchema.extend(projectMetaFields);
 
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type ProjectFormValue = z.infer<typeof projectFormSchema>;

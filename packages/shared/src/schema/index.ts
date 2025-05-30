@@ -207,7 +207,7 @@ export const projectBomImportJobRecordTable = pgTable(
       .primaryKey()
       .references(() => projectsTable.id),
     bomFileEtag: varchar("bom_file_etag", { length: 255 }),
-    jobId: varchar("job_id", { length: 255 }),
+    jobId: varchar("job_id", { length: 255 }).notNull(),
     status: bomProcessStatusEnum("status").notNull().default("waiting"),
     totalSteps: integer("total_steps"),
     processedSteps: integer("processed_steps"),

@@ -1,15 +1,16 @@
 import { PageShell } from "@/components/layout/page-shell";
+import { ScrollableBody } from "@/components/layout/scrollable-body";
 import { PendingComponent } from "@/components/pending-component";
 import { ProjectForm } from "@/components/project-form";
 import { Button } from "@/components/ui/button";
-import { queryClient } from "@/query-client";
+import { Progress } from "@/components/ui/progress";
+import { useBomUploadAndQueue } from "@/hooks/use-bom-upload-and-queue";
+
 import { trpc } from "@/trpc";
 import { ProjectFormValue } from "@myapp/shared";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ScrollableBody } from "@/components/layout/scrollable-body";
-import { useState } from "react";
 
 export const Route = createFileRoute(
   "/_dashboard/customers/$customerId/projects/$projectId"
@@ -20,53 +21,74 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const { customerId, projectId } = Route.useParams();
-  const [isUpdating, setIsUpdating] = useState(false);
+
+  const { handleBomUploadAndQueue, processProgress, uploadProgress, state } =
+    useBomUploadAndQueue({ customerId, projectState: "create" });
 
   // Fetch project data
   const { data: project } = useSuspenseQuery(
     trpc.basicInfo.readProject.queryOptions(projectId)
   );
 
-  const { mutate } = useMutation(
+  const { mutate: updateProject, isPending } = useMutation(
     trpc.basicInfo.updateProject.mutationOptions()
   );
 
   const handleSubmit = async (formData: ProjectFormValue) => {
-    setIsUpdating(true);
+    const { bom, ...projectData } = formData;
 
-    try {
-      await mutate(
-        {
-          projectId,
-          data: formData,
+    updateProject(
+      {
+        projectId,
+        data: projectData,
+      },
+      {
+        onSuccess: async (project) => {
+          await handleBomUploadAndQueue({ projectId: project.id, bom });
         },
-        {
-          onSuccess: () => {
-            // TODO: reference create page for complete flow
-            // Need to decide whether to upload bom or not and then decide if we need to add bom to queue
-
-            toast.success("成功更新專案");
-            // Invalidate the projects list and current project queries
-            queryClient.invalidateQueries({
-              queryKey:
-                trpc.basicInfo.readProject.queryOptions(projectId).queryKey,
-            });
-          },
-          onError: (error) => {
-            console.error("Error updating project:", error);
-            toast.error(`更新專案時發生錯誤: ${error.message}`);
-          },
-          onSettled: () => {
-            setIsUpdating(false);
-          },
-        }
-      );
-    } catch (error) {
-      console.error("Error in mutation:", error);
-      toast.error("更新專案時發生未預期的錯誤");
-      setIsUpdating(false);
-    }
+        onError: (error) => {
+          console.error("Project creation failed:", error);
+          toast.error(`更新專案失敗: ${error.message}`);
+        },
+      }
+    );
   };
+
+  const uploadOrProcessText = (() => {
+    if (state === "uploading") return "上傳中...";
+
+    if (processProgress?.status === "failed") return "匯入失敗";
+    if (processProgress?.status === "done") return "匯入完成";
+
+    if (
+      processProgress?.status === "processing" ||
+      processProgress?.status === "waiting"
+    )
+      return "匯入中...";
+
+    return "未知狀態";
+  })();
+
+  const progressBar = (() => {
+    console.log(state, processProgress);
+    if (state === "idle") return null;
+
+    let progress = 0;
+
+    if (state === "uploading") progress = uploadProgress;
+
+    if (state === "processing") {
+      if (processProgress?.status === "done") progress = 100;
+      if (processProgress?.status === "failed") return null;
+      if (
+        processProgress?.status === "processing" ||
+        processProgress?.status === "waiting"
+      )
+        progress = processProgress.progress;
+    }
+
+    return <Progress value={progress} className="h-2 flex-1" />;
+  })();
 
   return (
     <PageShell
@@ -76,14 +98,22 @@ function RouteComponent() {
             <Link
               to={"/customers/$customerId/projects"}
               params={{ customerId }}
-              disabled={isUpdating}
+              disabled={isPending}
             >
               返回專案列表
             </Link>
           </Button>
           <div className="flex gap-2 items-center">
-            <Button type="submit" form="project-form" disabled={isUpdating}>
-              {isUpdating ? "更新中..." : "更新專案"}
+            {(state === "processing" || state === "uploading") && (
+              <div className="flex items-center gap-2 w-60">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  {uploadOrProcessText}
+                </span>
+                {progressBar}
+              </div>
+            )}
+            <Button type="submit" form="project-form" disabled={isPending}>
+              儲存
             </Button>
           </div>
         </div>
@@ -94,7 +124,8 @@ function RouteComponent() {
           customerId={customerId}
           initialData={project}
           onSubmit={handleSubmit}
-          disabled={isUpdating}
+          disabled={isPending}
+          projectId={projectId}
         />
       </ScrollableBody>
     </PageShell>

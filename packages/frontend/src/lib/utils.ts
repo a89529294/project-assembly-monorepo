@@ -47,3 +47,35 @@ export async function privateFetch(
 
   return response;
 }
+
+export const uploadToS3 = (
+  file: File,
+  uploadUrl: string,
+  onProgress: (progrss: number) => void
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", uploadUrl, true);
+    xhr.setRequestHeader("Content-Type", "text/csv");
+    xhr.timeout = 300000; // 5 minutes
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        onProgress(percentComplete);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const eTag = xhr.getResponseHeader("ETag");
+        resolve(eTag ? eTag.replace(/^"|"$/g, "") : "");
+      } else {
+        reject(new Error(`Upload failed: ${xhr.status}`));
+      }
+    };
+
+    xhr.onerror = xhr.ontimeout = () => reject(new Error("Upload failed"));
+    xhr.send(file);
+  });
+};

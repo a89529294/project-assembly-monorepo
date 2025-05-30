@@ -1,6 +1,8 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
+  BOM_PROCESS_STATUS,
+  BomProcessStatus,
   ContactFromDb,
   contactsTable,
   projectBomImportJobRecordTable,
@@ -9,11 +11,15 @@ import {
   projectsPaginationSchema,
   projectsQuerySchema,
   projectsTable,
+  readProjectOutputSchema,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { z } from "zod";
-import { bomProcessQueue } from "../../bom-process-queue.js";
+import {
+  bomProcessQueue,
+  ProjectBomImportProgress,
+} from "../../bom-process-queue.js";
 import { db } from "../../db/index.js";
 import { s3Client } from "../../s3.js";
 import { protectedProcedure } from "../core";
@@ -33,7 +39,7 @@ const genProjectsWhereCondition = (term: string) => {
 
 export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
   .input(z.string())
-  .output(projectFormSchema)
+  .output(readProjectOutputSchema)
   .query(async ({ input }) => {
     const [project] = await db
       .select()
@@ -57,7 +63,7 @@ export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
       .where(eq(projectContactsTable.projectId, input));
 
     // Check if BOM file exists and generate presigned URL if it does
-    let bom = "";
+    let bom;
     const BUCKET_NAME = process.env.S3_BUCKET_NAME;
     const bomFilePath = `projects/${input}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`;
 
@@ -85,10 +91,49 @@ export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
       console.debug(`No BOM file found for project ${input}`);
     }
 
+    // BOM import job status/progress
+    let bomJobStatus: BomProcessStatus | null = null;
+    let bomJobProgress: number | null = null;
+    const [jobRecord] = await db
+      .select()
+      .from(projectBomImportJobRecordTable)
+      .where(eq(projectBomImportJobRecordTable.id, input));
+
+    if (jobRecord) {
+      bomJobStatus = jobRecord.status;
+      if (jobRecord.status === "done" || jobRecord.status === "failed") {
+        // done or failed, just return status
+        bomJobProgress = null;
+      } else {
+        // try to get progress from the queue
+        const job = await bomProcessQueue.getJob(jobRecord.jobId);
+        if (job) {
+          const jobProgress =
+            (await job.progress()) as ProjectBomImportProgress;
+          if (jobProgress.totalAssemblies > 0) {
+            bomJobProgress = Number(
+              (
+                (jobProgress.processedAssemblies /
+                  jobProgress.totalAssemblies) *
+                100
+              ).toFixed(2)
+            );
+          } else {
+            bomJobProgress = 0;
+          }
+        }
+      }
+    }
+
     return {
       ...project,
       contacts: contacts.map((c) => c.contacts),
       bom,
+      bomProcess: {
+        jobStatus: bomJobStatus,
+        jobProgress: bomJobProgress,
+        projectId: project.id,
+      },
     };
   });
 
@@ -184,6 +229,7 @@ const onAddBomToProcessQueueOutputSchema = z.discriminatedUnion("status", [
   }),
   z.object({
     status: z.literal("waiting"),
+    jobId: z.union([z.string(), z.number()]),
   }),
 ]);
 
@@ -206,7 +252,7 @@ export const onAddBomToProcessQueueProcedure = protectedProcedure([
     const { projectId, s3Key, eTag, fileSize } = input;
 
     try {
-      const { jobRecord, skipped } = await bomProcessQueue.addJob({
+      const { jobRecord, skipped, job } = await bomProcessQueue.addJob({
         projectId,
         operator: ctx.user.id,
         queuedAt: Date.now(),
@@ -224,7 +270,7 @@ export const onAddBomToProcessQueueProcedure = protectedProcedure([
       }
 
       // failed to create job or add job record into db
-      if (jobRecord === null)
+      if (jobRecord === null || job === null)
         return {
           status: "failed",
           message: "BOM process failed",
@@ -232,6 +278,7 @@ export const onAddBomToProcessQueueProcedure = protectedProcedure([
 
       return {
         status: "waiting",
+        jobId: job.id,
       };
     } catch (error) {
       throw new TRPCError({
@@ -258,31 +305,74 @@ export const checkBomProcessStatusProcedure = protectedProcedure([
   "BasicInfoManagement",
 ])
   .input(z.string().uuid("Invalid project ID"))
+  .output(
+    z.discriminatedUnion("status", [
+      z.object({
+        status: z.literal(BOM_PROCESS_STATUS[3]),
+      }),
+      z.object({
+        status: z.literal(BOM_PROCESS_STATUS[2]),
+        progress: z.literal(100),
+      }),
+      z.object({
+        status: z.literal(BOM_PROCESS_STATUS[0]),
+        progress: z.number().min(0).max(99.99),
+      }),
+      z.object({
+        status: z.literal(BOM_PROCESS_STATUS[1]),
+        progress: z.number().min(0).max(99.99),
+      }),
+    ])
+  )
   .query(async ({ input }) => {
-    const [job] = await db
+    const [jobRecord] = await db
       .select()
       .from(projectBomImportJobRecordTable)
       .where(eq(projectBomImportJobRecordTable.id, input))
       .limit(1);
 
-    if (!job) {
+    if (!jobRecord) {
       throw new TRPCError({
         code: "NOT_FOUND",
         message: "BOM import job not found",
       });
     }
 
-    console.log(job);
+    if (jobRecord.status === "failed") {
+      return {
+        status: "failed",
+      };
+    }
 
-    if (job.status === "failed")
-      throw new TRPCError({ message: "匯入BOM表出錯", code: "PARSE_ERROR" });
+    if (jobRecord.status === "done") {
+      return {
+        status: "done",
+        progress: 100,
+      };
+    }
 
-    if (job.status === "done") return 100;
+    const job = await bomProcessQueue.getJob(jobRecord.jobId);
 
-    if (!job.processedSteps) return 0;
-    if (!job.totalSteps || job.totalSteps === 0) return 0;
+    if (!job) {
+      return {
+        status: "failed",
+      };
+    }
 
-    return (job.processedSteps / job.totalSteps) * 100;
+    const jobProgress = (await job.progress()) as ProjectBomImportProgress;
+    const isActive = await job.isActive();
+
+    if (jobProgress.totalAssemblies === 0) {
+      return {
+        status: "failed",
+      };
+    }
+
+    return {
+      status: isActive ? "processing" : "waiting",
+      progress:
+        (jobProgress.processedAssemblies / jobProgress.totalAssemblies) * 100,
+    };
   });
 
 export const createProjectProcedure = protectedProcedure([

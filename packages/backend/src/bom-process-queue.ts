@@ -51,7 +51,7 @@ export interface BomProcessJobResult {
   completedAt: number;
 }
 
-interface ProjectBomImportProgress {
+export interface ProjectBomImportProgress {
   processedAssemblies: number;
   totalAssemblies: number;
 }
@@ -340,6 +340,9 @@ export class BomProcessQueue {
     const assemblyChunks = chunkArray(insertAssemblies, chunkSize);
 
     for (const assemblyChunk of assemblyChunks) {
+      // TODO remove this later
+      await new Promise((r) => setTimeout(r, 1000));
+
       const tagIds = await this.generateTagIds(assemblyChunk.length);
 
       await db.transaction(async (tx) => {
@@ -648,12 +651,6 @@ export class BomProcessQueue {
     await job.progress(progress);
   }
 
-  private async getJobProgress(
-    job: Queue.Job
-  ): Promise<ProjectBomImportProgress> {
-    return (await job.progress()) as ProjectBomImportProgress;
-  }
-
   private async updateJobStatus(
     projectId: string,
     status: BomProcessStatus,
@@ -683,7 +680,7 @@ export class BomProcessQueue {
   private async upsertJobRecord(
     projectId: string,
     eTag: string,
-    jobId?: string
+    jobId: string
   ) {
     return db
       .insert(projectBomImportJobRecordTable)
@@ -694,7 +691,7 @@ export class BomProcessQueue {
         processedSteps: 0,
         totalSteps: 0,
         errorMessage: null,
-        jobId: jobId || null,
+        jobId: jobId,
       })
       .onConflictDoUpdate({
         target: projectBomImportJobRecordTable.id,
@@ -709,6 +706,12 @@ export class BomProcessQueue {
         },
       })
       .returning();
+  }
+
+  private async getJobProgress(
+    job: Queue.Job
+  ): Promise<ProjectBomImportProgress> {
+    return (await job.progress()) as ProjectBomImportProgress;
   }
 
   // Public methods
@@ -740,7 +743,6 @@ export class BomProcessQueue {
       }
 
       // Create/update job record in the database FIRST
-      const [jobRecord] = await this.upsertJobRecord(data.projectId, data.eTag);
 
       // Create job in the queue with consistent name
       const job = await this.queue.add("process-bom", data, {
@@ -755,10 +757,16 @@ export class BomProcessQueue {
         ...options,
       });
 
-      // Update job record with the actual job ID
-      await this.updateJobRecord(data.projectId, {
-        jobId: job.id.toString(),
-      });
+      const [jobRecord] = await this.upsertJobRecord(
+        data.projectId,
+        data.eTag,
+        job.id.toString()
+      );
+
+      // // Update job record with the actual job ID
+      // await this.updateJobRecord(data.projectId, {
+      //   jobId: job.id.toString(),
+      // });
 
       console.log(
         `Added BOM process job ${job.id} for project ${data.projectId}`
