@@ -8,6 +8,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-surface-100: #e5e5e5;
+  --color-surface-200: #cbcbcb;
+  --color-surface-300: #a3a3a3;
+  --color-surface-400: #767676;
+  --color-secondary-800: #1c1c1c;
+  --color-primary-50: #fff9ef;
+  --color-primary-300: #ffaa15;
+  --color-danger-200: #df4c5f;
+  --color-danger-300: #b13243;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -39,6 +48,13 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --text-header-xl: 3.5rem;
+  --text-header-xl--line-height: 4.5rem;
+  --text-title-md: 1.125rem;
+  --text-title-md--line-height: 1.625rem;
+  --button-md: 1rem;
+  --button-md--line-height: 1.25rem;
 
   --animate-slideDown: slideDown 300ms ease-out;
   --animate-slideUp: slideUp 300ms ease-out;

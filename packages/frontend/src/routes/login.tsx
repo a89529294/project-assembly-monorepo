@@ -7,6 +7,9 @@ import {
 import { useState } from "react";
 import { useAuth } from "@/auth/use-auth";
 import { z } from "zod";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/spinner";
 
 export const Route = createFileRoute("/login")({
@@ -27,16 +30,15 @@ function Login() {
   const search = Route.useSearch();
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [logginIn, setLogginIn] = useState(false);
   const { login } = useAuth();
 
+  // TODO: implement auth fail handling
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Basic validation
     if (!account || !password) {
-      setError("Please enter both account and password");
       return;
     }
 
@@ -59,54 +61,187 @@ function Login() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[80vh]">
-      <div className="w-full max-w-md p-6 border rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+    <div className="flex h-screen">
+      {/* Left Section - Background Image */}
+      <div className="flex-[525] min-w-0 bg-no-repeat relative bg-[url('/login_bg.jpg')] bg-[length:134%_auto] bg-top-left">
+        <div
+          className="absolute inset-y-0 left-0 w-[40%] bg-[var(--color-surface-100)] opacity-60"
+          style={{
+            clipPath: "polygon(0 0, 100% 0, 35% 100%, 0 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-y-0 right-0 w-[24%] bg-surface-400"
+          style={{
+            clipPath: "polygon(67% 0,100% 0, 100% 100%, 0 100%)",
+          }}
+        />
 
-        {error && (
-          <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
-            {error}
-          </div>
-        )}
+        <div
+          className="absolute inset-y-0 right-0 w-[32%] bg-primary-300 opacity-65"
+          style={{
+            clipPath: "polygon(0% 0,100% 0, 50% 100%)",
+          }}
+        />
 
-        <form onSubmit={handleLogin}>
-          <div className="mb-4">
-            <label htmlFor="account" className="block mb-2 font-medium">
-              Account
-            </label>
-            <input
-              id="account"
-              type="text"
-              value={account}
-              onChange={(e) => setAccount(e.target.value)}
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter your account"
-            />
-          </div>
+        <div
+          className="absolute inset-y-0 right-0 w-[16%] bg-secondary-800"
+          style={{
+            clipPath: "polygon(100% 0, 100% 100%, 0 100%)",
+          }}
+        />
+        <img src="/logo.png" className="relative top-20 left-16" />
+      </div>
 
-          <div className="mb-6">
-            <label htmlFor="password" className="block mb-2 font-medium">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter your password"
-            />
-          </div>
+      {/* Right Section - Login Form */}
+      <div className="flex-[310] min-w-0 flex items-center  p-16 bg-secondary-800">
+        <div className="w-full max-w-xs">
+          <h1 className="text-header-xl text-white font-bold">登入</h1>
+          <h1 className="text-title-md text-surface-200 font-semibold mb-16">
+            歡迎登入!
+          </h1>
 
-          <button
-            type="submit"
-            className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
-          >
-            {logginIn && <Spinner />}
-            Sign In
-          </button>
-        </form>
+          <form onSubmit={handleLogin}>
+            <div
+              className={cn(
+                "mb-6 w-96 flex items-center gap-3 flex-row-reverse p-3 border-b relative",
+                "has-[:valid]:bg-primary-50 has-[:valid]:border-primary-300 has-[:user-invalid]:border-danger-300",
+                logginIn
+                  ? "bg-primary-50 border-primary-300"
+                  : "border-surface-400"
+              )}
+            >
+              <input
+                id="account"
+                type="text"
+                value={account}
+                onChange={(e) => setAccount(e.target.value)}
+                className={cn(
+                  "flex-1 relative outline-0 caret-white peer",
+                  "placeholder:text-surface-300 valid:text-secondary-800 valid:caret-secondary-800",
+                  "user-invalid:text-danger-300 user-invalid:placeholder:text-danger-300",
+                  logginIn && "text-secondary-800 caret-secondary-800"
+                )}
+                placeholder="請輸入帳號"
+                required
+                disabled={logginIn}
+              />
+              <div
+                className={cn(
+                  "w-px h-6",
+                  logginIn
+                    ? "bg-surface-400"
+                    : "bg-surface-200 peer-valid:bg-surface-400"
+                )}
+              />
+              <label
+                htmlFor="account"
+                className={cn(
+                  "peer-valid:hidden peer-user-invalid:hidden",
+                  logginIn && "hidden"
+                )}
+              >
+                <img src="/user.png" />
+              </label>
+              <label
+                htmlFor="account"
+                className={cn("hidden peer-valid:block", logginIn && "block")}
+              >
+                <img src="/user-yellow.png" />
+              </label>
+              <label
+                htmlFor="account"
+                className={cn(
+                  "hidden peer-user-invalid:block",
+                  logginIn && "hidden"
+                )}
+              >
+                <img src="/user-red.png" />
+              </label>
+              <span className="hidden text-xs text-danger-200 peer-user-invalid:block peer-user-invalid:absolute -bottom-1 left-[60px] translate-y-full">
+                帳號為必填
+              </span>
+            </div>
+
+            <div
+              className={cn(
+                "mb-6 w-96 flex items-center gap-3 flex-row-reverse p-3 border-b relative",
+                "has-[:valid]:bg-primary-50 has-[:valid]:border-primary-300 has-[:user-invalid]:border-danger-300",
+                logginIn
+                  ? "bg-primary-50 border-primary-300"
+                  : "border-surface-400"
+              )}
+            >
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={cn(
+                  "flex-1 relative outline-0 caret-white peer",
+                  "placeholder:text-surface-300 valid:text-secondary-800 valid:caret-secondary-800",
+                  "user-invalid:text-danger-300 user-invalid:placeholder:text-danger-300",
+                  logginIn && "text-secondary-800 caret-secondary-800"
+                )}
+                placeholder="請輸入密碼"
+                required
+                disabled={logginIn}
+              />
+              <div
+                className={cn(
+                  "w-px h-6",
+                  logginIn
+                    ? "bg-surface-400"
+                    : "bg-surface-200 peer-valid:bg-surface-400"
+                )}
+              />
+              <label
+                htmlFor="account"
+                className={cn(
+                  "peer-valid:hidden peer-user-invalid:hidden",
+                  logginIn && "hidden"
+                )}
+              >
+                <img src="/lock.png" />
+              </label>
+              <label
+                htmlFor="account"
+                className={cn("hidden peer-valid:block", logginIn && "block")}
+              >
+                <img src="/lock-yellow.png" />
+              </label>
+              <label
+                htmlFor="account"
+                className={cn(
+                  "hidden peer-user-invalid:block",
+                  logginIn && "hidden"
+                )}
+              >
+                <img src="/lock-red.png" />
+              </label>
+              <span className="hidden text-xs text-danger-200 peer-user-invalid:block peer-user-invalid:absolute -bottom-1 left-[60px] translate-y-full">
+                密碼為必填
+              </span>
+            </div>
+
+            <Label className="mb-16 text-white">
+              <Checkbox
+                className="data-[state=checked]:bg-primary-300 size-6 "
+                iconClassName="size-5"
+                disabled={logginIn}
+              />
+              記住帳號密碼
+            </Label>
+
+            <button
+              className="text-button-md w-96 flex items-center justify-center gap-2 py-4.5 bg-primary-300 text-white"
+              disabled={logginIn}
+            >
+              登入
+              {logginIn && <Spinner />}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
