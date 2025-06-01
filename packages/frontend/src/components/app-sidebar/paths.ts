@@ -7,6 +7,7 @@ import {
   LucideFilePlus,
   LucideHandshake,
   LucideLandmark,
+  LucideList,
   LucideMonitorPlay,
   LucidePackageOpen,
   LucideRocket,
@@ -167,39 +168,12 @@ export const genPaths = ({
     ],
     productionRoutes: [
       {
-        title: "Create",
-        basePath: "/production/create",
+        title: "專案列表",
+        basePath: "/production",
         linkOptions: {
-          to: "/production/create",
+          to: "/production",
         },
-        icon: Home,
-        roleNames: ["ProductionManagement", "AdminManagement"],
-      },
-      {
-        title: "Read",
-        basePath: "/production/read",
-        linkOptions: {
-          to: "/production/read",
-        },
-        icon: Inbox,
-        roleNames: ["ProductionManagement", "AdminManagement"],
-      },
-      {
-        title: "Update",
-        basePath: "/production/update",
-        linkOptions: {
-          to: "/production/update",
-        },
-        icon: RefreshCcw,
-        roleNames: ["ProductionManagement", "AdminManagement"],
-      },
-      {
-        title: "Delete",
-        basePath: "/production/delete",
-        linkOptions: {
-          to: "/production/delete",
-        },
-        icon: Delete,
+        icon: LucideList,
         roleNames: ["ProductionManagement", "AdminManagement"],
       },
     ],

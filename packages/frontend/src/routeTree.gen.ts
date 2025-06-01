@@ -15,19 +15,17 @@ import { Route as LoginImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/_dashboard/route'
 import { Route as DashboardIndexImport } from './routes/_dashboard/index'
 import { Route as DashboardBasicInfoRouteImport } from './routes/_dashboard/basic-info/route'
+import { Route as DashboardProductionIndexImport } from './routes/_dashboard/production/index'
 import { Route as DashboardStorageUpdateImport } from './routes/_dashboard/storage/update'
 import { Route as DashboardStorageReadImport } from './routes/_dashboard/storage/read'
 import { Route as DashboardStorageDeleteImport } from './routes/_dashboard/storage/delete'
 import { Route as DashboardStorageCreateImport } from './routes/_dashboard/storage/create'
-import { Route as DashboardProductionUpdateImport } from './routes/_dashboard/production/update'
-import { Route as DashboardProductionReadImport } from './routes/_dashboard/production/read'
-import { Route as DashboardProductionDeleteImport } from './routes/_dashboard/production/delete'
-import { Route as DashboardProductionCreateImport } from './routes/_dashboard/production/create'
 import { Route as DashboardCustomersSummaryImport } from './routes/_dashboard/customers/summary'
 import { Route as DashboardCustomersCreateImport } from './routes/_dashboard/customers/create'
 import { Route as DashboardBasicInfoCompanyInfoImport } from './routes/_dashboard/basic-info/company-info'
 import { Route as DashboardCustomersCustomerIdIndexImport } from './routes/_dashboard/customers/$customerId/index'
 import { Route as DashboardBasicInfoEmployeesIndexImport } from './routes/_dashboard/basic-info/employees/index'
+import { Route as DashboardProductionCustomerIdProjectIdImport } from './routes/_dashboard/production/$customerId/$projectId'
 import { Route as DashboardBasicInfoErpPermissionsUsersImport } from './routes/_dashboard/basic-info/erp-permissions/users'
 import { Route as DashboardBasicInfoErpPermissionsRolesImport } from './routes/_dashboard/basic-info/erp-permissions/roles'
 import { Route as DashboardBasicInfoErpPermissionsDepartmentsImport } from './routes/_dashboard/basic-info/erp-permissions/departments'
@@ -64,6 +62,12 @@ const DashboardBasicInfoRouteRoute = DashboardBasicInfoRouteImport.update({
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 
+const DashboardProductionIndexRoute = DashboardProductionIndexImport.update({
+  id: '/production/',
+  path: '/production/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+
 const DashboardStorageUpdateRoute = DashboardStorageUpdateImport.update({
   id: '/storage/update',
   path: '/storage/update',
@@ -85,30 +89,6 @@ const DashboardStorageDeleteRoute = DashboardStorageDeleteImport.update({
 const DashboardStorageCreateRoute = DashboardStorageCreateImport.update({
   id: '/storage/create',
   path: '/storage/create',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-
-const DashboardProductionUpdateRoute = DashboardProductionUpdateImport.update({
-  id: '/production/update',
-  path: '/production/update',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-
-const DashboardProductionReadRoute = DashboardProductionReadImport.update({
-  id: '/production/read',
-  path: '/production/read',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-
-const DashboardProductionDeleteRoute = DashboardProductionDeleteImport.update({
-  id: '/production/delete',
-  path: '/production/delete',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-
-const DashboardProductionCreateRoute = DashboardProductionCreateImport.update({
-  id: '/production/create',
-  path: '/production/create',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 
@@ -143,6 +123,13 @@ const DashboardBasicInfoEmployeesIndexRoute =
     id: '/employees/',
     path: '/employees/',
     getParentRoute: () => DashboardBasicInfoRouteRoute,
+  } as any)
+
+const DashboardProductionCustomerIdProjectIdRoute =
+  DashboardProductionCustomerIdProjectIdImport.update({
+    id: '/production/$customerId/$projectId',
+    path: '/production/$customerId/$projectId',
+    getParentRoute: () => DashboardRouteRoute,
   } as any)
 
 const DashboardBasicInfoErpPermissionsUsersRoute =
@@ -268,34 +255,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCustomersSummaryImport
       parentRoute: typeof DashboardRouteImport
     }
-    '/_dashboard/production/create': {
-      id: '/_dashboard/production/create'
-      path: '/production/create'
-      fullPath: '/production/create'
-      preLoaderRoute: typeof DashboardProductionCreateImport
-      parentRoute: typeof DashboardRouteImport
-    }
-    '/_dashboard/production/delete': {
-      id: '/_dashboard/production/delete'
-      path: '/production/delete'
-      fullPath: '/production/delete'
-      preLoaderRoute: typeof DashboardProductionDeleteImport
-      parentRoute: typeof DashboardRouteImport
-    }
-    '/_dashboard/production/read': {
-      id: '/_dashboard/production/read'
-      path: '/production/read'
-      fullPath: '/production/read'
-      preLoaderRoute: typeof DashboardProductionReadImport
-      parentRoute: typeof DashboardRouteImport
-    }
-    '/_dashboard/production/update': {
-      id: '/_dashboard/production/update'
-      path: '/production/update'
-      fullPath: '/production/update'
-      preLoaderRoute: typeof DashboardProductionUpdateImport
-      parentRoute: typeof DashboardRouteImport
-    }
     '/_dashboard/storage/create': {
       id: '/_dashboard/storage/create'
       path: '/storage/create'
@@ -322,6 +281,13 @@ declare module '@tanstack/react-router' {
       path: '/storage/update'
       fullPath: '/storage/update'
       preLoaderRoute: typeof DashboardStorageUpdateImport
+      parentRoute: typeof DashboardRouteImport
+    }
+    '/_dashboard/production/': {
+      id: '/_dashboard/production/'
+      path: '/production'
+      fullPath: '/production'
+      preLoaderRoute: typeof DashboardProductionIndexImport
       parentRoute: typeof DashboardRouteImport
     }
     '/_dashboard/basic-info/employees/create': {
@@ -365,6 +331,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/basic-info/erp-permissions/users'
       preLoaderRoute: typeof DashboardBasicInfoErpPermissionsUsersImport
       parentRoute: typeof DashboardBasicInfoRouteImport
+    }
+    '/_dashboard/production/$customerId/$projectId': {
+      id: '/_dashboard/production/$customerId/$projectId'
+      path: '/production/$customerId/$projectId'
+      fullPath: '/production/$customerId/$projectId'
+      preLoaderRoute: typeof DashboardProductionCustomerIdProjectIdImport
+      parentRoute: typeof DashboardRouteImport
     }
     '/_dashboard/basic-info/employees/': {
       id: '/_dashboard/basic-info/employees/'
@@ -456,14 +429,12 @@ interface DashboardRouteRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardCustomersCreateRoute: typeof DashboardCustomersCreateRoute
   DashboardCustomersSummaryRoute: typeof DashboardCustomersSummaryRoute
-  DashboardProductionCreateRoute: typeof DashboardProductionCreateRoute
-  DashboardProductionDeleteRoute: typeof DashboardProductionDeleteRoute
-  DashboardProductionReadRoute: typeof DashboardProductionReadRoute
-  DashboardProductionUpdateRoute: typeof DashboardProductionUpdateRoute
   DashboardStorageCreateRoute: typeof DashboardStorageCreateRoute
   DashboardStorageDeleteRoute: typeof DashboardStorageDeleteRoute
   DashboardStorageReadRoute: typeof DashboardStorageReadRoute
   DashboardStorageUpdateRoute: typeof DashboardStorageUpdateRoute
+  DashboardProductionIndexRoute: typeof DashboardProductionIndexRoute
+  DashboardProductionCustomerIdProjectIdRoute: typeof DashboardProductionCustomerIdProjectIdRoute
   DashboardCustomersCustomerIdIndexRoute: typeof DashboardCustomersCustomerIdIndexRoute
   DashboardCustomersCustomerIdProjectsProjectIdRoute: typeof DashboardCustomersCustomerIdProjectsProjectIdRoute
   DashboardCustomersCustomerIdProjectsCreateRoute: typeof DashboardCustomersCustomerIdProjectsCreateRoute
@@ -475,14 +446,13 @@ const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardCustomersCreateRoute: DashboardCustomersCreateRoute,
   DashboardCustomersSummaryRoute: DashboardCustomersSummaryRoute,
-  DashboardProductionCreateRoute: DashboardProductionCreateRoute,
-  DashboardProductionDeleteRoute: DashboardProductionDeleteRoute,
-  DashboardProductionReadRoute: DashboardProductionReadRoute,
-  DashboardProductionUpdateRoute: DashboardProductionUpdateRoute,
   DashboardStorageCreateRoute: DashboardStorageCreateRoute,
   DashboardStorageDeleteRoute: DashboardStorageDeleteRoute,
   DashboardStorageReadRoute: DashboardStorageReadRoute,
   DashboardStorageUpdateRoute: DashboardStorageUpdateRoute,
+  DashboardProductionIndexRoute: DashboardProductionIndexRoute,
+  DashboardProductionCustomerIdProjectIdRoute:
+    DashboardProductionCustomerIdProjectIdRoute,
   DashboardCustomersCustomerIdIndexRoute:
     DashboardCustomersCustomerIdIndexRoute,
   DashboardCustomersCustomerIdProjectsProjectIdRoute:
@@ -505,20 +475,18 @@ export interface FileRoutesByFullPath {
   '/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/customers/create': typeof DashboardCustomersCreateRoute
   '/customers/summary': typeof DashboardCustomersSummaryRoute
-  '/production/create': typeof DashboardProductionCreateRoute
-  '/production/delete': typeof DashboardProductionDeleteRoute
-  '/production/read': typeof DashboardProductionReadRoute
-  '/production/update': typeof DashboardProductionUpdateRoute
   '/storage/create': typeof DashboardStorageCreateRoute
   '/storage/delete': typeof DashboardStorageDeleteRoute
   '/storage/read': typeof DashboardStorageReadRoute
   '/storage/update': typeof DashboardStorageUpdateRoute
+  '/production': typeof DashboardProductionIndexRoute
   '/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
   '/basic-info/erp-permissions/app-machine-permissions': typeof DashboardBasicInfoErpPermissionsAppMachinePermissionsRoute
   '/basic-info/erp-permissions/department-members': typeof DashboardBasicInfoErpPermissionsDepartmentMembersRoute
   '/basic-info/erp-permissions/departments': typeof DashboardBasicInfoErpPermissionsDepartmentsRoute
   '/basic-info/erp-permissions/roles': typeof DashboardBasicInfoErpPermissionsRolesRoute
   '/basic-info/erp-permissions/users': typeof DashboardBasicInfoErpPermissionsUsersRoute
+  '/production/$customerId/$projectId': typeof DashboardProductionCustomerIdProjectIdRoute
   '/basic-info/employees': typeof DashboardBasicInfoEmployeesIndexRoute
   '/customers/$customerId': typeof DashboardCustomersCustomerIdIndexRoute
   '/customers/$customerId/projects/$projectId': typeof DashboardCustomersCustomerIdProjectsProjectIdRoute
@@ -534,20 +502,18 @@ export interface FileRoutesByTo {
   '/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/customers/create': typeof DashboardCustomersCreateRoute
   '/customers/summary': typeof DashboardCustomersSummaryRoute
-  '/production/create': typeof DashboardProductionCreateRoute
-  '/production/delete': typeof DashboardProductionDeleteRoute
-  '/production/read': typeof DashboardProductionReadRoute
-  '/production/update': typeof DashboardProductionUpdateRoute
   '/storage/create': typeof DashboardStorageCreateRoute
   '/storage/delete': typeof DashboardStorageDeleteRoute
   '/storage/read': typeof DashboardStorageReadRoute
   '/storage/update': typeof DashboardStorageUpdateRoute
+  '/production': typeof DashboardProductionIndexRoute
   '/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
   '/basic-info/erp-permissions/app-machine-permissions': typeof DashboardBasicInfoErpPermissionsAppMachinePermissionsRoute
   '/basic-info/erp-permissions/department-members': typeof DashboardBasicInfoErpPermissionsDepartmentMembersRoute
   '/basic-info/erp-permissions/departments': typeof DashboardBasicInfoErpPermissionsDepartmentsRoute
   '/basic-info/erp-permissions/roles': typeof DashboardBasicInfoErpPermissionsRolesRoute
   '/basic-info/erp-permissions/users': typeof DashboardBasicInfoErpPermissionsUsersRoute
+  '/production/$customerId/$projectId': typeof DashboardProductionCustomerIdProjectIdRoute
   '/basic-info/employees': typeof DashboardBasicInfoEmployeesIndexRoute
   '/customers/$customerId': typeof DashboardCustomersCustomerIdIndexRoute
   '/customers/$customerId/projects/$projectId': typeof DashboardCustomersCustomerIdProjectsProjectIdRoute
@@ -565,20 +531,18 @@ export interface FileRoutesById {
   '/_dashboard/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/_dashboard/customers/create': typeof DashboardCustomersCreateRoute
   '/_dashboard/customers/summary': typeof DashboardCustomersSummaryRoute
-  '/_dashboard/production/create': typeof DashboardProductionCreateRoute
-  '/_dashboard/production/delete': typeof DashboardProductionDeleteRoute
-  '/_dashboard/production/read': typeof DashboardProductionReadRoute
-  '/_dashboard/production/update': typeof DashboardProductionUpdateRoute
   '/_dashboard/storage/create': typeof DashboardStorageCreateRoute
   '/_dashboard/storage/delete': typeof DashboardStorageDeleteRoute
   '/_dashboard/storage/read': typeof DashboardStorageReadRoute
   '/_dashboard/storage/update': typeof DashboardStorageUpdateRoute
+  '/_dashboard/production/': typeof DashboardProductionIndexRoute
   '/_dashboard/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
   '/_dashboard/basic-info/erp-permissions/app-machine-permissions': typeof DashboardBasicInfoErpPermissionsAppMachinePermissionsRoute
   '/_dashboard/basic-info/erp-permissions/department-members': typeof DashboardBasicInfoErpPermissionsDepartmentMembersRoute
   '/_dashboard/basic-info/erp-permissions/departments': typeof DashboardBasicInfoErpPermissionsDepartmentsRoute
   '/_dashboard/basic-info/erp-permissions/roles': typeof DashboardBasicInfoErpPermissionsRolesRoute
   '/_dashboard/basic-info/erp-permissions/users': typeof DashboardBasicInfoErpPermissionsUsersRoute
+  '/_dashboard/production/$customerId/$projectId': typeof DashboardProductionCustomerIdProjectIdRoute
   '/_dashboard/basic-info/employees/': typeof DashboardBasicInfoEmployeesIndexRoute
   '/_dashboard/customers/$customerId/': typeof DashboardCustomersCustomerIdIndexRoute
   '/_dashboard/customers/$customerId/projects/$projectId': typeof DashboardCustomersCustomerIdProjectsProjectIdRoute
@@ -597,20 +561,18 @@ export interface FileRouteTypes {
     | '/basic-info/company-info'
     | '/customers/create'
     | '/customers/summary'
-    | '/production/create'
-    | '/production/delete'
-    | '/production/read'
-    | '/production/update'
     | '/storage/create'
     | '/storage/delete'
     | '/storage/read'
     | '/storage/update'
+    | '/production'
     | '/basic-info/employees/create'
     | '/basic-info/erp-permissions/app-machine-permissions'
     | '/basic-info/erp-permissions/department-members'
     | '/basic-info/erp-permissions/departments'
     | '/basic-info/erp-permissions/roles'
     | '/basic-info/erp-permissions/users'
+    | '/production/$customerId/$projectId'
     | '/basic-info/employees'
     | '/customers/$customerId'
     | '/customers/$customerId/projects/$projectId'
@@ -625,20 +587,18 @@ export interface FileRouteTypes {
     | '/basic-info/company-info'
     | '/customers/create'
     | '/customers/summary'
-    | '/production/create'
-    | '/production/delete'
-    | '/production/read'
-    | '/production/update'
     | '/storage/create'
     | '/storage/delete'
     | '/storage/read'
     | '/storage/update'
+    | '/production'
     | '/basic-info/employees/create'
     | '/basic-info/erp-permissions/app-machine-permissions'
     | '/basic-info/erp-permissions/department-members'
     | '/basic-info/erp-permissions/departments'
     | '/basic-info/erp-permissions/roles'
     | '/basic-info/erp-permissions/users'
+    | '/production/$customerId/$projectId'
     | '/basic-info/employees'
     | '/customers/$customerId'
     | '/customers/$customerId/projects/$projectId'
@@ -654,20 +614,18 @@ export interface FileRouteTypes {
     | '/_dashboard/basic-info/company-info'
     | '/_dashboard/customers/create'
     | '/_dashboard/customers/summary'
-    | '/_dashboard/production/create'
-    | '/_dashboard/production/delete'
-    | '/_dashboard/production/read'
-    | '/_dashboard/production/update'
     | '/_dashboard/storage/create'
     | '/_dashboard/storage/delete'
     | '/_dashboard/storage/read'
     | '/_dashboard/storage/update'
+    | '/_dashboard/production/'
     | '/_dashboard/basic-info/employees/create'
     | '/_dashboard/basic-info/erp-permissions/app-machine-permissions'
     | '/_dashboard/basic-info/erp-permissions/department-members'
     | '/_dashboard/basic-info/erp-permissions/departments'
     | '/_dashboard/basic-info/erp-permissions/roles'
     | '/_dashboard/basic-info/erp-permissions/users'
+    | '/_dashboard/production/$customerId/$projectId'
     | '/_dashboard/basic-info/employees/'
     | '/_dashboard/customers/$customerId/'
     | '/_dashboard/customers/$customerId/projects/$projectId'
@@ -708,14 +666,12 @@ export const routeTree = rootRoute
         "/_dashboard/",
         "/_dashboard/customers/create",
         "/_dashboard/customers/summary",
-        "/_dashboard/production/create",
-        "/_dashboard/production/delete",
-        "/_dashboard/production/read",
-        "/_dashboard/production/update",
         "/_dashboard/storage/create",
         "/_dashboard/storage/delete",
         "/_dashboard/storage/read",
         "/_dashboard/storage/update",
+        "/_dashboard/production/",
+        "/_dashboard/production/$customerId/$projectId",
         "/_dashboard/customers/$customerId/",
         "/_dashboard/customers/$customerId/projects/$projectId",
         "/_dashboard/customers/$customerId/projects/create",
@@ -756,22 +712,6 @@ export const routeTree = rootRoute
       "filePath": "_dashboard/customers/summary.tsx",
       "parent": "/_dashboard"
     },
-    "/_dashboard/production/create": {
-      "filePath": "_dashboard/production/create.tsx",
-      "parent": "/_dashboard"
-    },
-    "/_dashboard/production/delete": {
-      "filePath": "_dashboard/production/delete.tsx",
-      "parent": "/_dashboard"
-    },
-    "/_dashboard/production/read": {
-      "filePath": "_dashboard/production/read.tsx",
-      "parent": "/_dashboard"
-    },
-    "/_dashboard/production/update": {
-      "filePath": "_dashboard/production/update.tsx",
-      "parent": "/_dashboard"
-    },
     "/_dashboard/storage/create": {
       "filePath": "_dashboard/storage/create.tsx",
       "parent": "/_dashboard"
@@ -786,6 +726,10 @@ export const routeTree = rootRoute
     },
     "/_dashboard/storage/update": {
       "filePath": "_dashboard/storage/update.tsx",
+      "parent": "/_dashboard"
+    },
+    "/_dashboard/production/": {
+      "filePath": "_dashboard/production/index.tsx",
       "parent": "/_dashboard"
     },
     "/_dashboard/basic-info/employees/create": {
@@ -811,6 +755,10 @@ export const routeTree = rootRoute
     "/_dashboard/basic-info/erp-permissions/users": {
       "filePath": "_dashboard/basic-info/erp-permissions/users.tsx",
       "parent": "/_dashboard/basic-info"
+    },
+    "/_dashboard/production/$customerId/$projectId": {
+      "filePath": "_dashboard/production/$customerId/$projectId.tsx",
+      "parent": "/_dashboard"
     },
     "/_dashboard/basic-info/employees/": {
       "filePath": "_dashboard/basic-info/employees/index.tsx",

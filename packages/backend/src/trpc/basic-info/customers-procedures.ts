@@ -45,6 +45,7 @@ export const readCustomerProcedure = protectedProcedure(["BasicInfoManagement"])
 
 export const readCustomersProcedure = protectedProcedure([
   "BasicInfoManagement",
+  "ProductionManagement",
 ])
   .input(customersSummaryQueryInputSchema)
   .output(paginatedCustomerSummarySchema)

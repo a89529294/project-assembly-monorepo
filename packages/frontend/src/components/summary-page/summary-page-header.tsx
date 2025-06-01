@@ -10,7 +10,7 @@ export function SummaryPageHeader({
   deleteAction,
 }: {
   title: string;
-  createAction: ReactNode;
+  createAction?: ReactNode;
   deleteAction?: ({
     selectionData,
     resetSelection,

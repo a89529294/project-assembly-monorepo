@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useBomUploadAndQueue } from "@/hooks/use-bom-upload-and-queue";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { ProjectFormValue } from "@myapp/shared";
 import { useMutation } from "@tanstack/react-query";
@@ -37,6 +38,12 @@ function RouteComponent() {
       onSuccess: async (project) => {
         setNewProjectid(project.id);
         await handleBomUploadAndQueue({ projectId: project.id, bom });
+        queryClient.invalidateQueries({
+          queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.production.readSimpleProjects.queryKey(),
+        });
       },
       onError: (error) => {
         console.error("Project creation failed:", error);

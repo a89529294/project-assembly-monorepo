@@ -153,7 +153,6 @@ export const readCustomerProjectsProcedure = protectedProcedure([
       .select({ count: sql<number>`count(*)`.mapWith(Number) })
       .from(projectsTable)
       .$dynamic();
-
     const projectsBaseQuery = db.select().from(projectsTable).$dynamic();
 
     // Collect all conditions to combine with AND
