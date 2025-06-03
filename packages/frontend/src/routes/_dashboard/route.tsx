@@ -74,7 +74,7 @@ function RouteComponent() {
           </nav>
 
           {/* Main content */}
-          <div className="container relative mx-auto flex-grow flex flex-col">
+          <div className="relative flex-grow flex flex-col">
             <div className="absolute inset-0">
               <Outlet />
             </div>

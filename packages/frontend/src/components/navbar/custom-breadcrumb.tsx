@@ -144,13 +144,10 @@ const routeMap: Partial<
 export function CustomBreadCrumb() {
   const matches = useMatches();
   const closestMatch = matches.at(-1);
-  console.log(closestMatch);
 
   if (!closestMatch) return <div />;
 
   const crumbs = routeMap[closestMatch.routeId];
-
-  console.log(crumbs);
 
   if (!crumbs) return <div />;
 

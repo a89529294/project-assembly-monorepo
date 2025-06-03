@@ -13,11 +13,12 @@ import {
   LucideRocket,
   LucideRows4,
   LucideTable2,
-  LucideUserLock,
-  LucideUserRoundCog,
   RefreshCcw,
 } from "lucide-react";
 
+import { BuildingSVG } from "@/components/svg/sidebar/building-svg";
+import { EmployeeSVG } from "@/components/svg/sidebar/employee-svg";
+import { KeySVG } from "@/components/svg/sidebar/key-svg";
 import { RoleName } from "@myapp/shared";
 import { RegisteredRouter, ValidateLinkOptions } from "@tanstack/react-router";
 
@@ -26,7 +27,7 @@ export interface NavItem<
   TOptions = unknown,
 > {
   title: string;
-  icon: React.ComponentType;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   basePath: string;
   roleNames: RoleName[];
   linkOptions?: ValidateLinkOptions<TRouter, TOptions>;
@@ -61,7 +62,7 @@ export const genPaths = ({
         linkOptions: {
           to: "/basic-info/company-info",
         },
-        icon: Home,
+        icon: BuildingSVG,
         roleNames: ["BasicInfoManagement", "AdminManagement"],
       },
       {
@@ -70,13 +71,14 @@ export const genPaths = ({
         linkOptions: {
           to: "/basic-info/employees",
         },
-        icon: LucideUserRoundCog,
+        icon: EmployeeSVG,
         roleNames: ["BasicInfoManagement", "AdminManagement"],
       },
       {
         title: "人事權限",
         basePath: "/basic-info/erp-permissions",
         roleNames: ["PersonnelPermissionManagement", "AdminManagement"],
+        icon: KeySVG,
         subs: [
           {
             title: "部門管理",
@@ -114,7 +116,6 @@ export const genPaths = ({
             icon: LucideMonitorPlay,
           },
         ],
-        icon: LucideUserLock,
       },
     ],
     customerRoutes: [

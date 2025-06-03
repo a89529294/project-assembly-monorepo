@@ -8,8 +8,8 @@ import {
 import { genPaths } from "@/components/app-sidebar/paths";
 import { isAllowed } from "@/lib/utils";
 import { Route as CustomerDetailsRoute } from "@/routes/_dashboard/customers/$customerId/index";
-import { Route as CustomerProjectsRoute } from "@/routes/_dashboard/customers/$customerId/projects/";
-import { Route as CustomerProjectsCreateRoute } from "@/routes/_dashboard/customers/$customerId/projects/create";
+// import { Route as CustomerProjectsRoute } from "@/routes/_dashboard/customers/$customerId/projects/";
+// import { Route as CustomerProjectsCreateRoute } from "@/routes/_dashboard/customers/$customerId/projects/create";
 import { Route as ProjectDetailsRoute } from "@/routes/_dashboard/customers/$customerId/projects/$projectId";
 import { useMatch } from "@tanstack/react-router";
 import { roleNameEnum } from "../../../../backend/src/db/schema";
@@ -22,21 +22,26 @@ export function AppSidebar({ user }: { user: User }) {
     // strict: true,
     shouldThrow: false,
   });
-  const match2 = useMatch({
-    from: CustomerProjectsRoute.id,
-    shouldThrow: false,
-  });
-  const match3 = useMatch({
-    from: CustomerProjectsCreateRoute.id,
-    shouldThrow: false,
-  });
+  // const match2 = useMatch({
+  //   from: CustomerProjectsRoute.id,
+  //   shouldThrow: false,
+  // });
+  // const match3 = useMatch({
+  //   from: CustomerProjectsCreateRoute.id,
+  //   shouldThrow: false,
+  // });
   const match4 = useMatch({
     from: ProjectDetailsRoute.id,
     shouldThrow: false,
   });
 
   const customerId = match1?.params.customerId;
-  const showCustomerSubRoutes = !!(match1 || match2 || match3 || match4);
+  // const showCustomerSubRoutes = !!(match1 || match2 || match3 || match4);
+
+  const matchBasicInfo = !!useMatch({
+    from: "/_dashboard/basic-info",
+    shouldThrow: false,
+  });
 
   return (
     <Sidebar collapsible="none">
@@ -49,7 +54,7 @@ export function AppSidebar({ user }: { user: User }) {
 
         <div className="absolute right-0 h-6 top-1/2 -translate-y-1/2 border-r border-surface-0" />
       </SidebarHeader>
-      <SidebarContent className="py-3 px-1">
+      <SidebarContent className="">
         <CollapsibleSidebarMenu
           show={isAllowed(
             [
@@ -60,13 +65,15 @@ export function AppSidebar({ user }: { user: User }) {
             user.roles
           )}
           label={"設定"}
+          iconSrc="/sidebar/settings.png"
           items={
             genPaths({ customerId, projectsRouteExact: !match4 })
               .basicInfoRoutes
           }
+          active={matchBasicInfo}
         />
 
-        <CollapsibleSidebarMenu
+        {/* <CollapsibleSidebarMenu
           show={isAllowed(
             [roleNameEnum.enumValues[0], roleNameEnum.enumValues[1]],
             user.roles
@@ -98,7 +105,7 @@ export function AppSidebar({ user }: { user: User }) {
             genPaths({ customerId, projectsRouteExact: !match4 })
               .productionRoutes
           }
-        />
+        /> */}
       </SidebarContent>
     </Sidebar>
   );
