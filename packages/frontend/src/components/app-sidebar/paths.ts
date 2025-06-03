@@ -107,7 +107,7 @@ export const genPaths = ({
             icon: LucideFileLock2,
           },
           {
-            title: "App/機台操作權限",
+            title: "App-機台操作權限",
             linkOptions: {
               to: "/basic-info/erp-permissions/app-machine-permissions",
             },

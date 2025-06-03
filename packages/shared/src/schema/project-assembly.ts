@@ -17,6 +17,8 @@ import { projectAssemblyProcessTable } from "./project-assembly-process";
 import { projectAssemblySubLocationsTable } from "./project-assembly-sub-location";
 import { projectPartsTable } from "./project-part";
 
+// 爐號 車次 長度
+
 export const projectAssembliesTable = pgTable(
   "project_assemblies",
   {

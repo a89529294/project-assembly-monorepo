@@ -1,19 +1,25 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-inter: "Inter", sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-surface-0: #fff;
   --color-surface-100: #e5e5e5;
   --color-surface-200: #cbcbcb;
   --color-surface-300: #a3a3a3;
   --color-surface-400: #767676;
   --color-secondary-800: #1c1c1c;
+  --color-secondary-900: #000;
   --color-primary-50: #fff9ef;
+  --color-primary-100: #fff1da;
+  --color-primary-200: #ffd284;
   --color-primary-300: #ffaa15;
   --color-danger-200: #df4c5f;
   --color-danger-300: #b13243;
@@ -53,8 +59,8 @@
   --text-header-xl--line-height: 4.5rem;
   --text-title-md: 1.125rem;
   --text-title-md--line-height: 1.625rem;
-  --button-md: 1rem;
-  --button-md--line-height: 1.25rem;
+  --text-button-md: 1rem;
+  --text-button-md--line-height: 1.25rem;
 
   --animate-slideDown: slideDown 300ms ease-out;
   --animate-slideUp: slideUp 300ms ease-out;

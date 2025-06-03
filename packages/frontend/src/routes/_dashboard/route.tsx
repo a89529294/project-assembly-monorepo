@@ -1,16 +1,18 @@
 import {
   createFileRoute,
-  Link,
   Outlet,
   redirect,
   useNavigate,
   useRouter,
 } from "@tanstack/react-router";
 import { useAuth } from "../../auth/use-auth";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { TRPCClientError } from "@trpc/client";
 import { useEffect } from "react";
+
+import { CustomBreadCrumb } from "@/components/navbar/custom-breadcrumb";
+import { DialogUpdatePassword } from "@/components/dialogs/update-password";
 
 export const Route = createFileRoute("/_dashboard")({
   async beforeLoad({ context, location }) {
@@ -23,44 +25,50 @@ export const Route = createFileRoute("/_dashboard")({
       });
     }
   },
-  component: RouteComponent3,
+  component: RouteComponent,
   errorComponent: ErrorComponent,
 });
 
-function RouteComponent3() {
+function RouteComponent() {
   const router = useRouter();
   const navigate = Route.useNavigate();
 
   const { logout, user } = useAuth();
 
+  if (!user) return null;
+
   return (
     <SidebarProvider>
-      <AppSidebar user={user!} />
-      <main className="grow">
+      <AppSidebar user={user} />
+      <main className="grow font-inter">
         <div className="flex flex-col h-screen">
           {/* Navbar */}
-          <nav className="bg-gray-800 text-white p-4">
-            <div className="container mx-auto flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <SidebarTrigger className="text-white cursor-pointer" />
-                <Link to="/" className="font-bold text-xl">
-                  Company Logo
-                </Link>
-              </div>
-              <div className="flex items-center gap-4">
-                <span>user:{user?.name || "guest"}</span>
-                <button
-                  onClick={async () => {
-                    await logout(async () => {
-                      await router.invalidate();
+          <nav className="bg-secondary-900 h-20 text-white pl-6 pr-8 flex items-center justify-between">
+            <CustomBreadCrumb />
 
-                      navigate({ to: "/login" });
-                    });
-                  }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-                >
-                  Logout
-                </button>
+            {/* name, change password, logout */}
+            <div>
+              <div className="flex items-center gap-7">
+                <div className="flex items-center gap-3 text-title-md">
+                  <img src="/avatar.png" />
+                  {user.name}
+                </div>
+                <div className="flex gap-2">
+                  <DialogUpdatePassword />
+                  <button
+                    onClick={async () => {
+                      await logout(async () => {
+                        await router.invalidate();
+
+                        navigate({ to: "/login" });
+                      });
+                    }}
+                    className="flex items-center gap-2 py-3 px-4 rounded-sm text-button-md border border-primary-300 cursor-pointer"
+                  >
+                    <img src="/logout.png" />
+                    登出
+                  </button>
+                </div>
               </div>
             </div>
           </nav>

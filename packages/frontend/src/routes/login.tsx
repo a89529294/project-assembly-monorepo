@@ -61,7 +61,7 @@ function Login() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen font-inter">
       {/* Left Section - Background Image */}
       <div className="flex-[525] min-w-0 bg-no-repeat relative bg-[url('/login_bg.jpg')] bg-[length:134%_auto] bg-top-left">
         <div
@@ -90,7 +90,7 @@ function Login() {
             clipPath: "polygon(100% 0, 100% 100%, 0 100%)",
           }}
         />
-        <img src="/logo.png" className="relative top-20 left-16" />
+        <img src="/logo-with-name.png" className="relative top-20 left-16" />
       </div>
 
       {/* Right Section - Login Form */}

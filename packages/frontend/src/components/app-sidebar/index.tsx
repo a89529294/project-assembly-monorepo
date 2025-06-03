@@ -1,5 +1,9 @@
 import { CollapsibleSidebarMenu } from "@/components/app-sidebar/collapsible-sidebar-menu";
-import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+} from "@/components/ui/sidebar";
 
 import { genPaths } from "@/components/app-sidebar/paths";
 import { isAllowed } from "@/lib/utils";
@@ -10,6 +14,7 @@ import { Route as ProjectDetailsRoute } from "@/routes/_dashboard/customers/$cus
 import { useMatch } from "@tanstack/react-router";
 import { roleNameEnum } from "../../../../backend/src/db/schema";
 import { User } from "../../../../backend/src/trpc/router";
+import { Burger } from "@/components/burger";
 
 export function AppSidebar({ user }: { user: User }) {
   const match1 = useMatch({
@@ -34,7 +39,16 @@ export function AppSidebar({ user }: { user: User }) {
   const showCustomerSubRoutes = !!(match1 || match2 || match3 || match4);
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="none">
+      <SidebarHeader className="h-20 bg-secondary-900 pl-6 pr-5 flex-row justify-between items-center relative">
+        <Burger />
+        <div className="flex items-center gap-1 text-surface-0 font-bold">
+          <img src="/logo.png" />
+          俐煒機械
+        </div>
+
+        <div className="absolute right-0 h-6 top-1/2 -translate-y-1/2 border-r border-surface-0" />
+      </SidebarHeader>
       <SidebarContent className="py-3 px-1">
         <CollapsibleSidebarMenu
           show={isAllowed(

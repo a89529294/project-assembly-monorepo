@@ -96,7 +96,7 @@ export function RouteComponent() {
     <PageShell
       header={
         <SearchActionHeader
-          title="App/機台操作權限"
+          title="App-機台操作權限"
           disableInputs={disableInputs}
           initSearchTerm={searchTerm}
           isSearching={isUpdating}
