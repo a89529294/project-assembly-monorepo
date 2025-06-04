@@ -27,6 +27,7 @@ type VisibleFieldProps<T extends FieldValues> =
   | ({
       hideLabel?: false;
       required?: boolean;
+      hideAsterisk?: boolean;
       label?: string;
       hidden?: false;
       labelClassName?: string;
@@ -58,11 +59,13 @@ export function TextField<T extends FieldValues>(props: TextFieldProps<T>) {
               className={cn("gap-0 text-title-mn", props.labelClassName)}
             >
               {props.label ?? name}
-              {props.required && <span className="text-red-400">*</span>}
+              {props.required && !props.hideAsterisk && (
+                <span className="text-red-400">*</span>
+              )}
             </FormLabel>
           )}
           <FormControl>
-            <div className="relative flex-1">
+            <div className="relative flex-1 ">
               <Input
                 {...field}
                 hidden={hidden}
@@ -91,9 +94,9 @@ export function TextField<T extends FieldValues>(props: TextFieldProps<T>) {
                   }
                 />
               )}
+              <FormMessage className="absolute translate-y-1" />
             </div>
           </FormControl>
-          <FormMessage />
         </FormItem>
       )}
     />

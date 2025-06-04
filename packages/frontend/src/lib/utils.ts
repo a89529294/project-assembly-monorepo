@@ -23,6 +23,7 @@ const twMerge = extendTailwindMerge({
         "surface-200",
         "surface-300",
         "surface-400",
+        "secondary-600",
         "secondary-700",
         "secondary-800",
         "secondary-900",

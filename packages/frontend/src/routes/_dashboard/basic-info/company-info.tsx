@@ -4,11 +4,10 @@ import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { TRPCClientError } from "@trpc/client";
 import React, { useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { companyInfoFormSchema } from "@myapp/shared";
 import { TextField } from "@/components/form/text-field";
@@ -17,60 +16,70 @@ import { useCounties } from "@/hooks/use-counties";
 import { useDistricts } from "@/hooks/use-districts";
 import { SelectField } from "@/components/form/select-field";
 
+// TODO clean up the logic
 export const Route = createFileRoute("/_dashboard/basic-info/company-info")({
   validateSearch: z.object({
-    mode: z.enum(["read", "edit"]).optional().catch("read"),
+    mode: z.enum(["read", "edit"]).default("read"),
   }),
   async loader() {
-    try {
-      await queryClient.ensureQueryData(
-        trpc.basicInfo.readCompanyInfo.queryOptions()
-      );
-      return false;
-    } catch (e: unknown) {
-      if (e instanceof TRPCClientError && e.data?.httpStatus === 404)
-        return true;
-      throw e;
-    }
+    await queryClient.ensureQueryData(
+      trpc.basicInfo.readCompanyInfo.queryOptions()
+    );
   },
   component: CompanyInfoPage,
-  pendingComponent: () => <Skeleton className="mt-12 mx-6 h-full" />,
+  pendingComponent: () => <Skeleton className="inset-7 left-4.5 absolute" />,
 });
 
 function CompanyInfoPage() {
-  const form = useForm({
-    resolver: zodResolver(companyInfoFormSchema),
-  });
-  const isNewCompany = Route.useLoaderData();
-
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const search = Route.useSearch();
+  const { mode } = Route.useSearch();
   const navigate = useNavigate();
-  const mode = search.mode ?? "read";
+
   const {
     data: formState,
     createCompanyInfo,
     updateCompanyInfo,
     uploadCompanyLogo,
-  } = useCompanyInfo(isNewCompany);
+    deleteCompanyInfoLogo,
+  } = useCompanyInfo();
+  console.log(formState);
+  const [logo, setLogo] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState(formState?.logoURL);
   const {
     counties,
     isLoading: isLoadingCounties,
     nameToCode,
     codeToName,
   } = useCounties();
-  const { data: districts, isFetching: isFetchingDistricts } = useDistricts(
-    form.watch("county")
-  );
-
-  const [logoPreview, setLogoPreview] = useState<string | undefined>(
-    formState?.logoURL ?? undefined
-  );
-  const [logo, setLogo] = useState<File | null>(null);
   const isPendingMutate =
     createCompanyInfo.isPending ||
     updateCompanyInfo.isPending ||
     uploadCompanyLogo.isPending;
+
+  const form = useForm({
+    resolver: zodResolver(companyInfoFormSchema),
+    defaultValues: formState
+      ? {
+          ...formState,
+          county: nameToCode[formState.county],
+        }
+      : {
+          name: "",
+          phone: "",
+          email: "",
+          fax: "",
+          taxId: "",
+          county: "",
+          district: "",
+          address: "",
+          logoURL: null,
+        },
+    disabled: isPendingMutate || mode === "read",
+  });
+
+  const { data: districts, isFetching: isFetchingDistricts } = useDistricts(
+    form.watch("county")
+  );
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -97,25 +106,16 @@ function CompanyInfoPage() {
       search: { mode: "read" },
     });
   };
-  const handleSaveClick = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
 
-    const formEle = e.currentTarget;
-    const formData = new FormData(formEle);
+  const isReadMode = mode === "read";
+  const disableInputs = isReadMode || isPendingMutate;
+
+  const onSubmit: SubmitHandler<z.infer<typeof companyInfoFormSchema>> = async (
+    data
+  ) => {
+    const isNewCompany = !formState;
 
     const mutateCompanyInfo = (logoURL?: string) => {
-      const payload: Parameters<(typeof createCompanyInfo)["mutate"]>[0] = {
-        name: formData.get("name") as string,
-        phone: formData.get("phone") as string,
-        email: formData.get("email") as string,
-        fax: formData.get("fax") as string,
-        taxId: formData.get("taxId") as string,
-        county: formData.get("county") as string,
-        district: formData.get("district") as string,
-        address: formData.get("address") as string,
-        logoURL,
-      };
-
       const config = {
         onSuccess: () => {
           navigate({
@@ -132,10 +132,17 @@ function CompanyInfoPage() {
           toast.error(isNewCompany ? "無法新增公司資訊" : "無法更新公司資訊"),
       };
 
+      const payload = {
+        ...data,
+        county: codeToName[data.county],
+        logoURL,
+      };
+
       if (isNewCompany) {
         createCompanyInfo.mutate(payload, config);
       } else updateCompanyInfo.mutate(payload, config);
     };
+
     if (logo) {
       uploadCompanyLogo.mutate(logo, {
         onSuccess: (c) => {
@@ -146,21 +153,17 @@ function CompanyInfoPage() {
           setLogoPreview(undefined);
         },
       });
-      // prevent uploading the same logo
       setLogo(null);
     } else {
+      if (data.logoURL && logo === null) {
+        await deleteCompanyInfoLogo.mutateAsync();
+      }
       mutateCompanyInfo();
     }
   };
 
-  const isReadMode = mode === "read";
-  const disableInputs = isReadMode || isPendingMutate;
-
-  const onSubmit = (data) => console.log(data);
-
   return (
     <div className="p-7 pl-4.5 bg-surface-100 h-full">
-      {/* <form className="" onSubmit={handleSaveClick}> */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           {/* Toolbar */}
@@ -207,16 +210,19 @@ function CompanyInfoPage() {
           </div>
 
           <div className="grid grid-cols-[1fr_auto] bg-white gap-4 py-3.5 pl-8 pr-4">
-            {/* left 5 inputs */}
             <div className="space-y-8">
               <TextField
                 form={form}
                 name="name"
                 label="公司名稱"
                 required
-                containerClassName="flex "
-                labelClassName="w-20"
-                inputClassName="h-10 border border-surface-100 rounded-sm w-full "
+                hideAsterisk={mode === "read"}
+                containerClassName="flex gap-0"
+                labelClassName="w-20 text-secondary-600"
+                inputClassName={cn(
+                  "h-10 border border-surface-100 rounded-sm w-full disabled:text-secondary-900 disabled:opacity-100",
+                  mode === "read" && "border-none shadow-none"
+                )}
                 placeholder="請輸入公司名稱"
               />
 
@@ -225,9 +231,13 @@ function CompanyInfoPage() {
                 name="phone"
                 label="聯絡電話"
                 required
-                containerClassName="flex "
-                labelClassName="w-20"
-                inputClassName="h-10 border border-surface-100 rounded-sm w-full "
+                containerClassName="flex gap-0"
+                labelClassName="w-20 text-secondary-600"
+                hideAsterisk={mode === "read"}
+                inputClassName={cn(
+                  "h-10 border border-surface-100 rounded-sm w-full disabled:text-secondary-900 disabled:opacity-100",
+                  mode === "read" && "border-none shadow-none"
+                )}
                 placeholder="請輸入聯絡電話"
               />
 
@@ -236,9 +246,13 @@ function CompanyInfoPage() {
                 name="email"
                 label="Email"
                 required
-                containerClassName="flex "
-                labelClassName="w-20"
-                inputClassName="h-10 border border-surface-100 rounded-sm w-full "
+                containerClassName="flex gap-0"
+                labelClassName="w-20 text-secondary-600"
+                hideAsterisk={mode === "read"}
+                inputClassName={cn(
+                  "h-10 border border-surface-100 rounded-sm w-full disabled:text-secondary-900 disabled:opacity-100",
+                  mode === "read" && "border-none shadow-none"
+                )}
                 placeholder="請輸入Email"
               />
               <TextField
@@ -246,65 +260,78 @@ function CompanyInfoPage() {
                 name="fax"
                 label="傳真"
                 required
-                containerClassName="flex "
-                labelClassName="w-20"
-                inputClassName="h-10 border border-surface-100 rounded-sm w-full "
+                containerClassName="flex gap-0"
+                labelClassName="w-20 text-secondary-600"
+                hideAsterisk={mode === "read"}
+                inputClassName={cn(
+                  "h-10 border border-surface-100 rounded-sm w-full disabled:text-secondary-900 disabled:opacity-100",
+                  mode === "read" && "border-none shadow-none"
+                )}
                 placeholder="請輸入傳真號碼"
               />
 
-              <TextField
-                form={form}
-                name="fax"
-                label="傳真"
-                required
-                containerClassName="flex "
-                labelClassName="w-20"
-                inputClassName="h-10 border border-surface-100 rounded-sm w-full "
-                placeholder="請輸入傳真號碼"
-              />
               <TextField
                 form={form}
                 name="taxId"
                 label="統一編號"
                 required
-                containerClassName="flex "
-                labelClassName="w-20"
-                inputClassName="h-10 border border-surface-100 rounded-sm w-full "
+                containerClassName="flex gap-0"
+                labelClassName="w-20 text-secondary-600"
+                hideAsterisk={mode === "read"}
+                inputClassName={cn(
+                  "h-10 border border-surface-100 rounded-sm w-full disabled:text-secondary-900 disabled:opacity-100",
+                  mode === "read" && "border-none shadow-none"
+                )}
                 placeholder="請輸入統一編號"
               />
 
-              <div className="flex">
-                <FormLabel className={cn("gap-0 text-title-mn w-20")}>
+              <div className="flex shrink-0">
+                <FormLabel
+                  className={cn("gap-0 text-title-mn w-20 text-secondary-600")}
+                >
                   公司地址
-                  <span className="text-red-400">*</span>
+                  {mode === "edit" && <span className="text-red-400">*</span>}
                 </FormLabel>
                 <div className="flex-1 flex gap-2">
-                  <SelectField
-                    form={form}
-                    name="district"
-                    loading={isLoadingCounties}
-                    options={counties}
-                    hideLabel
-                    containerClassName="flex-1"
-                    placeholder="請選擇縣/市"
-                  />
-                  <SelectField
-                    form={form}
-                    name="district"
-                    loading={isFetchingDistricts}
-                    options={districts}
-                    hideLabel
-                    containerClassName="flex-1"
-                    placeholder="請選擇區"
-                  />
-                  <TextField
-                    form={form}
-                    name="address"
-                    hideLabel
-                    containerClassName="flex flex-1"
-                    inputClassName="h-10 border border-surface-100 rounded-sm flex-1"
-                    placeholder="請輸入統一編號"
-                  />
+                  {mode === "read" && (
+                    <p className="h-10 text-body-lg pl-3 flex items-center text-secondary-900">
+                      {form.getValues("county")}
+                      {form.getValues("district")}
+                      {form.getValues("address")}
+                    </p>
+                  )}
+                  {mode === "edit" && (
+                    <>
+                      <SelectField
+                        form={form}
+                        name="county"
+                        loading={isLoadingCounties}
+                        options={counties}
+                        hideLabel
+                        containerClassName="flex-1"
+                        triggerClassName="h-10"
+                        placeholder="請選擇縣/市"
+                      />
+                      <SelectField
+                        form={form}
+                        name="district"
+                        loading={isFetchingDistricts}
+                        options={districts}
+                        hideLabel
+                        containerClassName="flex-1"
+                        triggerClassName="h-10"
+                        placeholder="請選擇區"
+                      />
+                      <TextField
+                        form={form}
+                        name="address"
+                        hideLabel
+                        containerClassName="flex flex-1"
+                        inputClassName="h-10 border border-surface-100 rounded-sm flex-1"
+                        placeholder="請輸入地址"
+                      />
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -330,19 +357,37 @@ function CompanyInfoPage() {
                 </div>
               )}
 
-              <button
-                type="button"
-                className={cn(
-                  "absolute right-3 bottom-3 px-4 py-1 rounded bg-blue-100 text-blue-700 transition",
-                  disableInputs
-                    ? "opacity-80 cursor-not-allowed"
-                    : "hover:bg-blue-200"
-                )}
-                onClick={() => !disableInputs && fileInputRef.current?.click()}
-                disabled={disableInputs}
-              >
-                上傳 Logo
-              </button>
+              {logoPreview ? (
+                <button
+                  type="button"
+                  className={cn(
+                    "absolute right-3 bottom-3 p-2 border border-secondary-900 rounded-sm",
+                    disableInputs && "hidden"
+                  )}
+                  onClick={() => {
+                    setLogo(null);
+                    setLogoPreview(null);
+                  }}
+                  disabled={disableInputs}
+                >
+                  <img src="/delete.png" className="size-6" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={cn(
+                    "absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-primary-300 rounded-sm text-button-sm flex gap-1 py-2 px-4 cursor-pointer",
+                    disableInputs && "hidden"
+                  )}
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                  }}
+                  disabled={disableInputs}
+                >
+                  <img src="/upload.png" className="size-4" />
+                  上傳 logo
+                </button>
+              )}
             </div>
           </div>
         </form>

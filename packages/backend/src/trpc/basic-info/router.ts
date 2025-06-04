@@ -1,5 +1,6 @@
 import {
   createCompanyInfoProcedure,
+  deleteCompanyInfoLogoProcedure,
   readCompanyInfoProcedure,
   updateCompanyInfoProcedure,
 } from "./company-procedures.js";
@@ -37,6 +38,7 @@ export const basicInfoRouter = router({
   readCompanyInfo: readCompanyInfoProcedure,
   createCompanyInfo: createCompanyInfoProcedure,
   updateCompanyInfo: updateCompanyInfoProcedure,
+  deleteCompanyInfoLogo: deleteCompanyInfoLogoProcedure,
   readCustomers: readCustomersProcedure,
   createCustomer: createCustomerProcedure,
   readCustomer: readCustomerProcedure,

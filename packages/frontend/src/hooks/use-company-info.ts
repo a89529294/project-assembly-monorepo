@@ -1,19 +1,21 @@
 // use-company-info.ts
 import { privateFetch } from "@/lib/utils";
 import { trpc } from "@/trpc";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 
-export function useCompanyInfo(isNewCompany: boolean) {
-  const companyQuery = useQuery({
-    ...trpc.basicInfo.readCompanyInfo.queryOptions(),
-    enabled: !isNewCompany,
-  });
+export function useCompanyInfo() {
+  const companyQuery = useSuspenseQuery(
+    trpc.basicInfo.readCompanyInfo.queryOptions()
+  );
 
   const createCompanyInfo = useMutation(
     trpc.basicInfo.createCompanyInfo.mutationOptions()
   );
   const updateCompanyInfo = useMutation(
     trpc.basicInfo.updateCompanyInfo.mutationOptions()
+  );
+  const deleteCompanyInfoLogo = useMutation(
+    trpc.basicInfo.deleteCompanyInfoLogo.mutationOptions()
   );
 
   async function uploadCompanyLogoFn(file: File) {
@@ -38,5 +40,6 @@ export function useCompanyInfo(isNewCompany: boolean) {
     createCompanyInfo,
     updateCompanyInfo,
     uploadCompanyLogo,
+    deleteCompanyInfoLogo,
   };
 }

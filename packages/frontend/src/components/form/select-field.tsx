@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 import { Spinner } from "@/components/spinner";
+import { cn } from "@/lib/utils";
 
 type BaseProps<T extends FieldValues> = {
   form: UseFormReturn<T>;
@@ -23,6 +24,7 @@ type BaseProps<T extends FieldValues> = {
   onSelect?: () => void;
   containerClassName?: string;
   placeholder?: string;
+  triggerClassName?: string;
 };
 
 type SelectFieldProps<T extends FieldValues> = BaseProps<T> &
@@ -38,7 +40,15 @@ type SelectFieldProps<T extends FieldValues> = BaseProps<T> &
   );
 
 export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
-  const { form, name, options, loading, onSelect, hideLabel } = props;
+  const {
+    form,
+    name,
+    options,
+    loading,
+    onSelect,
+    hideLabel,
+    triggerClassName,
+  } = props;
 
   return (
     <FormField
@@ -61,7 +71,7 @@ export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
             value={field.value}
           >
             <FormControl>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className={cn("w-full", triggerClassName)}>
                 <SelectValue placeholder={props.placeholder} />
               </SelectTrigger>
             </FormControl>
