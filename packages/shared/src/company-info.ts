@@ -18,5 +18,3 @@ export const companyInfoFormSchema = z.object({
     ])
     .nullable(),
 });
-
-type A = z.infer<typeof companyInfoFormSchema>;

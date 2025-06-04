@@ -167,6 +167,7 @@ export function EmployeeForm({
                         { value: "male", label: "男" },
                         { value: "female", label: "女" },
                       ]}
+                      label="性別"
                     />
 
                     <TextField
@@ -289,6 +290,7 @@ export function EmployeeForm({
                         onSelect={() =>
                           form.setValue("residenceDistrict", null)
                         }
+                        label="居住縣市"
                       />
 
                       <SelectField
@@ -299,6 +301,7 @@ export function EmployeeForm({
                         }
                         loading={isLoadingResidenceTown}
                         options={townsForResidence}
+                        label="居住區"
                       />
 
                       <TextField
@@ -323,6 +326,7 @@ export function EmployeeForm({
                         }
                         loading={isLoadingCounties}
                         options={counties}
+                        label="郵寄縣市"
                       />
 
                       <SelectField
@@ -333,6 +337,7 @@ export function EmployeeForm({
                         }
                         loading={isLoadingMailingTown}
                         options={townsForMailing}
+                        label="郵寄區"
                       />
 
                       <TextField
