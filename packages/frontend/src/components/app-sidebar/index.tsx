@@ -57,7 +57,7 @@ export function AppSidebar({ user }: { user: User }) {
   });
 
   return (
-    <Sidebar collapsible="none">
+    <Sidebar collapsible="none" className="h-svh bg-primary-300">
       <SidebarHeader className="h-20 bg-secondary-900 pl-6 pr-5 flex-row justify-between items-center relative">
         <Burger />
         <div className="flex items-center gap-1 text-surface-0 font-bold">
@@ -67,7 +67,7 @@ export function AppSidebar({ user }: { user: User }) {
 
         <div className="absolute right-0 h-6 top-1/2 -translate-y-1/2 border-r border-surface-0" />
       </SidebarHeader>
-      <SidebarContent className="gap-0">
+      <SidebarContent className="gap-0 ">
         <CollapsibleSidebarMenu
           show={isAllowed(
             [

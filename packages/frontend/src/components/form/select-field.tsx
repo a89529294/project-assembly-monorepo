@@ -15,33 +15,43 @@ import {
 import { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 import { Spinner } from "@/components/spinner";
 
-export function SelectField<T extends FieldValues>({
-  form,
-  name,
-  required,
-  label,
-  options,
-  loading,
-  onSelect,
-}: {
+type BaseProps<T extends FieldValues> = {
   form: UseFormReturn<T>;
   name: FieldPath<T>;
-  required: boolean;
-  label?: string;
   loading?: boolean;
   options: { value: string; label: string }[] | undefined;
   onSelect?: () => void;
-}) {
+  containerClassName?: string;
+  placeholder?: string;
+};
+
+type SelectFieldProps<T extends FieldValues> = BaseProps<T> &
+  (
+    | {
+        hideLabel: true;
+      }
+    | {
+        hideLabel?: false;
+        label: string;
+        required: boolean;
+      }
+  );
+
+export function SelectField<T extends FieldValues>(props: SelectFieldProps<T>) {
+  const { form, name, options, loading, onSelect, hideLabel } = props;
+
   return (
     <FormField
       control={form.control}
       name={name}
       render={({ field }) => (
-        <FormItem>
-          <FormLabel>
-            {label ?? name}{" "}
-            {required && <span className="text-red-400"> *</span>}
-          </FormLabel>
+        <FormItem className={props.containerClassName}>
+          {!hideLabel && (
+            <FormLabel>
+              {props.label}{" "}
+              {props.required && <span className="text-red-400"> *</span>}
+            </FormLabel>
+          )}
           <Select
             disabled={field.disabled}
             onValueChange={(...args) => {
@@ -52,7 +62,7 @@ export function SelectField<T extends FieldValues>({
           >
             <FormControl>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="" />
+                <SelectValue placeholder={props.placeholder} />
               </SelectTrigger>
             </FormControl>
             <SelectContent>

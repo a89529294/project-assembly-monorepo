@@ -57,8 +57,6 @@ export const CustomerForm = ({
     contacts: [],
   };
 
-  console.log(initialData);
-
   const form = useForm<CustomerDetail>({
     mode: "onChange",
     resolver: zodResolver(customerDetailedSchema),

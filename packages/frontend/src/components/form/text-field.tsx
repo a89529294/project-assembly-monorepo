@@ -6,32 +6,43 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { HTMLInputTypeAttribute, useState } from "react";
 import { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 
-type VisibleFieldProps<T extends FieldValues> = {
+type BaseProps<T extends FieldValues> = {
   form: UseFormReturn<T>;
   name: FieldPath<T>;
-  required?: boolean;
-  label?: string;
-  hidden?: false | undefined;
   type?: HTMLInputTypeAttribute;
+  containerClassName?: string;
+  placeholder?: string;
+  inputClassName?: string;
 };
 
+type VisibleFieldProps<T extends FieldValues> =
+  | ({
+      hideLabel: true;
+      hidden?: false;
+    } & BaseProps<T>)
+  | ({
+      hideLabel?: false;
+      required?: boolean;
+      label?: string;
+      hidden?: false;
+      labelClassName?: string;
+    } & BaseProps<T>);
+
 type HiddenFieldProps<T extends FieldValues> = {
-  form: UseFormReturn<T>;
-  name: FieldPath<T>;
   hidden: true;
-  type?: HTMLInputTypeAttribute;
-  // label and required are omitted when hidden is true
-};
+  hideLabel?: boolean;
+} & BaseProps<T>;
 
 type TextFieldProps<T extends FieldValues> =
   | VisibleFieldProps<T>
   | HiddenFieldProps<T>;
 
 export function TextField<T extends FieldValues>(props: TextFieldProps<T>) {
-  const { form, name, hidden, type } = props;
+  const { form, name, hidden, type, hideLabel } = props;
   const [eyeState, setEyeState] = useState<"open" | "closed">("closed");
 
   return (
@@ -39,15 +50,19 @@ export function TextField<T extends FieldValues>(props: TextFieldProps<T>) {
       control={form.control}
       name={name}
       render={({ field }) => (
-        <FormItem className={hidden ? "sr-only" : ""}>
-          {!hidden && (
-            <FormLabel>
+        <FormItem
+          className={cn("", props.containerClassName, hidden && "sr-only")}
+        >
+          {!hidden && !hideLabel && (
+            <FormLabel
+              className={cn("gap-0 text-title-mn", props.labelClassName)}
+            >
               {props.label ?? name}
-              {props.required && <span className="text-red-400"> *</span>}
+              {props.required && <span className="text-red-400">*</span>}
             </FormLabel>
           )}
           <FormControl>
-            <div className="relative">
+            <div className="relative flex-1">
               <Input
                 {...field}
                 hidden={hidden}
@@ -58,15 +73,24 @@ export function TextField<T extends FieldValues>(props: TextFieldProps<T>) {
                       : "text"
                     : type
                 }
+                className={cn(
+                  "md:text-body-lg text-secondary-900",
+                  props.inputClassName
+                )}
+                placeholder={props.placeholder}
               />
 
-              <img
-                className="size-4 absolute right-2.5 top-1/2 -translate-y-1/2"
-                src={eyeState === "closed" ? "/eye-close.png" : "/eye-open.png"}
-                onClick={() =>
-                  setEyeState((v) => (v === "closed" ? "open" : "closed"))
-                }
-              />
+              {type === "password" && (
+                <img
+                  className="size-4 absolute right-2.5 top-1/2 -translate-y-1/2"
+                  src={
+                    eyeState === "closed" ? "/eye-close.png" : "/eye-open.png"
+                  }
+                  onClick={() =>
+                    setEyeState((v) => (v === "closed" ? "open" : "closed"))
+                  }
+                />
+              )}
             </div>
           </FormControl>
           <FormMessage />

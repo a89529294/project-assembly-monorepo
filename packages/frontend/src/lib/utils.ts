@@ -13,6 +13,8 @@ const twMerge = extendTailwindMerge({
         "title-md",
         "button-sm",
         "button-md",
+        "title-mn",
+        "body-lg",
       ],
       font: ["inter"],
       color: [

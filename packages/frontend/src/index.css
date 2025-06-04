@@ -72,6 +72,10 @@
   --text-button-sm--font-weight: 500;
   --text-button-md: 1rem;
   --text-button-md--line-height: 1.25rem;
+  --text-title-mn: 0.75rem;
+  --text-title-mn--line-height: 1rem;
+  --text-body-lg: 1rem;
+  --text-body-lg--line-height: 1.625rem;
 
   --animate-slideDown: slideDown 300ms ease-out;
   --animate-slideUp: slideUp 300ms ease-out;

@@ -7,3 +7,4 @@ export * from "./app-users";
 export * from "./customers";
 export * from "./projects";
 export * from "./project-assembly";
+export * from "./company-info";
