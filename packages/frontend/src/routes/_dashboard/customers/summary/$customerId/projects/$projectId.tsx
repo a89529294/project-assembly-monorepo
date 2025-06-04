@@ -5,65 +5,54 @@ import { ProjectForm } from "@/components/project-form";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useBomUploadAndQueue } from "@/hooks/use-bom-upload-and-queue";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import { queryClient } from "@/query-client";
+
 import { trpc } from "@/trpc";
 import { ProjectFormValue } from "@myapp/shared";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute(
-  "/_dashboard/customers/$customerId/projects/create"
+  "/_dashboard/customers/summary/$customerId/projects/$projectId"
 )({
   component: RouteComponent,
   pendingComponent: PendingComponent,
 });
 
 function RouteComponent() {
-  const [newProjectId, setNewProjectid] = useLocalStorage("new-project-id", "");
-  const navigate = Route.useNavigate();
-  const { customerId } = Route.useParams();
-  const { mutate: createProject, isPending } = useMutation(
-    trpc.basicInfo.createProject.mutationOptions()
-  );
+  const { customerId, projectId } = Route.useParams();
+
   const { handleBomUploadAndQueue, processProgress, uploadProgress, state } =
     useBomUploadAndQueue({ customerId, projectState: "create" });
 
-  const handleSubmit = (data: ProjectFormValue) => {
-    const { bom, ...projectData } = data;
+  // Fetch project data
+  const { data: project } = useSuspenseQuery(
+    trpc.basicInfo.readProject.queryOptions(projectId)
+  );
 
-    createProject(projectData, {
-      onSuccess: async (project) => {
-        setNewProjectid(project.id);
-        await handleBomUploadAndQueue({ projectId: project.id, bom });
-        queryClient.invalidateQueries({
-          queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),
-        });
-        queryClient.invalidateQueries({
-          queryKey: trpc.production.readSimpleProjects.queryKey(),
-        });
-      },
-      onError: (error) => {
-        console.error("Project creation failed:", error);
-        toast.error(`專案建立失敗: ${error.message}`);
-      },
-    });
-  };
+  const { mutate: updateProject, isPending } = useMutation(
+    trpc.basicInfo.updateProject.mutationOptions()
+  );
 
-  useEffect(() => {
-    if (newProjectId)
-      navigate({
-        to: "/customers/$customerId/projects/$projectId",
-        params: {
-          projectId: newProjectId,
+  const handleSubmit = async (formData: ProjectFormValue) => {
+    const { bom, ...projectData } = formData;
+
+    updateProject(
+      {
+        projectId,
+        data: projectData,
+      },
+      {
+        onSuccess: async (project) => {
+          await handleBomUploadAndQueue({ projectId: project.id, bom });
         },
-      });
-
-    setNewProjectid("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+        onError: (error) => {
+          console.error("Project creation failed:", error);
+          toast.error(`更新專案失敗: ${error.message}`);
+        },
+      }
+    );
+  };
 
   const uploadOrProcessText = (() => {
     if (state === "uploading") return "上傳中...";
@@ -71,11 +60,18 @@ function RouteComponent() {
     if (processProgress?.status === "failed") return "匯入失敗";
     if (processProgress?.status === "done") return "匯入完成";
 
-    return "匯入中...";
+    if (
+      processProgress?.status === "processing" ||
+      processProgress?.status === "waiting"
+    )
+      return "匯入中...";
+
+    return "未知狀態";
   })();
 
   const progressBar = (() => {
     console.log(state, processProgress);
+
     if (state === "idle") return null;
 
     let progress = 0;
@@ -101,7 +97,7 @@ function RouteComponent() {
         <div className="flex justify-between items-center mb-6">
           <Button asChild type="button" variant="outline">
             <Link
-              to={"/customers/$customerId/projects"}
+              to={"/customers/summary/$customerId/projects"}
               params={{ customerId }}
               disabled={isPending}
             >
@@ -117,7 +113,6 @@ function RouteComponent() {
                 {progressBar}
               </div>
             )}
-
             <Button type="submit" form="project-form" disabled={isPending}>
               儲存
             </Button>
@@ -128,8 +123,10 @@ function RouteComponent() {
       <ScrollableBody>
         <ProjectForm
           customerId={customerId}
+          initialData={project}
           onSubmit={handleSubmit}
           disabled={isPending}
+          projectId={projectId}
         />
       </ScrollableBody>
     </PageShell>

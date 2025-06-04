@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_dashboard/storage/delete")({
+export const Route = createFileRoute("/_dashboard/warehouse/delete")({
   component: StorageDeletePage,
 });
 

@@ -14,7 +14,7 @@ import { customersSummaryQueryInputSchema } from "@myapp/shared";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_dashboard/customers/summary")({
+export const Route = createFileRoute("/_dashboard/customers/summary/")({
   validateSearch: customersSummaryQueryInputSchema,
   loaderDeps: ({ search }) => ({ search }),
   loader({ deps: { search } }) {

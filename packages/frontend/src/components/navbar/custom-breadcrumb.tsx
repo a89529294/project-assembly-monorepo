@@ -11,7 +11,10 @@ import { router } from "@/router";
 import { Link, useMatches } from "@tanstack/react-router";
 
 type RouteIDs = keyof typeof router.routesById;
-type RoutePaths = Exclude<keyof typeof router.routesByPath, "">;
+type RoutePaths = Exclude<
+  keyof typeof router.routesByPath,
+  "" | "/production/"
+>;
 
 const routeMap: Partial<
   Record<RouteIDs, { label: string; href?: RoutePaths }[]>
@@ -87,7 +90,7 @@ const routeMap: Partial<
       label: "App-機台操作權限",
     },
   ],
-  "/_dashboard/customers/summary": [
+  "/_dashboard/customers/summary/": [
     {
       label: "客戶管理",
     },
@@ -95,7 +98,7 @@ const routeMap: Partial<
       label: "客戶列表",
     },
   ],
-  "/_dashboard/customers/$customerId/": [
+  "/_dashboard/customers/summary/$customerId/": [
     {
       label: "客戶管理",
     },
@@ -107,7 +110,7 @@ const routeMap: Partial<
       label: "客戶細節",
     },
   ],
-  "/_dashboard/customers/$customerId/projects/": [
+  "/_dashboard/customers/summary/$customerId/projects/": [
     {
       label: "客戶管理",
     },
@@ -119,7 +122,7 @@ const routeMap: Partial<
       label: "客戶專案列表",
     },
   ],
-  "/_dashboard/customers/$customerId/projects/create": [
+  "/_dashboard/customers/summary/$customerId/projects/create": [
     {
       label: "客戶管理",
     },

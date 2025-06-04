@@ -1,5 +1,6 @@
 import { ChevronDown } from "lucide-react";
 
+import { useAuth } from "@/auth/use-auth";
 import { NavItem } from "@/components/app-sidebar/paths";
 import {
   Collapsible,
@@ -17,11 +18,10 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useAuth } from "@/auth/use-auth";
-import { RoleName } from "@myapp/shared";
 import { cn } from "@/lib/utils";
+import { RoleName } from "@myapp/shared";
+import { Link, useMatches, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 interface NavigationProps {
   show: boolean;
@@ -78,16 +78,18 @@ export function CollapsibleSidebarMenu({
             )}
           >
             <CollapsibleTrigger className="flex justify-between w-full items-center">
-              <div
-                className={cn(
-                  "flex gap-2 items-center text-button-sm-active text-secondary-900",
-                  active && "text-primary-300"
-                )}
-              >
+              <div className={cn("flex gap-2 items-center  ")}>
                 <div className="size-8 rounded-full bg-primary-300 grid place-items-center">
                   <img className="size-6" src={iconSrc} />
                 </div>
-                {label}
+                <div
+                  className={cn(
+                    "text-button-sm-active text-secondary-900",
+                    active && "text-primary-300"
+                  )}
+                >
+                  {label}
+                </div>
               </div>
               <ChevronDown
                 className={cn(
@@ -100,15 +102,15 @@ export function CollapsibleSidebarMenu({
           <CollapsibleContent>
             <SidebarGroupContent>
               <SidebarMenu className="gap-0">
-                {items.map(
-                  (item) =>
+                {items.map((item) => {
+                  return (
                     showLink(item.roleNames) && (
                       <SidebarMenuItem key={item.title}>
                         {/* Main item with link if linkOptions exists */}
                         <SidebarMenuButton
                           asChild
                           className={cn(
-                            "flex py-4 pl-5 h-auto rounded-none text-button-sm [&.active]:text-button-sm-active font-inter",
+                            "flex py-3.5 pl-7 h-auto rounded-none text-button-sm [&.active]:text-button-sm-active font-inter gap-4",
                             location.pathname.startsWith(item.basePath)
                               ? "bg-secondary-800 hover:bg-secondary-800!"
                               : "bg-secondary-700 hover:bg-secondary-700!"
@@ -121,15 +123,14 @@ export function CollapsibleSidebarMenu({
                                 "text-button-sm [&.active]:text-button-sm-active"
                               )}
                             >
-                              <div className="size-8 grid place-items-center">
-                                <item.icon
-                                  stroke={
-                                    location.pathname.startsWith(item.basePath)
-                                      ? "var(--color-primary-300)"
-                                      : "white"
-                                  }
-                                />
-                              </div>
+                              <item.icon
+                                stroke={
+                                  location.pathname.startsWith(item.basePath)
+                                    ? "var(--color-primary-300)"
+                                    : "white"
+                                }
+                              />
+
                               <span
                                 className={
                                   location.pathname.startsWith(item.basePath)
@@ -142,15 +143,14 @@ export function CollapsibleSidebarMenu({
                             </Link>
                           ) : (
                             <div>
-                              <div className="size-8 grid place-items-center">
-                                <item.icon
-                                  stroke={
-                                    location.pathname.startsWith(item.basePath)
-                                      ? "var(--color-primary-300)"
-                                      : "white"
-                                  }
-                                />
-                              </div>
+                              <item.icon
+                                stroke={
+                                  location.pathname.startsWith(item.basePath)
+                                    ? "var(--color-primary-300)"
+                                    : "white"
+                                }
+                              />
+
                               <span
                                 className={
                                   location.pathname.startsWith(item.basePath)
@@ -166,7 +166,7 @@ export function CollapsibleSidebarMenu({
 
                         {/* Sub items if they exist */}
                         {!!item.subs && (
-                          <SidebarMenuSub>
+                          <SidebarMenuSub className="mx-0 border-surface-0 p-0 border-none translate-0">
                             <SubCollapsible
                               item={item}
                               showSubItems={showSubItems}
@@ -175,7 +175,8 @@ export function CollapsibleSidebarMenu({
                         )}
                       </SidebarMenuItem>
                     )
-                )}
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </CollapsibleContent>
@@ -192,23 +193,48 @@ function SubCollapsible({
   item: NavItem;
   showSubItems?: boolean;
 }) {
+  const matches = useMatches();
+  const closestMatch = matches.at(-1);
+  console.log(closestMatch?.routeId);
+
+  const x =
+    "/" +
+    closestMatch?.routeId
+      .split("/")
+      .filter((v) => v !== "" && v !== "_dashboard")
+      .join("/");
+
   return (
     <Collapsible open={showSubItems}>
       <CollapsibleContent>
-        {item.subs!.map((sub) => (
-          <SidebarMenuSubItem key={sub.title}>
-            <SidebarMenuSubButton asChild>
-              <Link
-                to={sub.linkOptions.to}
-                className="[&.active]:font-bold"
-                activeOptions={{ exact: sub.exact, includeSearch: false }}
-              >
-                <sub.icon />
-                <span>{sub.title}</span>
-              </Link>
-            </SidebarMenuSubButton>
-          </SidebarMenuSubItem>
-        ))}
+        {item.subs!.map((sub) => {
+          console.log(sub.linkOptions.to);
+          return (
+            <SidebarMenuSubItem key={sub.title}>
+              <SidebarMenuSubButton asChild>
+                <Link
+                  to={sub.linkOptions.to}
+                  className={cn(
+                    " pl-[35.5px] bg-secondary-700 rounded-none translate-x-0 h-auto active:text-primary-300! [&:active>div]:border-primary-300",
+                    x === sub.linkOptions.to
+                      ? "bg-secondary-800 hover:bg-secondary-800! text-primary-300!"
+                      : "bg-secondary-700 hover:bg-secondary-700! text-surface-0 hover:text-surface-0"
+                  )}
+                  activeOptions={{ exact: sub.exact, includeSearch: false }}
+                >
+                  <div
+                    className={cn(
+                      "border-l pl-[23.5px] py-3.5  h-full",
+                      x === sub.linkOptions.to && "border-primary-300"
+                    )}
+                  >
+                    {sub.title}
+                  </div>
+                </Link>
+              </SidebarMenuSubButton>
+            </SidebarMenuSubItem>
+          );
+        })}
       </CollapsibleContent>
     </Collapsible>
   );

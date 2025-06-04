@@ -19,7 +19,7 @@ import { LucideReceiptText } from "lucide-react";
 const columnHelper = createColumnHelper<ProjectSummary>();
 
 export const Route = createFileRoute(
-  "/_dashboard/customers/$customerId/projects/"
+  "/_dashboard/customers/summary/$customerId/projects/"
 )({
   validateSearch: projectsSearchSchema,
   loaderDeps: ({ search }) => ({
@@ -92,7 +92,7 @@ function RouteComponent() {
         return (
           <RevealOnHover className="pr-4">
             <Link
-              to="/customers/$customerId/projects/$projectId"
+              to="/customers/summary/$customerId/projects/$projectId"
               params={{ customerId: customerId, projectId: project.id }}
               search={{ mode: "read" }}
             >
@@ -123,7 +123,7 @@ function RouteComponent() {
             createAction={
               <Button asChild>
                 <Link
-                  to="/customers/$customerId/projects/create"
+                  to="/customers/summary/$customerId/projects/create"
                   params={{ customerId }}
                   key="customer-projects-page-new-project-button"
                 >

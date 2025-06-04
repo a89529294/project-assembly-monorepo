@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_dashboard/storage/update")({
+export const Route = createFileRoute("/_dashboard/warehouse/update")({
   component: StorageUpdatePage,
 });
 

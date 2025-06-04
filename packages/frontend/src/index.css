@@ -5,25 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-inter: "Inter", sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --color-surface-0: #fff;
-  --color-surface-100: #e5e5e5;
-  --color-surface-200: #cbcbcb;
-  --color-surface-300: #a3a3a3;
-  --color-surface-400: #767676;
-  --color-secondary-700: #2c2c2c;
-  --color-secondary-800: #1c1c1c;
-  --color-secondary-900: #000;
-  --color-primary-50: #fff9ef;
-  --color-primary-100: #fff1da;
-  --color-primary-200: #ffd284;
-  --color-primary-300: #ffaa15;
-  --color-danger-200: #df4c5f;
-  --color-danger-300: #b13243;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -55,7 +41,25 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+}
 
+/* dont forget to add any new classes to src/libs/utils extendTailwindMerge */
+@theme {
+  --font-inter: "Inter", sans-serif;
+  --color-surface-0: #fff;
+  --color-surface-100: #e5e5e5;
+  --color-surface-200: #cbcbcb;
+  --color-surface-300: #a3a3a3;
+  --color-surface-400: #767676;
+  --color-secondary-700: #2c2c2c;
+  --color-secondary-800: #1c1c1c;
+  --color-secondary-900: #000;
+  --color-primary-50: #fff9ef;
+  --color-primary-100: #fff1da;
+  --color-primary-200: #ffd284;
+  --color-primary-300: #ffaa15;
+  --color-danger-200: #df4c5f;
+  --color-danger-300: #b13243;
   --text-header-xl: 3.5rem;
   --text-header-xl--line-height: 4.5rem;
   --text-title-md: 1.125rem;

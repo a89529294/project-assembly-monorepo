@@ -121,7 +121,7 @@ export const genPaths = ({
     customerRoutes: [
       {
         title: "客戶列表",
-        basePath: "/customers",
+        basePath: "/customers/summary",
         linkOptions: {
           to: "/customers/summary",
         },
@@ -131,7 +131,7 @@ export const genPaths = ({
           {
             title: "客戶細節",
             linkOptions: {
-              to: "/customers/$customerId",
+              to: "/customers/summary/$customerId",
               params: { customerId },
             },
             icon: LucideTable2,
@@ -140,7 +140,7 @@ export const genPaths = ({
           {
             title: "客戶專案列表",
             linkOptions: {
-              to: "/customers/$customerId/projects",
+              to: "/customers/summary/$customerId/projects",
               params: { customerId },
             },
             icon: LucidePackageOpen,
@@ -149,7 +149,7 @@ export const genPaths = ({
           {
             title: "新增客戶專案",
             linkOptions: {
-              to: "/customers/$customerId/projects/create",
+              to: "/customers/summary/$customerId/projects/create",
               params: { customerId },
             },
             icon: LucideFilePlus,
@@ -178,39 +178,39 @@ export const genPaths = ({
         roleNames: ["ProductionManagement", "AdminManagement"],
       },
     ],
-    storageRoutes: [
+    warehouseRoutes: [
       {
         title: "Create",
-        basePath: "/storage/create",
+        basePath: "/warehouse/create",
         linkOptions: {
-          to: "/storage/create",
+          to: "/warehouse/create",
         },
         icon: Home,
         roleNames: ["ProductionManagement", "AdminManagement"],
       },
       {
         title: "Read",
-        basePath: "/storage/read",
+        basePath: "/warehouse/read",
         linkOptions: {
-          to: "/storage/read",
+          to: "/warehouse/read",
         },
         icon: Inbox,
         roleNames: ["ProductionManagement", "AdminManagement"],
       },
       {
         title: "Update",
-        basePath: "/storage/update",
+        basePath: "/warehouse/update",
         linkOptions: {
-          to: "/storage/update",
+          to: "/warehouse/update",
         },
         icon: RefreshCcw,
         roleNames: ["ProductionManagement", "AdminManagement"],
       },
       {
         title: "Delete",
-        basePath: "/storage/delete",
+        basePath: "/warehouse/delete",
         linkOptions: {
-          to: "/storage/delete",
+          to: "/warehouse/delete",
         },
         icon: Delete,
         roleNames: ["ProductionManagement", "AdminManagement"],

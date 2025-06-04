@@ -149,7 +149,7 @@ export const genCustomerColumns = ({
         return (
           <RevealOnHover className="pr-4">
             <Link
-              to="/customers/$customerId"
+              to="/customers/summary/$customerId"
               params={{ customerId: customer.id }}
               search={{ mode: "read" }}
             >

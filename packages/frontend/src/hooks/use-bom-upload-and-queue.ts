@@ -43,7 +43,10 @@ export function useBomUploadAndQueue({
     queryClient.invalidateQueries({
       queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),
     });
-    navigate({ to: "/customers/$customerId/projects", params: { customerId } });
+    navigate({
+      to: "/customers/summary/$customerId/projects",
+      params: { customerId },
+    });
     setState("done");
   };
 

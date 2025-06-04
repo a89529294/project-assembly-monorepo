@@ -13,7 +13,9 @@ import { z } from "zod";
 import { useUpdateCustomer } from "@/hooks/customers/use-update-customer";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_dashboard/customers/$customerId/")({
+export const Route = createFileRoute(
+  "/_dashboard/customers/summary/$customerId/"
+)({
   validateSearch: z.object({
     mode: z.enum(["read", "edit"]).default("read"),
   }),
@@ -104,7 +106,7 @@ function RouteComponent() {
             <div className="space-x-2">
               <Button asChild variant={"secondary"} key="new-project-button">
                 <Link
-                  to="/customers/$customerId/projects/create"
+                  to="/customers/summary/$customerId/projects/create"
                   params={{ customerId }}
                 >
                   新增專案
@@ -112,7 +114,7 @@ function RouteComponent() {
               </Button>
               <Button asChild variant={"secondary"} key="list-projects-button">
                 <Link
-                  to="/customers/$customerId/projects"
+                  to="/customers/summary/$customerId/projects"
                   params={{ customerId }}
                 >
                   專案列表

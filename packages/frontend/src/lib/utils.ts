@@ -1,8 +1,39 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
 import { User } from "../../../backend/src/trpc/router";
 import { roleNameEnum } from "../../../backend/src/db/schema";
 import { baseURL, generateHeaders } from "../constants";
+import { extendTailwindMerge } from "tailwind-merge";
+
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      text: [
+        "button-sm-active",
+        "header-xl",
+        "title-md",
+        "button-sm",
+        "button-md",
+      ],
+      font: ["inter"],
+      color: [
+        "surface-0",
+        "surface-100",
+        "surface-200",
+        "surface-300",
+        "surface-400",
+        "secondary-700",
+        "secondary-800",
+        "secondary-900",
+        "primary-50",
+        "primary-100",
+        "primary-200",
+        "primary-300",
+        "danger-200",
+        "danger-300",
+      ],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

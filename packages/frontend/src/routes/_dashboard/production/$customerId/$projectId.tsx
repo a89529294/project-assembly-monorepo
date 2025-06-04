@@ -103,7 +103,7 @@ function RouteComponent() {
           </Button>
           <Button variant="outline" asChild>
             <Link
-              to="/customers/$customerId/projects/$projectId"
+              to="/customers/summary/$customerId/projects/$projectId"
               params={{ customerId: project?.customerId, projectId }}
             >
               專案細節
