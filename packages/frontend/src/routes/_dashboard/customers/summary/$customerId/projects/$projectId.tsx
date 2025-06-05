@@ -5,6 +5,9 @@ import { ProjectForm } from "@/components/project-form";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useBomUploadAndQueue } from "@/hooks/use-bom-upload-and-queue";
+import { useNcUpload } from "@/hooks/use-nc-upload";
+import { useMultiFileUploadProgress } from "@/hooks/use-multi-file-upload-progress";
+import { queryClient } from "@/query-client";
 
 import { trpc } from "@/trpc";
 import { ProjectFormValue } from "@myapp/shared";
@@ -21,9 +24,19 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const { customerId, projectId } = Route.useParams();
+  const navigate = Route.useNavigate();
 
-  const { handleBomUploadAndQueue, processProgress, uploadProgress, state } =
-    useBomUploadAndQueue({ customerId, projectState: "create" });
+  const { handleBomUploadAndQueue } = useBomUploadAndQueue();
+  const { handleNcUpload } = useNcUpload();
+
+  // Use the new pattern with setupFileConfigs
+  const {
+    fileStatuses,
+    overallProgress,
+    updateFileProgress,
+    resetProgress,
+    setupFileConfigs,
+  } = useMultiFileUploadProgress();
 
   // Fetch project data
   const { data: project } = useSuspenseQuery(
@@ -35,7 +48,29 @@ function RouteComponent() {
   );
 
   const handleSubmit = async (formData: ProjectFormValue) => {
-    const { bom, ...projectData } = formData;
+    const { bom, nc, ...projectData } = formData;
+
+    const dynamicFileConfigs = [];
+
+    // Add BOM config if BOM file is present
+    if (bom) {
+      dynamicFileConfigs.push({
+        fileId: "bom" as const,
+        weight: 1,
+        totalStages: 2,
+      });
+    }
+
+    // Add NC config if NC file is present
+    if (nc) {
+      dynamicFileConfigs.push({
+        fileId: "nc" as const,
+        weight: 1,
+        totalStages: 1,
+      });
+    }
+
+    setupFileConfigs(dynamicFileConfigs);
 
     updateProject(
       {
@@ -43,53 +78,107 @@ function RouteComponent() {
         data: projectData,
       },
       {
-        onSuccess: async (project) => {
-          await handleBomUploadAndQueue({ projectId: project.id, bom });
+        onSuccess: async () => {
+          // Reset progress tracking
+          resetProgress();
+          // Track upload completion status
+          let bomUploadComplete = false;
+          let ncUploadComplete = false;
+
+          // Function to check if all uploads are complete and navigate
+          const checkAllUploadsAndNavigate = () => {
+            if (bomUploadComplete && ncUploadComplete) {
+              // All uploads are complete, invalidate queries and navigate
+              queryClient.invalidateQueries({
+                queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),
+              });
+
+              // Navigate back to projects list
+              navigate({
+                to: "/customers/summary/$customerId/projects",
+                params: { customerId },
+              });
+            }
+          };
+
+          // Start all uploads in parallel
+          const uploadPromises = [];
+
+          // BOM upload and processing
+          if (bom instanceof File) {
+            const bomPromise = handleBomUploadAndQueue(
+              { projectId, bom },
+              {
+                onUploadProgress: (progress: number) => {
+                  updateFileProgress("bom", "upload", progress);
+                },
+                onProcessProgress: (progress: number) => {
+                  updateFileProgress("bom", "process", progress, 1);
+                },
+                onComplete: () => {
+                  updateFileProgress("bom", "complete", 100, 1);
+                  bomUploadComplete = true;
+                  checkAllUploadsAndNavigate();
+                },
+                onError: (error) => {
+                  updateFileProgress("bom", "error", 0);
+                  console.error("BOM upload/process failed:", error);
+                },
+              }
+            );
+            uploadPromises.push(bomPromise);
+          } else {
+            // No BOM file to upload, mark as complete
+            bomUploadComplete = true;
+          }
+
+          // NC upload
+          if (nc instanceof File) {
+            const ncPromise = handleNcUpload(
+              { projectId, nc },
+              {
+                onUploadProgress: (progress: number) => {
+                  updateFileProgress("nc", "upload", progress);
+                },
+                onComplete: () => {
+                  updateFileProgress("nc", "complete", 100);
+                  ncUploadComplete = true;
+                  checkAllUploadsAndNavigate();
+                },
+                onError: (error) => {
+                  updateFileProgress("nc", "error", 0);
+                  console.error("NC upload failed:", error);
+                },
+              }
+            );
+            uploadPromises.push(ncPromise);
+          } else {
+            // No NC file to upload, mark as complete
+            ncUploadComplete = true;
+          }
+
+          // Wait for all uploads to complete or fail
+          try {
+            await Promise.all(uploadPromises);
+          } catch (error) {
+            console.error("One or more uploads failed:", error);
+            // Even if some uploads fail, we'll let the onComplete callbacks handle navigation
+          }
         },
         onError: (error) => {
-          console.error("Project creation failed:", error);
+          console.error("Project update failed:", error);
           toast.error(`更新專案失敗: ${error.message}`);
         },
       }
     );
   };
 
-  const uploadOrProcessText = (() => {
-    if (state === "uploading") return "上傳中...";
-
-    if (processProgress?.status === "failed") return "匯入失敗";
-    if (processProgress?.status === "done") return "匯入完成";
-
-    if (
-      processProgress?.status === "processing" ||
-      processProgress?.status === "waiting"
-    )
-      return "匯入中...";
-
-    return "未知狀態";
-  })();
-
-  const progressBar = (() => {
-    console.log(state, processProgress);
-
-    if (state === "idle") return null;
-
-    let progress = 0;
-
-    if (state === "uploading") progress = uploadProgress;
-
-    if (state === "processing") {
-      if (processProgress?.status === "done") progress = 100;
-      if (processProgress?.status === "failed") return null;
-      if (
-        processProgress?.status === "processing" ||
-        processProgress?.status === "waiting"
-      )
-        progress = processProgress.progress;
-    }
-
-    return <Progress value={progress} className="h-2 flex-1" />;
-  })();
+  // Get appropriate status message based on progress
+  const getStatusMessage = () => {
+    if (overallProgress === 0) return "";
+    if (overallProgress === 100) return "上傳和處理完成";
+    return `上傳和處理中... ${Math.round(overallProgress)}%`;
+  };
 
   return (
     <PageShell
@@ -105,12 +194,12 @@ function RouteComponent() {
             </Link>
           </Button>
           <div className="flex gap-2 items-center">
-            {(state === "processing" || state === "uploading") && (
+            {overallProgress > 0 && overallProgress < 100 && (
               <div className="flex items-center gap-2 w-60">
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {uploadOrProcessText}
+                  {getStatusMessage()}
                 </span>
-                {progressBar}
+                <Progress value={overallProgress} className="h-2 flex-1" />
               </div>
             )}
             <Button type="submit" form="project-form" disabled={isPending}>
@@ -121,12 +210,23 @@ function RouteComponent() {
       }
     >
       <ScrollableBody>
+        {/* Progress bar for file uploads - full width version */}
+        {overallProgress > 0 && overallProgress < 100 && (
+          <div className="container mb-6 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span>{getStatusMessage()}</span>
+            </div>
+            <Progress value={overallProgress} className="h-2" />
+          </div>
+        )}
+
         <ProjectForm
           customerId={customerId}
           initialData={project}
           onSubmit={handleSubmit}
           disabled={isPending}
           projectId={projectId}
+          fileStatuses={fileStatuses}
         />
       </ScrollableBody>
     </PageShell>

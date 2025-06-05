@@ -9,8 +9,15 @@ import { fileTypeFromBuffer } from "file-type";
 import { Hono } from "hono";
 import { s3Client } from "../s3.js";
 import { honoAuthMiddleware } from "../trpc/core.js";
-import { BOM_DIR_NAME, BOM_FILE_NAME, HISTORY_DIR_NAME } from "./constants.js";
+import {
+  BOM_DIR_NAME,
+  BOM_FILE_NAME,
+  HISTORY_DIR_NAME,
+  NC_DIR_NAME,
+  NC_FILE_NAME,
+} from "./constants.js";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { preparePresignedUpload } from "./utils/prepare-presigned-upload.js";
 
 const fileRoutes = new Hono();
 
@@ -211,111 +218,150 @@ fileRoutes.post(
 //   }
 // );
 
+// fileRoutes.get(
+//   "/presigned-url/bom-upload/:projectId",
+//   honoAuthMiddleware(["BasicInfoManagement"]),
+//   async (c) => {
+//     const { projectId } = c.req.param();
+//     const BUCKET_NAME = process.env.S3_BUCKET_NAME;
+//     const bomDirPath = `projects/${projectId}/${BOM_DIR_NAME}/`;
+//     const historyDirPath = `${bomDirPath}${HISTORY_DIR_NAME}/`;
+//     const bomFilePath = `${bomDirPath}${BOM_FILE_NAME}`;
+
+//     console.log("[bom-upload] Handler start. projectId:", projectId);
+//     console.log("[bom-upload] BUCKET_NAME:", BUCKET_NAME);
+//     console.log("[bom-upload] bomDirPath:", bomDirPath);
+//     console.log("[bom-upload] bomFilePath:", bomFilePath);
+//     console.log("[bom-upload] historyDirPath:", historyDirPath);
+
+//     try {
+//       // Check if BOM file already exists
+//       console.log("[bom-upload] Listing objects for:", bomFilePath);
+//       const listCommand = new ListObjectsV2Command({
+//         Bucket: BUCKET_NAME,
+//         Prefix: bomFilePath,
+//       });
+
+//       const listedObjects = await s3Client.send(listCommand);
+//       console.log("[bom-upload] Listed objects:", listedObjects);
+//       let historyFilePath = null;
+
+//       // If BOM file exists, prepare to move it to history
+//       if (listedObjects.Contents && listedObjects.Contents.length > 0) {
+//         console.log("[bom-upload] BOM exists, preparing to move to history.");
+//         // Ensure history directory exists
+//         console.log("[bom-upload] Ensuring history directory exists:", historyDirPath);
+//         await s3Client.send(
+//           new PutObjectCommand({
+//             Bucket: BUCKET_NAME,
+//             Key: historyDirPath,
+//             Body: Buffer.from(""),
+//           })
+//         );
+//         console.log("[bom-upload] History directory ensured.");
+
+//         // Create timestamp for the history file
+//         const now = new Date().toISOString().replace(/[:T-]|\.\d{3}Z$/g, "");
+//         const historyFileName = `TeklaBom_${now}.csv`;
+//         historyFilePath = `${historyDirPath}${historyFileName}`;
+//         console.log("[bom-upload] historyFilePath:", historyFilePath);
+
+//         // Copy existing BOM to history
+//         console.log("[bom-upload] Copying BOM to history:", historyFilePath);
+//         await s3Client.send(
+//           new CopyObjectCommand({
+//             Bucket: BUCKET_NAME,
+//             CopySource: `${encodeURIComponent(BUCKET_NAME!)}/${encodeURIComponent(bomFilePath)}`,
+//             Key: historyFilePath,
+//           })
+//         );
+//         console.log("[bom-upload] BOM copied to history.");
+
+//         // Delete the original BOM file
+//         console.log("[bom-upload] Deleting original BOM:", bomFilePath);
+//         await s3Client.send(
+//           new DeleteObjectCommand({
+//             Bucket: BUCKET_NAME,
+//             Key: bomFilePath,
+//           })
+//         );
+//         console.log("[bom-upload] Original BOM deleted.");
+//       } else {
+//         console.log("[bom-upload] No existing BOM file found.");
+//       }
+
+//       // Generate a pre-signed URL for PUT operation with required headers
+//       console.log("[bom-upload] Generating presigned URL for:", bomFilePath);
+//       const command = new PutObjectCommand({
+//         Bucket: BUCKET_NAME,
+//         Key: bomFilePath,
+//         ContentType: "text/csv",
+//         // Metadata: {
+//         //   "original-filename": BOM_FILE_NAME,
+//         // },
+//       });
+
+//       const uploadUrl = await getSignedUrl(s3Client, command, {
+//         expiresIn: 3600,
+//       });
+//       console.log("[bom-upload] Presigned URL generated:", uploadUrl);
+
+//       console.log("[bom-upload] Returning JSON response.");
+//       return c.json({
+//         success: true,
+//         uploadUrl,
+//         s3Key: bomFilePath,
+//         // filePath: bomFilePath,
+//         // historyFilePath: historyFilePath || null,
+//       });
+//     } catch (error) {
+//       console.error("[bom-upload] Error in pre-signed URL generation:", error);
+//       throw new TRPCError({
+//         code: "INTERNAL_SERVER_ERROR",
+//         message: "Failed to prepare for file upload",
+//         cause: error instanceof Error ? error.message : "unknown error",
+//       });
+//     }
+//   }
+// );
+
 fileRoutes.get(
   "/presigned-url/bom-upload/:projectId",
   honoAuthMiddleware(["BasicInfoManagement"]),
   async (c) => {
     const { projectId } = c.req.param();
-    const BUCKET_NAME = process.env.S3_BUCKET_NAME;
-    const bomDirPath = `projects/${projectId}/${BOM_DIR_NAME}/`;
-    const historyDirPath = `${bomDirPath}${HISTORY_DIR_NAME}/`;
-    const bomFilePath = `${bomDirPath}${BOM_FILE_NAME}`;
-
-    console.log("[bom-upload] Handler start. projectId:", projectId);
-    console.log("[bom-upload] BUCKET_NAME:", BUCKET_NAME);
-    console.log("[bom-upload] bomDirPath:", bomDirPath);
-    console.log("[bom-upload] bomFilePath:", bomFilePath);
-    console.log("[bom-upload] historyDirPath:", historyDirPath);
-
-    try {
-      // Check if BOM file already exists
-      console.log("[bom-upload] Listing objects for:", bomFilePath);
-      const listCommand = new ListObjectsV2Command({
-        Bucket: BUCKET_NAME,
-        Prefix: bomFilePath,
-      });
-
-      const listedObjects = await s3Client.send(listCommand);
-      console.log("[bom-upload] Listed objects:", listedObjects);
-      let historyFilePath = null;
-
-      // If BOM file exists, prepare to move it to history
-      if (listedObjects.Contents && listedObjects.Contents.length > 0) {
-        console.log("[bom-upload] BOM exists, preparing to move to history.");
-        // Ensure history directory exists
-        console.log("[bom-upload] Ensuring history directory exists:", historyDirPath);
-        await s3Client.send(
-          new PutObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: historyDirPath,
-            Body: Buffer.from(""),
-          })
-        );
-        console.log("[bom-upload] History directory ensured.");
-
-        // Create timestamp for the history file
-        const now = new Date().toISOString().replace(/[:T-]|\.\d{3}Z$/g, "");
-        const historyFileName = `TeklaBom_${now}.csv`;
-        historyFilePath = `${historyDirPath}${historyFileName}`;
-        console.log("[bom-upload] historyFilePath:", historyFilePath);
-
-        // Copy existing BOM to history
-        console.log("[bom-upload] Copying BOM to history:", historyFilePath);
-        await s3Client.send(
-          new CopyObjectCommand({
-            Bucket: BUCKET_NAME,
-            CopySource: `${encodeURIComponent(BUCKET_NAME!)}/${encodeURIComponent(bomFilePath)}`,
-            Key: historyFilePath,
-          })
-        );
-        console.log("[bom-upload] BOM copied to history.");
-
-        // Delete the original BOM file
-        console.log("[bom-upload] Deleting original BOM:", bomFilePath);
-        await s3Client.send(
-          new DeleteObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: bomFilePath,
-          })
-        );
-        console.log("[bom-upload] Original BOM deleted.");
-      } else {
-        console.log("[bom-upload] No existing BOM file found.");
-      }
-
-      // Generate a pre-signed URL for PUT operation with required headers
-      console.log("[bom-upload] Generating presigned URL for:", bomFilePath);
-      const command = new PutObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: bomFilePath,
-        ContentType: "text/csv",
-        // Metadata: {
-        //   "original-filename": BOM_FILE_NAME,
-        // },
-      });
-
-      const uploadUrl = await getSignedUrl(s3Client, command, {
-        expiresIn: 3600,
-      });
-      console.log("[bom-upload] Presigned URL generated:", uploadUrl);
-
-      console.log("[bom-upload] Returning JSON response.");
-      return c.json({
-        success: true,
-        uploadUrl,
-        s3Key: bomFilePath,
-        // filePath: bomFilePath,
-        // historyFilePath: historyFilePath || null,
-      });
-    } catch (error) {
-      console.error("[bom-upload] Error in pre-signed URL generation:", error);
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to prepare for file upload",
-        cause: error instanceof Error ? error.message : "unknown error",
-      });
-    }
+    const { uploadUrl, s3Key } = await preparePresignedUpload({
+      projectId,
+      dirName: BOM_DIR_NAME,
+      fileName: BOM_FILE_NAME,
+      contentType: "text/csv",
+      historyFileNameTemplate: (timestamp) => `TeklaBom_${timestamp}.csv`,
+    });
+    return c.json({
+      success: true,
+      uploadUrl,
+      s3Key,
+    });
   }
 );
 
+fileRoutes.get(
+  "/presigned-url/nc-upload/:projectId",
+  honoAuthMiddleware(["BasicInfoManagement"]),
+  async (c) => {
+    const { projectId } = c.req.param();
+    const { uploadUrl, s3Key } = await preparePresignedUpload({
+      projectId,
+      dirName: NC_DIR_NAME,
+      fileName: NC_FILE_NAME,
+      contentType: "application/zip",
+      historyFileNameTemplate: (timestamp) => `nc_${timestamp}.zip`,
+    });
+    return c.json({
+      success: true,
+      uploadUrl,
+      s3Key,
+    });
+  }
+);
 export default fileRoutes;

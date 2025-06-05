@@ -5,6 +5,8 @@ import { ProjectForm } from "@/components/project-form";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useBomUploadAndQueue } from "@/hooks/use-bom-upload-and-queue";
+import { useNcUpload } from "@/hooks/use-nc-upload";
+import { useMultiFileUploadProgress } from "@/hooks/use-multi-file-upload-progress";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
@@ -22,28 +24,164 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  const [newProjectId, setNewProjectid] = useLocalStorage("new-project-id", "");
+  // Store project creation state with customer context to prevent cross-customer redirects
+  const [projectCreationState, setProjectCreationState] = useLocalStorage(
+    "project-creation-state",
+    { customerId: "", projectId: "", isProcessing: false }
+  );
   const navigate = Route.useNavigate();
   const { customerId } = Route.useParams();
   const { mutate: createProject, isPending } = useMutation(
     trpc.basicInfo.createProject.mutationOptions()
   );
-  const { handleBomUploadAndQueue, processProgress, uploadProgress, state } =
-    useBomUploadAndQueue({ customerId, projectState: "create" });
+  const { handleBomUploadAndQueue } = useBomUploadAndQueue();
+  const { handleNcUpload } = useNcUpload();
+
+  // We'll set up the file configs dynamically in the handleSubmit function
+  // based on which files are actually present
+  const {
+    fileStatuses,
+    overallProgress,
+    updateFileProgress,
+    resetProgress,
+    setupFileConfigs,
+  } = useMultiFileUploadProgress();
+  console.log(fileStatuses);
 
   const handleSubmit = (data: ProjectFormValue) => {
-    const { bom, ...projectData } = data;
+    // Extract files from form data
+    const { bom, nc, ...projectData } = data;
+
+    const dynamicFileConfigs = [];
+
+    // Add BOM config if BOM file is present
+    if (bom) {
+      dynamicFileConfigs.push({
+        fileId: "bom" as const,
+        weight: 1,
+        totalStages: 2,
+      });
+    }
+
+    // Add NC config if NC file is present
+    if (nc) {
+      dynamicFileConfigs.push({
+        fileId: "nc" as const,
+        weight: 1,
+        totalStages: 1,
+      });
+    }
+
+    setupFileConfigs(dynamicFileConfigs);
 
     createProject(projectData, {
       onSuccess: async (project) => {
-        setNewProjectid(project.id);
-        await handleBomUploadAndQueue({ projectId: project.id, bom });
-        queryClient.invalidateQueries({
-          queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),
+        // Save project creation state with customer context and processing flag
+        setProjectCreationState({
+          customerId,
+          projectId: project.id,
+          isProcessing: true,
         });
-        queryClient.invalidateQueries({
-          queryKey: trpc.production.readSimpleProjects.queryKey(),
-        });
+
+        // Track upload completion status
+        let bomUploadComplete = false;
+        let ncUploadComplete = false;
+
+        // Function to check if all uploads are complete and navigate
+        const checkAllUploadsAndNavigate = () => {
+          if (bomUploadComplete && ncUploadComplete) {
+            // All uploads are complete, invalidate queries and navigate
+            queryClient.invalidateQueries({
+              queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),
+            });
+            queryClient.invalidateQueries({
+              queryKey: trpc.production.readSimpleProjects.queryKey(),
+            });
+
+            // Clear processing state since uploads are complete
+            setProjectCreationState({
+              customerId: "",
+              projectId: "",
+              isProcessing: false,
+            });
+
+            // Navigate to project detail page
+            navigate({
+              to: "/customers/summary/$customerId/projects/$projectId",
+              params: {
+                customerId,
+                projectId: project.id,
+              },
+            });
+          }
+        };
+
+        // Start all uploads in parallel
+        const uploadPromises = [];
+
+        // Reset progress tracking before starting new uploads
+        resetProgress();
+
+        // Only attempt BOM upload if a BOM file exists
+        if (bom instanceof File) {
+          const bomPromise = handleBomUploadAndQueue(
+            { projectId: project.id, bom },
+            {
+              onUploadProgress: (progress: number) => {
+                updateFileProgress("bom", "upload", progress);
+              },
+              onProcessProgress: (progress: number) => {
+                updateFileProgress("bom", "process", progress, 1);
+              },
+              onComplete: () => {
+                updateFileProgress("bom", "complete", 100, 1);
+                bomUploadComplete = true;
+                checkAllUploadsAndNavigate();
+              },
+              onError: (error) => {
+                updateFileProgress("bom", "error", 0);
+                console.error("BOM upload/process failed:", error);
+              },
+            }
+          );
+          uploadPromises.push(bomPromise);
+        } else {
+          // Mark BOM as complete if not present
+          bomUploadComplete = true;
+        }
+
+        // Only attempt NC upload if an NC file exists
+        if (nc instanceof File) {
+          const ncPromise = handleNcUpload(
+            { projectId: project.id, nc },
+            {
+              onUploadProgress: (progress: number) => {
+                updateFileProgress("nc", "upload", progress);
+              },
+              onComplete: () => {
+                updateFileProgress("nc", "complete", 100);
+                ncUploadComplete = true;
+                checkAllUploadsAndNavigate();
+              },
+              onError: (error) => {
+                updateFileProgress("nc", "error", 0);
+                console.error("NC upload failed:", error);
+              },
+            }
+          );
+          uploadPromises.push(ncPromise);
+        } else {
+          // Mark NC as complete if not present
+          ncUploadComplete = true;
+        }
+
+        // Wait for all uploads to complete or fail
+        try {
+          await Promise.all(uploadPromises);
+        } catch (error) {
+          console.error("One or more uploads failed:", error);
+          // Even if some uploads fail, we'll let the onComplete callbacks handle navigation
+        }
       },
       onError: (error) => {
         console.error("Project creation failed:", error);
@@ -53,47 +191,34 @@ function RouteComponent() {
   };
 
   useEffect(() => {
-    if (newProjectId)
+    // Check if there's an ongoing project creation for this customer
+    const {
+      customerId: storedCustomerId,
+      projectId: storedProjectId,
+      isProcessing,
+    } = projectCreationState;
+
+    // Only redirect if:
+    // 1. We have a stored project that's still processing
+    // 2. The stored customer ID matches the current route's customer ID
+    if (isProcessing && storedProjectId && storedCustomerId === customerId) {
       navigate({
         to: "/customers/summary/$customerId/projects/$projectId",
         params: {
-          projectId: newProjectId,
+          customerId,
+          projectId: storedProjectId,
         },
       });
-
-    setNewProjectid("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const uploadOrProcessText = (() => {
-    if (state === "uploading") return "上傳中...";
-
-    if (processProgress?.status === "failed") return "匯入失敗";
-    if (processProgress?.status === "done") return "匯入完成";
-
-    return "匯入中...";
-  })();
-
-  const progressBar = (() => {
-    console.log(state, processProgress);
-    if (state === "idle") return null;
-
-    let progress = 0;
-
-    if (state === "uploading") progress = uploadProgress;
-
-    if (state === "processing") {
-      if (processProgress?.status === "done") progress = 100;
-      if (processProgress?.status === "failed") return null;
-      if (
-        processProgress?.status === "processing" ||
-        processProgress?.status === "waiting"
-      )
-        progress = processProgress.progress;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerId]);
 
-    return <Progress value={progress} className="h-2 flex-1" />;
-  })();
+  // Get appropriate status message based on progress
+  const getStatusMessage = () => {
+    if (overallProgress === 0) return "";
+    if (overallProgress === 100) return "上傳和處理完成";
+    return `上傳和處理中... ${Math.round(overallProgress)}%`;
+  };
 
   return (
     <PageShell
@@ -109,12 +234,12 @@ function RouteComponent() {
             </Link>
           </Button>
           <div className="flex gap-2 items-center">
-            {(state === "processing" || state === "uploading") && (
+            {overallProgress > 0 && overallProgress < 100 && (
               <div className="flex items-center gap-2 w-60">
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {uploadOrProcessText}
+                  {getStatusMessage()}
                 </span>
-                {progressBar}
+                <Progress value={overallProgress} className="h-2 flex-1" />
               </div>
             )}
 
@@ -130,6 +255,7 @@ function RouteComponent() {
           customerId={customerId}
           onSubmit={handleSubmit}
           disabled={isPending}
+          fileStatuses={fileStatuses}
         />
       </ScrollableBody>
     </PageShell>

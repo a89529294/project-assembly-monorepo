@@ -12,6 +12,7 @@ import {
   projectsQuerySchema,
   projectsTable,
   readProjectOutputSchema,
+  processWorkTypesTable,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq, ilike, inArray, or, sql } from "drizzle-orm";
@@ -24,7 +25,12 @@ import { db } from "../../db/index.js";
 import { s3Client } from "../../s3.js";
 import { protectedProcedure } from "../core";
 import { orderDirectionFn } from "../helpers.js";
-import { BOM_DIR_NAME, BOM_FILE_NAME } from "../../file/constants.js";
+import {
+  BOM_DIR_NAME,
+  BOM_FILE_NAME,
+  NC_DIR_NAME,
+  NC_FILE_NAME,
+} from "../../file/constants.js";
 
 const genProjectsWhereCondition = (term: string) => {
   const searchTerm = `%${term}%`;
@@ -62,9 +68,36 @@ export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
       )
       .where(eq(projectContactsTable.projectId, input));
 
-    // Check if BOM file exists and generate presigned URL if it does
     let bom;
+    let nc;
     const BUCKET_NAME = process.env.S3_BUCKET_NAME;
+    const ncFilePath = `projects/${input}/${NC_DIR_NAME}/${NC_FILE_NAME}`;
+
+    try {
+      // Check if NC file exists
+      const ncFileCommand = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: ncFilePath,
+      });
+
+      // This will throw an error if the file doesn't exist
+      await s3Client.send(
+        new GetObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: ncFilePath,
+        })
+      );
+
+      // If we get here, the file exists - generate a presigned URL
+      nc = await getSignedUrl(s3Client, ncFileCommand, {
+        expiresIn: 3600, // 1 hour expiration
+      });
+    } catch (error) {
+      // File doesn't exist or other S3 error - nc remains undefined
+      console.debug(`No NC file found for project ${input}`);
+    }
+
+    // Check if BOM file exists and generate presigned URL if it does
     const bomFilePath = `projects/${input}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`;
 
     try {
@@ -129,6 +162,7 @@ export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
       ...project,
       contacts: contacts.map((c) => c.contacts),
       bom,
+      nc,
       bomProcess: {
         jobStatus: bomJobStatus,
         jobProgress: bomJobProgress,
@@ -382,13 +416,44 @@ export const checkBomProcessStatusProcedure = protectedProcedure([
     };
   });
 
+// Special process work types for new projects
+const SPECIAL_PROCESS_WORK_TYPES = [
+  {
+    name: "核銷庫存", // Inventory Write-off
+    sequence: 0,
+    queue: 1,
+  },
+  {
+    name: "成品出貨", // Finished Goods Shipment
+    sequence: 0,
+    queue: 2,
+  },
+  {
+    name: "待出貨區", // Pre-shipment Area
+    sequence: 0,
+    queue: 3,
+  },
+  {
+    name: "製程ID變更", // Process ID Change
+    sequence: 0,
+    queue: 4,
+  },
+];
+
 export const createProjectProcedure = protectedProcedure([
   "BasicInfoManagement",
 ])
   .input(projectFormSchema)
-  .mutation(async ({ input }) => {
+  .mutation(async ({ input, ctx }) => {
     const { contacts, ...projectData } = input;
     const contactIds = contacts.map((v) => v.id);
+    const userId = ctx.session.userId;
+    if (!userId) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "User ID is required to create process work types",
+      });
+    }
     return db.transaction(async (tx) => {
       // 1. Create the project
       const [project] = await tx
@@ -403,7 +468,17 @@ export const createProjectProcedure = protectedProcedure([
         });
       }
 
-      // 2. If there are contacts, create the associations
+      // 2. Insert special process work types for this project
+      await tx.insert(processWorkTypesTable).values(
+        SPECIAL_PROCESS_WORK_TYPES.map((type) => ({
+          ...type,
+          projectId: project.id,
+          createdBy: userId,
+          updatedBy: userId,
+        }))
+      );
+
+      // 3. If there are contacts, create the associations
       if (contactIds.length > 0) {
         // Verify all contact IDs exist and belong to the same customer
         const contacts = await tx

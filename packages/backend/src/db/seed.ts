@@ -18,6 +18,7 @@ import {
   appUserPermissionsTable,
   appUserRefreshTokensTable,
   roleNameEnum,
+  processWorkTypesTable,
 } from "./schema.js";
 import { db } from "./index.js";
 import { randomUUID } from "crypto";

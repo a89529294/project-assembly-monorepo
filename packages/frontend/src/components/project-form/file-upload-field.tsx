@@ -5,13 +5,15 @@ import csvIcon from "../../assets/csv.png";
 
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
+import { FileUploadStatus } from "@/hooks/use-multi-file-upload-progress";
 
 interface FileUploadFieldProps {
   form: UseFormReturn<ProjectFormValue>;
-  name: "bom";
+  name: "bom" | "nc";
   label: string;
   accept: string;
   projectId?: string;
+  status: FileUploadStatus | undefined;
 }
 
 export function FileUploadField({
@@ -20,7 +22,10 @@ export function FileUploadField({
   label,
   accept,
   projectId,
+  status,
 }: FileUploadFieldProps) {
+  console.log(status);
+
   const fileValue = useWatch({
     control: form.control,
     name: name,
@@ -28,7 +33,11 @@ export function FileUploadField({
 
   const { data: processProgress, isError: cehckBomProcessError } = useQuery(
     trpc.basicInfo.checkBomProcessStatus.queryOptions(projectId!, {
-      enabled: typeof fileValue === "string" && !!projectId,
+      enabled:
+        typeof fileValue === "string" &&
+        !!projectId &&
+        status === undefined &&
+        name === "bom",
       refetchInterval: (query) => {
         if (
           query.state.data?.status === "failed" ||
@@ -73,6 +82,14 @@ export function FileUploadField({
   const hasExistingFile = typeof fileValue === "string";
   const hasNewFile = fileValue instanceof File;
 
+  const fileName = (() => {
+    if (hasNewFile) return fileValue.name;
+
+    if (name === "bom") return "TeklamBom.csv";
+
+    if (name === "nc") return "nc.zip";
+  })();
+
   return (
     <div className="space-y-2">
       {/* Top row: label, description, upload button */}
@@ -80,22 +97,25 @@ export function FileUploadField({
         <div className="flex items-center gap-4 min-w-0">
           <label className="text-sm font-medium text-gray-700 whitespace-nowrap flex items-center gap-2">
             {label}
-            {processProgress &&
+            {/* Display BOM process progress when status is undefined */}
+            {name === "bom" &&
+              status === undefined &&
+              processProgress &&
               (() => {
                 // Compute display values
-                let status = "";
+                let statusText = "";
                 let progress: number | undefined = 0;
 
                 if (cehckBomProcessError) {
-                  status = "匯入失敗";
+                  statusText = "匯入失敗";
                 }
 
                 if (processProgress.status === "failed") {
-                  status = "匯入失敗";
+                  statusText = "匯入失敗";
                 }
 
                 if (processProgress.status === "done") {
-                  status = "匯入完成";
+                  statusText = "匯入完成";
                   progress = 100;
                 }
 
@@ -103,14 +123,43 @@ export function FileUploadField({
                   processProgress.status === "waiting" ||
                   processProgress.status === "processing"
                 ) {
-                  status = "匯入中...";
+                  statusText = "匯入中...";
                   progress = processProgress.progress;
                 }
 
                 return (
                   <span className="ml-2 px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs font-normal border border-blue-200 flex items-center gap-2">
-                    {`狀態: ${status}`}
+                    {`狀態: ${statusText}`}
                     {typeof progress === "number" && <span>({progress}%)</span>}
+                  </span>
+                );
+              })()}
+
+            {/* Display file upload status when status is defined */}
+            {status &&
+              (() => {
+                let statusText = "";
+                let statusClasses = "bg-blue-100 text-blue-800 border-blue-200";
+
+                if (status.stage === "upload") {
+                  statusText = "上傳中";
+                } else if (status.stage === "process") {
+                  statusText = "處理中";
+                } else if (status.stage === "complete") {
+                  statusText = "完成";
+                  statusClasses =
+                    "bg-green-100 text-green-800 border-green-200";
+                } else if (status.stage === "error") {
+                  statusText = "錯誤";
+                  statusClasses = "bg-red-100 text-red-800 border-red-200";
+                }
+
+                return (
+                  <span
+                    className={`ml-2 px-2 py-0.5 rounded ${statusClasses} text-xs font-normal border flex items-center gap-2`}
+                  >
+                    {`狀態: ${statusText}`}
+                    {status.progress < 100 && <span>({status.progress}%)</span>}
                   </span>
                 );
               })()}
@@ -142,7 +191,7 @@ export function FileUploadField({
                 className="h-10 w-10 object-contain"
               />
               <span className="text-sm text-gray-700 truncate max-w-xs">
-                {hasNewFile ? fileValue.name : "TeklamBom.csv"}
+                {fileName}
               </span>
             </div>
             <div className="flex items-center gap-2">

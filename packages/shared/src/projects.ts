@@ -43,6 +43,14 @@ export const projectFormSchema = baseProjectSchema
         z.string(),
       ])
       .optional(),
+    nc: z
+      .union([
+        z.custom<File>((file) => file instanceof File, {
+          message: "Invalid file object",
+        }),
+        z.string(),
+      ])
+      .optional(),
     ...sharedProjectFields,
   });
 

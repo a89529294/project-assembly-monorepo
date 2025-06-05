@@ -4,6 +4,7 @@ import { FileUploadField } from "@/components/project-form/file-upload-field";
 import { Form } from "@/components/ui/form";
 import { useCounties } from "@/hooks/use-counties";
 import { useDistricts } from "@/hooks/use-districts";
+import { FileUploadStatus } from "@/hooks/use-multi-file-upload-progress";
 import { trpc } from "@/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -20,6 +21,7 @@ type ProjectFormProps = {
   initialData?: ProjectFormValue;
   onSubmit: (data: ProjectFormValue) => void;
   disabled: boolean;
+  fileStatuses: FileUploadStatus[];
 };
 
 // type ProjectFormProps =
@@ -138,6 +140,17 @@ export function ProjectForm(props: ProjectFormProps) {
                 label="BOM 檔案"
                 accept=".csv,.xlsx,.xls"
                 projectId={props.projectId}
+                status={props.fileStatuses.find((v) => v.fileId === "bom")}
+              />
+            </div>
+            <div className="space-y-4">
+              <FileUploadField
+                form={form}
+                name="nc"
+                label="NC 檔案"
+                accept=".zip"
+                projectId={props.projectId}
+                status={props.fileStatuses.find((v) => v.fileId === "bom")}
               />
             </div>
           </div>
@@ -146,62 +159,6 @@ export function ProjectForm(props: ProjectFormProps) {
     </Form>
   );
 }
-
-// interface FileUploadFieldProps {
-//   form: UseFormReturn<ProjectFormValue>;
-//   name: "bom";
-//   label: string;
-//   accept: string;
-//   description?: string;
-// }
-
-// function FileUploadField({
-//   form,
-//   name,
-//   label,
-//   accept,
-//   description,
-// }: FileUploadFieldProps) {
-//   const fileValue = useWatch({
-//     control: form.control,
-//     name: name,
-//   });
-
-//   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = e.target.files?.[0];
-//     if (file) {
-//       form.setValue(name, file);
-//     }
-//   };
-
-//   return (
-//     <div className="space-y-2">
-//       <label className="block text-sm font-medium text-gray-700">{label}</label>
-//       <div className="mt-1 flex items-center">
-//         <label className="relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:text-blue-500">
-//           <span className="flex items-center gap-2">
-//             <FileUp className="h-4 w-4" />
-//             選擇檔案
-//           </span>
-//           <input
-//             type="file"
-//             accept={accept}
-//             className="sr-only"
-//             onChange={handleFileChange}
-//           />
-//         </label>
-//         {fileValue?.name && (
-//           <span className="ml-4 text-sm text-gray-500 truncate max-w-xs">
-//             已選擇: {fileValue.name}
-//           </span>
-//         )}
-//       </div>
-//       {description && (
-//         <p className="mt-1 text-sm text-gray-500">{description}</p>
-//       )}
-//     </div>
-//   );
-// }
 
 interface ContactFieldsProps {
   customerId: string;

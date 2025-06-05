@@ -208,7 +208,6 @@ function SubCollapsible({
     <Collapsible open={showSubItems}>
       <CollapsibleContent>
         {item.subs!.map((sub) => {
-          console.log(sub.linkOptions.to);
           return (
             <SidebarMenuSubItem key={sub.title}>
               <SidebarMenuSubButton asChild>

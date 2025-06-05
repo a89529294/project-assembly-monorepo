@@ -84,13 +84,14 @@ export async function privateFetch(
 
 export const uploadToS3 = (
   file: File,
+  contentType: string,
   uploadUrl: string,
   onProgress: (progrss: number) => void
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", uploadUrl, true);
-    xhr.setRequestHeader("Content-Type", "text/csv");
+    xhr.setRequestHeader("Content-Type", contentType);
     xhr.timeout = 300000; // 5 minutes
 
     xhr.upload.onprogress = (event) => {

@@ -1,13 +1,28 @@
 // src/schemas/process-work-detail.schema.ts
-import { pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { baseAuditSchema } from "./common";
 import { processWorkTypesTable } from "./process-work-type";
 
+export enum ProcessWorkDetailStatus {
+  COMPLETE = "完成",
+  ERROR = "錯誤",
+  CHECK = "檢測",
+}
+
+export const processWorkDetailStatusEnum = pgEnum(
+  "process_work_detail_status",
+  [
+    ProcessWorkDetailStatus.COMPLETE,
+    ProcessWorkDetailStatus.ERROR,
+    ProcessWorkDetailStatus.CHECK,
+  ]
+);
+
 export const processWorkDetailsTable = pgTable("process_work_detail", {
   ...baseAuditSchema,
   name: text("name").notNull(),
-  type: text("type").notNull(),
+  type: processWorkDetailStatusEnum("type").notNull(),
 
   // Foreign keys
   processWorkTypeId: uuid("process_work_type_id")
