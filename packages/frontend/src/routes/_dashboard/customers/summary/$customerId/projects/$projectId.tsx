@@ -49,12 +49,23 @@ function RouteComponent() {
     trpc.basicInfo.readProject.queryOptions(projectId)
   );
 
-  const { mutate: updateProject, isPending } = useMutation(
-    trpc.basicInfo.updateProject.mutationOptions()
+  const { mutate: updateProject, isPending: isUpdateProjectPending } =
+    useMutation(trpc.basicInfo.updateProject.mutationOptions());
+
+  const isAnyFileProcessing = fileStatuses.some(
+    (status) => status.stage === "upload"
   );
+  const isFormBusy = isUpdateProjectPending || isAnyFileProcessing;
 
   const handleSubmit = async (formData: ProjectFormValue) => {
-    const { bom, nc, constructorPDF, installedPlanePDF, designedPlanePDF, ...projectData } = formData;
+    const {
+      bom,
+      nc,
+      constructorPDF,
+      installedPlanePDF,
+      designedPlanePDF,
+      ...projectData
+    } = formData;
 
     const dynamicFileConfigs = [];
 
@@ -123,7 +134,13 @@ function RouteComponent() {
 
           // Function to check if all uploads are complete and navigate
           const checkAllUploadsAndNavigate = () => {
-            if (bomUploadComplete && ncUploadComplete && constructorPdfUploadComplete && installedPlanePdfUploadComplete && designedPlanePdfUploadComplete) {
+            if (
+              bomUploadComplete &&
+              ncUploadComplete &&
+              constructorPdfUploadComplete &&
+              installedPlanePdfUploadComplete &&
+              designedPlanePdfUploadComplete
+            ) {
               // All uploads are complete, invalidate queries and navigate
               queryClient.invalidateQueries({
                 queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),
@@ -223,7 +240,12 @@ function RouteComponent() {
               { projectId, installedPlanePDFFile: installedPlanePDF },
               {
                 onUploadProgress: (progress: number) => {
-                  updateFileProgress("installedPlanePDF", "upload", progress, 0);
+                  updateFileProgress(
+                    "installedPlanePDF",
+                    "upload",
+                    progress,
+                    0
+                  );
                 },
                 onComplete: () => {
                   updateFileProgress("installedPlanePDF", "complete", 100, 0);
@@ -268,6 +290,8 @@ function RouteComponent() {
           // Wait for all uploads to complete or fail
           try {
             await Promise.all(uploadPromises);
+
+            toast.success("更新專案成功");
           } catch (error) {
             console.error("One or more uploads failed:", error);
             // Even if some uploads fail, we'll let the onComplete callbacks handle navigation
@@ -296,7 +320,7 @@ function RouteComponent() {
             <Link
               to={"/customers/summary/$customerId/projects"}
               params={{ customerId }}
-              disabled={isPending}
+              disabled={isFormBusy}
             >
               返回專案列表
             </Link>
@@ -310,7 +334,7 @@ function RouteComponent() {
                 <Progress value={overallProgress} className="h-2 flex-1" />
               </div>
             )}
-            <Button type="submit" form="project-form" disabled={isPending}>
+            <Button type="submit" form="project-form" disabled={isFormBusy}>
               儲存
             </Button>
           </div>
@@ -332,7 +356,7 @@ function RouteComponent() {
           customerId={customerId}
           initialData={project}
           onSubmit={handleSubmit}
-          disabled={isPending}
+          disabled={isFormBusy}
           projectId={projectId}
           fileStatuses={fileStatuses}
         />

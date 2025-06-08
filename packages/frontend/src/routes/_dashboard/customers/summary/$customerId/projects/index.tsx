@@ -26,8 +26,10 @@ export const Route = createFileRoute(
     search,
   }),
   loader({ deps: { search }, params: { customerId } }) {
-    // TODO: Replace with actual projects query for the specific customer
-    // Using readCustomers as a placeholder - replace with actual projects query when available
+    queryClient.ensureQueryData(
+      trpc.basicInfo.readCustomer.queryOptions(customerId)
+    );
+
     queryClient.ensureQueryData(
       trpc.basicInfo.readCustomerProjects.queryOptions({
         customerId,
@@ -44,6 +46,9 @@ function RouteComponent() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const deferredTableControlsReturn = useDeferredPaginatedTableControls(search);
+  const { data: customer } = useSuspenseQuery(
+    trpc.basicInfo.readCustomer.queryOptions(customerId)
+  );
   const { data } = useSuspenseQuery(
     trpc.basicInfo.readCustomerProjects.queryOptions({
       customerId,
@@ -59,19 +64,19 @@ function RouteComponent() {
     },
     {
       accessorKey: "name",
-      header: "Project Name",
+      header: "專案名稱",
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: "狀態",
     },
     {
       accessorKey: "startDate",
-      header: "Start Date",
+      header: "起始日期",
     },
     {
       accessorKey: "endDate",
-      header: "End Date",
+      header: "結束日期",
     },
     columnHelper.display({
       id: "delete-customer",
@@ -119,7 +124,7 @@ function RouteComponent() {
       <PageShell
         header={
           <SummaryPageHeader
-            title="Projects"
+            title={`${customer.name}的專案`}
             createAction={
               <Button asChild>
                 <Link

@@ -12,9 +12,16 @@ import {
   PROJECT_STATUSES,
   projectFormSchema,
   ProjectFormValue,
+  projectStatusToLabel,
 } from "@myapp/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useFieldArray, useForm, UseFormReturn } from "react-hook-form";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type ProjectFormProps = {
   customerId: string;
@@ -26,7 +33,7 @@ type ProjectFormProps = {
 };
 
 export function ProjectForm(props: ProjectFormProps) {
-  const { counties } = useCounties();
+  const { counties, isFetching: isFetchingCounties } = useCounties();
 
   const form = useForm<ProjectFormValue>({
     resolver: zodResolver(projectFormSchema),
@@ -50,7 +57,9 @@ export function ProjectForm(props: ProjectFormProps) {
     disabled: props.disabled,
   });
 
-  const { data: districts } = useDistricts(form.watch("county"));
+  const { data: districts, isFetching: isFetchingDistricits } = useDistricts(
+    form.watch("county")
+  );
 
   const handleSubmit = form.handleSubmit(
     (values) => {
@@ -66,7 +75,7 @@ export function ProjectForm(props: ProjectFormProps) {
       <form onSubmit={handleSubmit} className="space-y-6" id="project-form">
         <div className="space-y-6">
           {/* Project Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-white rounded-lg shadow">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 gap-y-6 p-6 bg-white rounded-lg shadow">
             <h2 className="md:col-span-2 text-lg font-semibold">專案資訊</h2>
 
             <TextField
@@ -84,7 +93,7 @@ export function ProjectForm(props: ProjectFormProps) {
               label="狀態"
               options={PROJECT_STATUSES.map((status) => ({
                 value: status,
-                label: status,
+                label: projectStatusToLabel(status),
               }))}
               required
             />
@@ -102,14 +111,16 @@ export function ProjectForm(props: ProjectFormProps) {
                 options={counties}
                 onSelect={() => form.setValue("district", "")}
                 required={false}
+                loading={isFetchingCounties}
               />
 
               <SelectField
                 form={form}
                 name="district"
                 label="區"
-                options={districts || []}
+                options={districts}
                 required={false}
+                loading={isFetchingDistricits}
               />
 
               <TextField form={form} name="address" label="詳細地址" />
@@ -120,7 +131,11 @@ export function ProjectForm(props: ProjectFormProps) {
           <div className="grid grid-cols-1 gap-4 p-6 bg-white rounded-lg shadow">
             <h2 className="text-lg font-semibold">聯絡人</h2>
             <div className="space-y-4">
-              <ContactFields form={form} customerId={props.customerId} />
+              <ContactFields
+                customerId={props.customerId}
+                form={form}
+                disabled={props.disabled}
+              />
             </div>
           </div>
 
@@ -131,10 +146,11 @@ export function ProjectForm(props: ProjectFormProps) {
               <FileUploadField
                 form={form}
                 name="bom"
-                label="BOM 檔案 (csv)"
-                accept=".csv,.xlsx,.xls"
+                label="BOM表 (zip)"
+                accept=".csv"
                 projectId={props.projectId}
                 status={props.fileStatuses.find((v) => v.fileId === "bom")}
+                disabled={props.disabled}
               />
             </div>
             <div className="space-y-4">
@@ -145,6 +161,7 @@ export function ProjectForm(props: ProjectFormProps) {
                 accept=".zip"
                 projectId={props.projectId}
                 status={props.fileStatuses.find((v) => v.fileId === "nc")}
+                disabled={props.disabled}
               />
 
               <FileUploadField
@@ -156,6 +173,7 @@ export function ProjectForm(props: ProjectFormProps) {
                 status={props.fileStatuses.find(
                   (v) => v.fileId === "constructorPDF"
                 )}
+                disabled={props.disabled}
               />
 
               <FileUploadField
@@ -167,6 +185,7 @@ export function ProjectForm(props: ProjectFormProps) {
                 status={props.fileStatuses.find(
                   (v) => v.fileId === "installedPlanePDF"
                 )}
+                disabled={props.disabled}
               />
 
               <FileUploadField
@@ -178,6 +197,7 @@ export function ProjectForm(props: ProjectFormProps) {
                 status={props.fileStatuses.find(
                   (v) => v.fileId === "designedPlanePDF"
                 )}
+                disabled={props.disabled}
               />
             </div>
           </div>
@@ -190,9 +210,10 @@ export function ProjectForm(props: ProjectFormProps) {
 interface ContactFieldsProps {
   customerId: string;
   form: UseFormReturn<ProjectFormValue>;
+  disabled?: boolean;
 }
 
-function ContactFields({ customerId, form }: ContactFieldsProps) {
+function ContactFields({ customerId, form, disabled }: ContactFieldsProps) {
   const { data: availableContacts, isLoading } = useQuery(
     trpc.basicInfo.readProjectContacts.queryOptions(customerId)
   );
@@ -223,21 +244,43 @@ function ContactFields({ customerId, form }: ContactFieldsProps) {
             <button
               type="button"
               onClick={() => remove(index)}
-              className="text-red-500 hover:text-red-700 mt-6"
+              className={`text-red-500 hover:text-red-700 mt-6 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              disabled={disabled}
             >
               移除
             </button>
           )}
         </div>
       ))}
-      <button
-        type="button"
-        onClick={() => append(availableContacts![0])}
-        className="text-blue-500 hover:text-blue-700 text-sm font-medium self-start"
-        disabled={!availableContacts || availableContacts.length === 0}
-      >
-        + 新增聯絡人
-      </button>
+      <TooltipProvider>
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => {
+                if (availableContacts && availableContacts.length > 0) {
+                  append(availableContacts[0]);
+                }
+              }}
+              className={`text-blue-500 hover:text-blue-700 text-sm font-medium self-start ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              disabled={
+                disabled ||
+                isLoading ||
+                !availableContacts ||
+                availableContacts.length === 0
+              }
+            >
+              + 新增聯絡人
+            </button>
+          </TooltipTrigger>
+          {!isLoading &&
+            (!availableContacts || availableContacts.length === 0) && (
+              <TooltipContent>
+                <p>尚無可用聯絡人</p>
+              </TooltipContent>
+            )}
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }

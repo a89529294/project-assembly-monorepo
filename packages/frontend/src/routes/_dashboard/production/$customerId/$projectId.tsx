@@ -93,7 +93,7 @@ function RouteComponent() {
       navigate={(a) => navigate({ search: { ...search, ...a.search } })}
     >
       <PageShell
-        header={<SummaryPageHeader title={`${project.name} - 組件列表`} />}
+        header={<SummaryPageHeader title={`${project.name} - 構件列表`} />}
       >
         <div className="flex justify-between mb-4">
           <Button variant="outline" asChild>

@@ -168,7 +168,7 @@ export const projectsTable = pgTable("projects", {
   address: varchar({ length: 100 }),
   customerId: uuid("customer_id")
     .notNull()
-    .references(() => customersTable.id),
+    .references(() => customersTable.id, { onDelete: "cascade" }),
   ...timestampsWithDeletedAt,
 });
 

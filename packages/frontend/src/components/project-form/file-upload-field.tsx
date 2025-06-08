@@ -15,6 +15,7 @@ interface FileUploadFieldProps {
   accept: string;
   projectId?: string;
   status: FileUploadStatus | undefined;
+  disabled?: boolean;
 }
 
 export function FileUploadField({
@@ -24,6 +25,7 @@ export function FileUploadField({
   accept,
   projectId,
   status,
+  disabled,
 }: FileUploadFieldProps) {
   console.log(status);
 
@@ -170,7 +172,7 @@ export function FileUploadField({
           </label>
         </div>
         {/* Upload button at top right */}
-        <label className="relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:text-blue-500 ml-4">
+        <label className={`relative rounded-md bg-white font-medium text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:text-blue-500 ml-4 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
           <span className="flex items-center gap-2">
             <LucideFileUp className="h-4 w-4" />
             選擇檔案
@@ -181,6 +183,7 @@ export function FileUploadField({
             className="sr-only"
             onChange={handleFileChange}
             name={name}
+            disabled={disabled}
           />
         </label>
       </div>
@@ -201,10 +204,11 @@ export function FileUploadField({
             <div className="flex items-center gap-2">
               {hasExistingFile && (
                 <a
-                  href={fileValue}
+                  href={disabled ? undefined : fileValue}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  className={`text-sm text-blue-600 hover:text-blue-800 underline ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                  onClick={(e) => disabled && e.preventDefault()}
                 >
                   下載檔案
                 </a>
@@ -212,8 +216,8 @@ export function FileUploadField({
               {hasNewFile && (
                 <button
                   onClick={handleDownload}
-                  className="text-sm text-blue-600 hover:text-blue-800 underline"
-                  disabled={!fileValue}
+                  className={`text-sm text-blue-600 hover:text-blue-800 underline ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!fileValue || disabled}
                   type="button"
                 >
                   下載檔案

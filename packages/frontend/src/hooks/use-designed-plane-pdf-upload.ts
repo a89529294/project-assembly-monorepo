@@ -30,7 +30,7 @@ export function useDesignedPlanePdfUpload() {
       const result = await handleFileUpload(
         {
           file: designedPlanePDFFile,
-          fileType: "designedPlanePDF", // Ensure this matches FileId
+          fileType: "設計平面PDF",
           contentType: "application/zip",
           urlPath: `/file/presigned-url/designed-plane-upload/${projectId}`,
         },

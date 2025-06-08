@@ -30,7 +30,7 @@ export function useConstructorPdfUpload() {
       const result = await handleFileUpload(
         {
           file: constructorPDFFile,
-          fileType: "constructorPDF",
+          fileType: "構建PDF",
           contentType: "application/zip",
           urlPath: `/file/presigned-url/constructor-pdf-upload/${projectId}`,
         },

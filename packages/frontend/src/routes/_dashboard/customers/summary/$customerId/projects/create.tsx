@@ -34,9 +34,8 @@ function RouteComponent() {
   );
   const navigate = Route.useNavigate();
   const { customerId } = Route.useParams();
-  const { mutate: createProject, isPending } = useMutation(
-    trpc.basicInfo.createProject.mutationOptions()
-  );
+  const { mutate: createProject, isPending: isCreateProjectPending } =
+    useMutation(trpc.basicInfo.createProject.mutationOptions());
   const { handleBomUploadAndQueue } = useBomUploadAndQueue();
   const { handleNcUpload } = useNcUpload();
   const { uploadConstructorPdf } = useConstructorPdfUpload();
@@ -53,6 +52,11 @@ function RouteComponent() {
     setupFileConfigs,
   } = useMultiFileUploadProgress();
   console.log(fileStatuses);
+
+  const isAnyFileProcessing = fileStatuses.some(
+    (status) => status.stage === "upload"
+  );
+  const isFormBusy = isCreateProjectPending || isAnyFileProcessing;
 
   const handleSubmit = (data: ProjectFormValue) => {
     // Extract files from form data
@@ -317,6 +321,8 @@ function RouteComponent() {
         // Wait for all uploads to complete or fail
         try {
           await Promise.all(uploadPromises);
+
+          toast.success("建立專案成功");
         } catch (error) {
           console.error("One or more uploads failed:", error);
           // Even if some uploads fail, we'll let the onComplete callbacks handle navigation
@@ -374,7 +380,7 @@ function RouteComponent() {
             <Link
               to={"/customers/summary/$customerId/projects"}
               params={{ customerId }}
-              disabled={isPending}
+              disabled={isFormBusy}
             >
               返回專案列表
             </Link>
@@ -389,7 +395,7 @@ function RouteComponent() {
               </div>
             )}
 
-            <Button type="submit" form="project-form" disabled={isPending}>
+            <Button type="submit" form="project-form" disabled={isFormBusy}>
               儲存
             </Button>
           </div>
@@ -400,7 +406,7 @@ function RouteComponent() {
         <ProjectForm
           customerId={customerId}
           onSubmit={handleSubmit}
-          disabled={isPending}
+          disabled={isFormBusy}
           fileStatuses={fileStatuses}
         />
       </ScrollableBody>

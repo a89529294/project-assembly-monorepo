@@ -1,4 +1,4 @@
-import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
   BOM_PROCESS_STATUS,
@@ -68,144 +68,55 @@ export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
       )
       .where(eq(projectContactsTable.projectId, input));
 
-    let bom;
-    let nc;
-    let constructorPDF;
-    let installedPlanePDF;
-    let designedPlanePDF;
     const BUCKET_NAME = process.env.S3_BUCKET_NAME;
-    const ncFilePath = `projects/${input}/${NC_DIR_NAME}/${NC_FILE_NAME}`;
-    const constructorPdfZipFilePath = `uploads/constructor-pdf-zip/${input}.zip`;
-    const installedPlaneZipFilePath = `uploads/installed-plane-zip/${input}.zip`;
-    const designedPlaneZipFilePath = `uploads/designed-plane-zip/${input}.zip`;
+    const projectId = input;
 
-    try {
-      // Check if NC file exists
-      const ncFileCommand = new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: ncFilePath,
-      });
+    const filePaths = {
+      nc: `projects/${projectId}/${NC_DIR_NAME}/${NC_FILE_NAME}`,
+      bom: `projects/${projectId}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`,
+      constructorPDF: `uploads/constructor-pdf-zip/${projectId}.zip`,
+      installedPlanePDF: `uploads/installed-plane-zip/${projectId}.zip`,
+      designedPlanePDF: `uploads/designed-plane-zip/${projectId}.zip`,
+    };
 
-      // This will throw an error if the file doesn't exist
-      await s3Client.send(
-        new GetObjectCommand({
+    const getSignedUrlForFile = async (key: string, filePath: string): Promise<string | undefined> => {
+      if (!BUCKET_NAME) {
+        console.error("S3_BUCKET_NAME is not defined.");
+        return undefined;
+      }
+      try {
+        await s3Client.send(
+          new HeadObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: filePath,
+          })
+        );
+        // If HeadObjectCommand is successful, the file exists. Now get the signed URL.
+        const command = new GetObjectCommand({
           Bucket: BUCKET_NAME,
-          Key: ncFilePath,
-        })
-      );
+          Key: filePath,
+        });
+        return await getSignedUrl(s3Client, command, {
+          expiresIn: 3600, // 1 hour expiration
+        });
+      } catch (error: any) {
+        // Log specific error for S3 'NoSuchKey' or 'NotFound'
+        if (error.name === 'NoSuchKey' || error.name === 'NotFound') {
+          console.debug(`File not found for ${key} at path ${filePath} for project ${projectId}`);
+        } else {
+          console.error(`Error checking or getting signed URL for ${key} (project ${projectId}): ${error.message}`);
+        }
+        return undefined;
+      }
+    };
 
-      // If we get here, the file exists - generate a presigned URL
-      nc = await getSignedUrl(s3Client, ncFileCommand, {
-        expiresIn: 3600, // 1 hour expiration
-      });
-    } catch (error) {
-      // File doesn't exist or other S3 error - nc remains undefined
-      console.debug(`No NC file found for project ${input}`);
-    }
-
-    const bomFilePath = `projects/${input}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`;
-
-    try {
-      // Check if BOM file exists
-      const command = new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: bomFilePath,
-      });
-
-      // This will throw an error if the file doesn't exist
-      await s3Client.send(
-        new GetObjectCommand({
-          Bucket: BUCKET_NAME,
-          Key: bomFilePath,
-        })
-      );
-
-      // If we get here, the file exists - generate a presigned URL
-      bom = await getSignedUrl(s3Client, command, {
-        expiresIn: 3600, // 1 hour expiration
-      });
-    } catch (error) {
-      // File doesn't exist or other S3 error - bomFileUrl remains null
-      console.debug(`No BOM file found for project ${input}`);
-    }
-
-    try {
-      // Check if constructor PDF zip file exists
-      const constructorPdfCommand = new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: constructorPdfZipFilePath,
-      });
-
-      // This will throw an error if the file doesn't exist
-      await s3Client.send(
-        new GetObjectCommand({
-          Bucket: BUCKET_NAME,
-          Key: constructorPdfZipFilePath,
-        })
-      );
-
-      // If we get here, the file exists - generate a presigned URL
-      constructorPDF = await getSignedUrl(s3Client, constructorPdfCommand, {
-        expiresIn: 3600, // 1 hour expiration
-      });
-    } catch (error) {
-      // File doesn't exist or other S3 error - constructorPDF remains undefined
-      console.debug(
-        `No constructor PDF zip file found for project ${input}: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-
-    try {
-      // Check if installed plane zip file exists
-      const installedPlaneCommand = new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: installedPlaneZipFilePath,
-      });
-
-      // This will throw an error if the file doesn't exist
-      await s3Client.send(
-        new GetObjectCommand({
-          Bucket: BUCKET_NAME,
-          Key: installedPlaneZipFilePath,
-        })
-      );
-
-      // If we get here, the file exists - generate a presigned URL
-      installedPlanePDF = await getSignedUrl(s3Client, installedPlaneCommand, {
-        expiresIn: 3600, // 1 hour expiration
-      });
-    } catch (error) {
-      // File doesn't exist or other S3 error - constructorPDF remains undefined
-      console.debug(
-        `No installed plane zip file found for project ${input}: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-
-    try {
-      // Check if installed plane zip file exists
-      const designedPlaneCommand = new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: designedPlaneZipFilePath,
-      });
-
-      // This will throw an error if the file doesn't exist
-      await s3Client.send(
-        new GetObjectCommand({
-          Bucket: BUCKET_NAME,
-          Key: designedPlaneZipFilePath,
-        })
-      );
-
-      // If we get here, the file exists - generate a presigned URL
-      designedPlanePDF = await getSignedUrl(s3Client, designedPlaneCommand, {
-        expiresIn: 3600, // 1 hour expiration
-      });
-    } catch (error) {
-      // File doesn't exist or other S3 error - constructorPDF remains undefined
-      console.debug(
-        `No desgined plane zip file found for project ${input}: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
+    const [nc, bom, constructorPDF, installedPlanePDF, designedPlanePDF] = await Promise.all([
+      getSignedUrlForFile("nc", filePaths.nc),
+      getSignedUrlForFile("bom", filePaths.bom),
+      getSignedUrlForFile("constructorPDF", filePaths.constructorPDF),
+      getSignedUrlForFile("installedPlanePDF", filePaths.installedPlanePDF),
+      getSignedUrlForFile("designedPlanePDF", filePaths.designedPlanePDF),
+    ]);
 
     // BOM import job status/progress
     let bomJobStatus: BomProcessStatus | null = null;

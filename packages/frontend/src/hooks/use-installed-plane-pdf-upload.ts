@@ -30,7 +30,7 @@ export function useInstalledPlanePdfUpload() {
       const result = await handleFileUpload(
         {
           file: installedPlanePDFFile,
-          fileType: "安裝平面",
+          fileType: "安裝平面PDF",
           contentType: "application/zip",
           urlPath: `/file/presigned-url/installed-plane-upload/${projectId}`,
         },

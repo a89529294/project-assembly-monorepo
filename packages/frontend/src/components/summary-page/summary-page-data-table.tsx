@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/data-table";
 import { SmartPagination } from "@/components/pagination";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useSummaryPageContext } from "@/contexts/summary-page-context";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,7 @@ export function SummaryPageDataTable<
             rowSelection={rowSelection}
             setRowSelection={handleSelectionChange}
           />
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
       <SmartPagination
