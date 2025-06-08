@@ -9,11 +9,16 @@ import { SummaryPageProvider } from "@/contexts/summary-page-context";
 import { useDeferredPaginatedTableControls } from "@/hooks/use-deferred-paginated-table-controls";
 import { queryClient } from "@/query-client";
 import { trpc } from "@/trpc";
-import { projectsSearchSchema, ProjectSummary } from "@myapp/shared";
+import {
+  projectsSearchSchema,
+  ProjectStatus,
+  projectStatusToLabel,
+  ProjectSummary,
+} from "@myapp/shared";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { createColumnHelper } from "@tanstack/react-table";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { LucideReceiptText } from "lucide-react";
 
 const columnHelper = createColumnHelper<ProjectSummary>();
@@ -69,7 +74,10 @@ function RouteComponent() {
     {
       accessorKey: "status",
       header: "狀態",
-    },
+      cell(info) {
+        return projectStatusToLabel(info.getValue() as ProjectStatus);
+      },
+    } as ColumnDef<ProjectSummary>,
     {
       accessorKey: "startDate",
       header: "起始日期",

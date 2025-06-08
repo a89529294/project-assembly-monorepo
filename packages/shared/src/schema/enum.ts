@@ -19,6 +19,8 @@ export const PROJECT_STATUSES = [
   "cancelled",
 ] as const;
 
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+
 export const projectStatusEnum = pgEnum("project_status", PROJECT_STATUSES);
 
 export const projectStatusToLabel = (
