@@ -30,7 +30,7 @@ import {
   BOM_FILE_NAME,
   NC_DIR_NAME,
   NC_FILE_NAME,
-} from "../../file/constants.js";
+} from "../../file/constants";
 
 const genProjectsWhereCondition = (term: string) => {
   const searchTerm = `%${term}%`;
@@ -70,8 +70,14 @@ export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
 
     let bom;
     let nc;
+    let constructorPDF;
+    let installedPlanePDF;
+    let designedPlanePDF;
     const BUCKET_NAME = process.env.S3_BUCKET_NAME;
     const ncFilePath = `projects/${input}/${NC_DIR_NAME}/${NC_FILE_NAME}`;
+    const constructorPdfZipFilePath = `uploads/constructor-pdf-zip/${input}.zip`;
+    const installedPlaneZipFilePath = `uploads/installed-plane-zip/${input}.zip`;
+    const designedPlaneZipFilePath = `uploads/designed-plane-zip/${input}.zip`;
 
     try {
       // Check if NC file exists
@@ -97,7 +103,6 @@ export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
       console.debug(`No NC file found for project ${input}`);
     }
 
-    // Check if BOM file exists and generate presigned URL if it does
     const bomFilePath = `projects/${input}/${BOM_DIR_NAME}/${BOM_FILE_NAME}`;
 
     try {
@@ -122,6 +127,84 @@ export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
     } catch (error) {
       // File doesn't exist or other S3 error - bomFileUrl remains null
       console.debug(`No BOM file found for project ${input}`);
+    }
+
+    try {
+      // Check if constructor PDF zip file exists
+      const constructorPdfCommand = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: constructorPdfZipFilePath,
+      });
+
+      // This will throw an error if the file doesn't exist
+      await s3Client.send(
+        new GetObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: constructorPdfZipFilePath,
+        })
+      );
+
+      // If we get here, the file exists - generate a presigned URL
+      constructorPDF = await getSignedUrl(s3Client, constructorPdfCommand, {
+        expiresIn: 3600, // 1 hour expiration
+      });
+    } catch (error) {
+      // File doesn't exist or other S3 error - constructorPDF remains undefined
+      console.debug(
+        `No constructor PDF zip file found for project ${input}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    try {
+      // Check if installed plane zip file exists
+      const installedPlaneCommand = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: installedPlaneZipFilePath,
+      });
+
+      // This will throw an error if the file doesn't exist
+      await s3Client.send(
+        new GetObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: installedPlaneZipFilePath,
+        })
+      );
+
+      // If we get here, the file exists - generate a presigned URL
+      installedPlanePDF = await getSignedUrl(s3Client, installedPlaneCommand, {
+        expiresIn: 3600, // 1 hour expiration
+      });
+    } catch (error) {
+      // File doesn't exist or other S3 error - constructorPDF remains undefined
+      console.debug(
+        `No installed plane zip file found for project ${input}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    try {
+      // Check if installed plane zip file exists
+      const designedPlaneCommand = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: designedPlaneZipFilePath,
+      });
+
+      // This will throw an error if the file doesn't exist
+      await s3Client.send(
+        new GetObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: designedPlaneZipFilePath,
+        })
+      );
+
+      // If we get here, the file exists - generate a presigned URL
+      designedPlanePDF = await getSignedUrl(s3Client, designedPlaneCommand, {
+        expiresIn: 3600, // 1 hour expiration
+      });
+    } catch (error) {
+      // File doesn't exist or other S3 error - constructorPDF remains undefined
+      console.debug(
+        `No desgined plane zip file found for project ${input}: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
 
     // BOM import job status/progress
@@ -163,6 +246,9 @@ export const readProjectProcedure = protectedProcedure(["BasicInfoManagement"])
       contacts: contacts.map((c) => c.contacts),
       bom,
       nc,
+      constructorPDF,
+      installedPlanePDF,
+      designedPlanePDF,
       bomProcess: {
         jobStatus: bomJobStatus,
         jobProgress: bomJobProgress,

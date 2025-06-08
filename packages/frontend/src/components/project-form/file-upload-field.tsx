@@ -1,7 +1,8 @@
 import { ProjectFormValue } from "@myapp/shared";
 import { LucideFileUp } from "lucide-react";
 import { UseFormReturn, useWatch } from "react-hook-form";
-import csvIcon from "../../assets/csv.png";
+import csvIcon from "@/assets/csv.png";
+import zipIcon from "@/assets/zip.png";
 
 import { trpc } from "@/trpc";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,7 @@ import { FileUploadStatus } from "@/hooks/use-multi-file-upload-progress";
 
 interface FileUploadFieldProps {
   form: UseFormReturn<ProjectFormValue>;
-  name: "bom" | "nc";
+  name: "bom" | "nc" | "constructorPDF" | "installedPlanePDF" | "designedPlanePDF";
   label: string;
   accept: string;
   projectId?: string;
@@ -88,6 +89,9 @@ export function FileUploadField({
     if (name === "bom") return "TeklamBom.csv";
 
     if (name === "nc") return "nc.zip";
+    if (name === "constructorPDF") return "構建pdf.zip";
+    if (name === "installedPlanePDF") return "安裝平面.zip";
+    if (name === "designedPlanePDF") return "設計平面.zip";
   })();
 
   return (
@@ -186,7 +190,7 @@ export function FileUploadField({
           <>
             <div className="flex items-center gap-2">
               <img
-                src={csvIcon}
+                src={fileName?.endsWith("zip") ? zipIcon : csvIcon}
                 alt="CSV Icon"
                 className="h-10 w-10 object-contain"
               />

@@ -1,4 +1,3 @@
-// utils/preparePresignedUpload.ts
 import {
   ListObjectsV2Command,
   PutObjectCommand,

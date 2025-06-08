@@ -18,6 +18,7 @@ import {
 } from "./constants.js";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { preparePresignedUpload } from "./utils/prepare-presigned-upload.js";
+import { prepareSimplePresignedUpload } from "./utils/prepare-simple-presigned-upload.js";
 
 const fileRoutes = new Hono();
 
@@ -364,4 +365,74 @@ fileRoutes.get(
     });
   }
 );
+
+fileRoutes.get(
+  "/presigned-url/constructor-pdf-upload/:projectId",
+  honoAuthMiddleware(["BasicInfoManagement"]), // Or appropriate permission
+  async (c) => {
+    const { projectId } = c.req.param();
+
+    // We only accept zip files for this endpoint
+    const contentType = "application/zip";
+
+    // The new util function generates a URL for a temporary location
+
+    const { uploadUrl } = await prepareSimplePresignedUpload({
+      filePath: `uploads/constructor-pdf-zip/${projectId}.zip`,
+      contentType,
+    });
+
+    return c.json({
+      success: true,
+      uploadUrl,
+    });
+  }
+);
+
+fileRoutes.get(
+  "/presigned-url/installed-plane-upload/:projectId",
+  honoAuthMiddleware(["BasicInfoManagement"]), // Or appropriate permission
+  async (c) => {
+    const { projectId } = c.req.param();
+
+    // We only accept zip files for this endpoint
+    const contentType = "application/zip";
+
+    // The new util function generates a URL for a temporary location
+
+    const { uploadUrl } = await prepareSimplePresignedUpload({
+      filePath: `uploads/installed-plane-zip/${projectId}.zip`,
+      contentType,
+    });
+
+    return c.json({
+      success: true,
+      uploadUrl,
+    });
+  }
+);
+
+fileRoutes.get(
+  "/presigned-url/designed-plane-upload/:projectId",
+  honoAuthMiddleware(["BasicInfoManagement"]), // Or appropriate permission
+  async (c) => {
+    const { projectId } = c.req.param();
+
+    // We only accept zip files for this endpoint
+    const contentType = "application/zip";
+
+    // The new util function generates a URL for a temporary location
+
+    const { uploadUrl } = await prepareSimplePresignedUpload({
+      filePath: `uploads/designed-plane-zip/${projectId}.zip`,
+      contentType,
+    });
+
+    return c.json({
+      success: true,
+      uploadUrl,
+    });
+  }
+);
+
 export default fileRoutes;

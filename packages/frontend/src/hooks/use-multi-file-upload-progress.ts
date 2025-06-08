@@ -1,6 +1,11 @@
 import { useState, useMemo, useCallback, useRef } from "react";
 
-export type FileId = "bom" | "nc";
+export type FileId =
+  | "bom"
+  | "nc"
+  | "constructorPDF"
+  | "installedPlanePDF"
+  | "designedPlanePDF";
 
 export type FileUploadStatus = {
   fileId: FileId;

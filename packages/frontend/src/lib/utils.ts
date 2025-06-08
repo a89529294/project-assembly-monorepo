@@ -92,7 +92,6 @@ export const uploadToS3 = (
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", uploadUrl, true);
     xhr.setRequestHeader("Content-Type", contentType);
-    xhr.timeout = 300000; // 5 minutes
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
@@ -110,7 +109,7 @@ export const uploadToS3 = (
       }
     };
 
-    xhr.onerror = xhr.ontimeout = () => reject(new Error("Upload failed"));
+    xhr.onerror = () => reject(new Error("Upload failed"));
     xhr.send(file);
   });
 };

@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useBomUploadAndQueue } from "@/hooks/use-bom-upload-and-queue";
 import { useNcUpload } from "@/hooks/use-nc-upload";
+import { useConstructorPdfUpload } from "@/hooks/use-constructor-pdf-upload";
+import { useInstalledPlanePdfUpload } from "@/hooks/use-installed-plane-pdf-upload";
+import { useDesignedPlanePdfUpload } from "@/hooks/use-designed-plane-pdf-upload";
 import { useMultiFileUploadProgress } from "@/hooks/use-multi-file-upload-progress";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { queryClient } from "@/query-client";
@@ -36,6 +39,9 @@ function RouteComponent() {
   );
   const { handleBomUploadAndQueue } = useBomUploadAndQueue();
   const { handleNcUpload } = useNcUpload();
+  const { uploadConstructorPdf } = useConstructorPdfUpload();
+  const { uploadInstalledPlanePdf } = useInstalledPlanePdfUpload();
+  const { uploadDesignedPlanePdf } = useDesignedPlanePdfUpload();
 
   // We'll set up the file configs dynamically in the handleSubmit function
   // based on which files are actually present
@@ -50,8 +56,15 @@ function RouteComponent() {
 
   const handleSubmit = (data: ProjectFormValue) => {
     // Extract files from form data
-    const { bom, nc, ...projectData } = data;
-
+    const {
+      bom,
+      nc,
+      constructorPDF,
+      installedPlanePDF,
+      designedPlanePDF,
+      ...projectData
+    } = data;
+    console.log(bom, nc, constructorPDF);
     const dynamicFileConfigs = [];
 
     // Add BOM config if BOM file is present
@@ -72,6 +85,30 @@ function RouteComponent() {
       });
     }
 
+    if (constructorPDF) {
+      dynamicFileConfigs.push({
+        fileId: "constructorPDF" as const,
+        weight: 1,
+        totalStages: 1,
+      });
+    }
+
+    if (installedPlanePDF) {
+      dynamicFileConfigs.push({
+        fileId: "installedPlanePDF" as const,
+        weight: 1,
+        totalStages: 1,
+      });
+    }
+
+    if (designedPlanePDF) {
+      dynamicFileConfigs.push({
+        fileId: "designedPlanePDF" as const,
+        weight: 1,
+        totalStages: 1,
+      });
+    }
+
     setupFileConfigs(dynamicFileConfigs);
 
     createProject(projectData, {
@@ -86,10 +123,19 @@ function RouteComponent() {
         // Track upload completion status
         let bomUploadComplete = false;
         let ncUploadComplete = false;
+        let constructorUploadComplete = false;
+        let installedPlanePdfUploadComplete = false;
+        let designedPlanePdfUploadComplete = false;
 
         // Function to check if all uploads are complete and navigate
         const checkAllUploadsAndNavigate = () => {
-          if (bomUploadComplete && ncUploadComplete) {
+          if (
+            bomUploadComplete &&
+            ncUploadComplete &&
+            constructorUploadComplete &&
+            installedPlanePdfUploadComplete &&
+            designedPlanePdfUploadComplete
+          ) {
             // All uploads are complete, invalidate queries and navigate
             queryClient.invalidateQueries({
               queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),
@@ -175,6 +221,99 @@ function RouteComponent() {
           ncUploadComplete = true;
         }
 
+        // Only attempt Constructor PDF upload if a file exists
+        if (constructorPDF instanceof File) {
+          // Note: uploadConstructorPdf internally handles form.setValue and progress for its own hook context
+          // We still need to manage the local completion flag for checkAllUploadsAndNavigate
+          const constructorPdfPromise = uploadConstructorPdf(
+            { projectId: project.id, constructorPDFFile: constructorPDF },
+            {
+              onUploadProgress: (progress: number) => {
+                // The hook's internal updateFileProgress handles the ProjectForm UI.
+                // This one is for the create.tsx page's overall progress if needed, or can be omitted
+                // if ProjectForm's progress is sufficient.
+                // For consistency, let's assume create.tsx might want its own tracking or logging.
+                updateFileProgress("constructorPDF", "upload", progress);
+              },
+              onSuccess: () => {
+                // result parameter is available if needed
+                updateFileProgress("constructorPDF", "complete", 100);
+                constructorUploadComplete = true;
+                checkAllUploadsAndNavigate();
+              },
+              onError: (error) => {
+                updateFileProgress("constructorPDF", "error", 0);
+                console.error("Constructor PDF upload failed:", error);
+                // constructorUploadComplete = true; // Decide if error means 'complete' for navigation
+                // checkAllUploadsAndNavigate(); // Or handle error state differently
+              },
+              onComplete: () => {
+                // This will be called after success or error by the hook's finally block.
+                // If an error occurs, we might not want to immediately mark as 'complete' for navigation
+                // unless that's the desired behavior (e.g., proceed with other successful uploads).
+                // For now, let's ensure navigation logic considers this.
+                // If an error occurs, onError is called. If successful, onSuccess is called.
+                // onComplete in the hook is for its internal cleanup or final state update.
+                // The checkAllUploadsAndNavigate is best called from onSuccess or a more specific error handling.
+                // Let's ensure constructorUploadComplete is true only on actual success for now.
+                // If an error happens, it won't be marked complete, and checkAllUploadsAndNavigate won't proceed
+                // unless we explicitly want to allow navigation despite some failures.
+              },
+            }
+          );
+          uploadPromises.push(constructorPdfPromise);
+        } else {
+          constructorUploadComplete = true;
+        }
+
+        // Only attempt Installed Plane PDF upload if a file exists
+        if (installedPlanePDF instanceof File) {
+          const installedPlanePdfPromise = uploadInstalledPlanePdf(
+            { projectId: project.id, installedPlanePDFFile: installedPlanePDF },
+            {
+              onUploadProgress: (progress: number) => {
+                updateFileProgress("installedPlanePDF", "upload", progress);
+              },
+              onSuccess: () => {
+                updateFileProgress("installedPlanePDF", "complete", 100);
+                installedPlanePdfUploadComplete = true;
+                checkAllUploadsAndNavigate();
+              },
+              onError: (error) => {
+                updateFileProgress("installedPlanePDF", "error", 0);
+                console.error("Installed Plane PDF upload failed:", error);
+              },
+            }
+          );
+          uploadPromises.push(installedPlanePdfPromise);
+        } else {
+          installedPlanePdfUploadComplete = true;
+        }
+
+        // Only attempt Designed Plane PDF upload if a file exists
+        if (designedPlanePDF instanceof File) {
+          const designedPlanePdfPromise = uploadDesignedPlanePdf(
+            { projectId: project.id, designedPlanePDFFile: designedPlanePDF },
+            {
+              onUploadProgress: (progress: number) => {
+                updateFileProgress("designedPlanePDF", "upload", progress);
+              },
+              onSuccess: () => {
+                updateFileProgress("designedPlanePDF", "complete", 100);
+                designedPlanePdfUploadComplete = true;
+                checkAllUploadsAndNavigate();
+              },
+              onError: (error) => {
+                updateFileProgress("designedPlanePDF", "error", 0);
+                console.error("Designed Plane PDF upload failed:", error);
+              },
+            }
+          );
+          uploadPromises.push(designedPlanePdfPromise);
+        } else {
+          designedPlanePdfUploadComplete = true;
+        }
+
         // Wait for all uploads to complete or fail
         try {
           await Promise.all(uploadPromises);
@@ -186,6 +325,13 @@ function RouteComponent() {
       onError: (error) => {
         console.error("Project creation failed:", error);
         toast.error(`專案建立失敗: ${error.message}`);
+      },
+      onSettled() {
+        setProjectCreationState({
+          customerId: "",
+          projectId: "",
+          isProcessing: false,
+        });
       },
     });
   };

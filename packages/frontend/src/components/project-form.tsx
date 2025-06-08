@@ -3,6 +3,7 @@ import { TextField } from "@/components/form/text-field";
 import { FileUploadField } from "@/components/project-form/file-upload-field";
 import { Form } from "@/components/ui/form";
 import { useCounties } from "@/hooks/use-counties";
+
 import { useDistricts } from "@/hooks/use-districts";
 import { FileUploadStatus } from "@/hooks/use-multi-file-upload-progress";
 import { trpc } from "@/trpc";
@@ -24,17 +25,6 @@ type ProjectFormProps = {
   fileStatuses: FileUploadStatus[];
 };
 
-// type ProjectFormProps =
-//   | ({
-//       type: "create";
-//       onSubmit: (values: ProjectCreate) => void;
-//     } & BaseProjectFormProps)
-//   | ({
-//       type: "update";
-//       onSubmit: (values: ProjectUpdate) => void;
-//       initialData: ProjectUpdate;
-//     } & BaseProjectFormProps);
-
 export function ProjectForm(props: ProjectFormProps) {
   const { counties } = useCounties();
 
@@ -52,6 +42,10 @@ export function ProjectForm(props: ProjectFormProps) {
           customerId: props.customerId,
           contacts: [],
           bom: undefined,
+          nc: undefined,
+          constructorPDF: undefined,
+          installedPlanePDF: undefined,
+          designedPlanePDF: undefined,
         },
     disabled: props.disabled,
   });
@@ -137,7 +131,7 @@ export function ProjectForm(props: ProjectFormProps) {
               <FileUploadField
                 form={form}
                 name="bom"
-                label="BOM 檔案"
+                label="BOM 檔案 (csv)"
                 accept=".csv,.xlsx,.xls"
                 projectId={props.projectId}
                 status={props.fileStatuses.find((v) => v.fileId === "bom")}
@@ -147,10 +141,43 @@ export function ProjectForm(props: ProjectFormProps) {
               <FileUploadField
                 form={form}
                 name="nc"
-                label="NC 檔案"
+                label="NC 檔案 (zip)"
                 accept=".zip"
                 projectId={props.projectId}
-                status={props.fileStatuses.find((v) => v.fileId === "bom")}
+                status={props.fileStatuses.find((v) => v.fileId === "nc")}
+              />
+
+              <FileUploadField
+                form={form}
+                name="constructorPDF"
+                label="構建PDF (zip)"
+                accept=".zip"
+                projectId={props.projectId}
+                status={props.fileStatuses.find(
+                  (v) => v.fileId === "constructorPDF"
+                )}
+              />
+
+              <FileUploadField
+                form={form}
+                name="installedPlanePDF"
+                label="安裝平面 (zip)"
+                accept=".zip"
+                projectId={props.projectId}
+                status={props.fileStatuses.find(
+                  (v) => v.fileId === "installedPlanePDF"
+                )}
+              />
+
+              <FileUploadField
+                form={form}
+                name="designedPlanePDF"
+                label="設計平面 (zip)"
+                accept=".zip"
+                projectId={props.projectId}
+                status={props.fileStatuses.find(
+                  (v) => v.fileId === "designedPlanePDF"
+                )}
               />
             </div>
           </div>

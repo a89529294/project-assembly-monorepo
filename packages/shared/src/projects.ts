@@ -51,6 +51,9 @@ export const projectFormSchema = baseProjectSchema
         z.string(),
       ])
       .optional(),
+    constructorPDF: z.union([z.instanceof(File), z.string()]).optional(),
+    installedPlanePDF: z.union([z.instanceof(File), z.string()]).optional(),
+    designedPlanePDF: z.union([z.instanceof(File), z.string()]).optional(),
     ...sharedProjectFields,
   });
 

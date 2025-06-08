@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useBomUploadAndQueue } from "@/hooks/use-bom-upload-and-queue";
 import { useNcUpload } from "@/hooks/use-nc-upload";
+import { useConstructorPdfUpload } from "@/hooks/use-constructor-pdf-upload";
+import { useInstalledPlanePdfUpload } from "@/hooks/use-installed-plane-pdf-upload";
+import { useDesignedPlanePdfUpload } from "@/hooks/use-designed-plane-pdf-upload";
 import { useMultiFileUploadProgress } from "@/hooks/use-multi-file-upload-progress";
 import { queryClient } from "@/query-client";
 
@@ -28,6 +31,9 @@ function RouteComponent() {
 
   const { handleBomUploadAndQueue } = useBomUploadAndQueue();
   const { handleNcUpload } = useNcUpload();
+  const { uploadConstructorPdf } = useConstructorPdfUpload();
+  const { uploadInstalledPlanePdf } = useInstalledPlanePdfUpload();
+  const { uploadDesignedPlanePdf } = useDesignedPlanePdfUpload();
 
   // Use the new pattern with setupFileConfigs
   const {
@@ -48,7 +54,7 @@ function RouteComponent() {
   );
 
   const handleSubmit = async (formData: ProjectFormValue) => {
-    const { bom, nc, ...projectData } = formData;
+    const { bom, nc, constructorPDF, installedPlanePDF, designedPlanePDF, ...projectData } = formData;
 
     const dynamicFileConfigs = [];
 
@@ -70,6 +76,33 @@ function RouteComponent() {
       });
     }
 
+    // Add Constructor PDF config if present
+    if (constructorPDF) {
+      dynamicFileConfigs.push({
+        fileId: "constructorPDF" as const,
+        weight: 1,
+        totalStages: 1,
+      });
+    }
+
+    // Add Installed Plane PDF config if present
+    if (installedPlanePDF) {
+      dynamicFileConfigs.push({
+        fileId: "installedPlanePDF" as const,
+        weight: 1,
+        totalStages: 1,
+      });
+    }
+
+    // Add Designed Plane PDF config if present
+    if (designedPlanePDF) {
+      dynamicFileConfigs.push({
+        fileId: "designedPlanePDF" as const,
+        weight: 1,
+        totalStages: 1,
+      });
+    }
+
     setupFileConfigs(dynamicFileConfigs);
 
     updateProject(
@@ -84,10 +117,13 @@ function RouteComponent() {
           // Track upload completion status
           let bomUploadComplete = false;
           let ncUploadComplete = false;
+          let constructorPdfUploadComplete = false;
+          let installedPlanePdfUploadComplete = false;
+          let designedPlanePdfUploadComplete = false;
 
           // Function to check if all uploads are complete and navigate
           const checkAllUploadsAndNavigate = () => {
-            if (bomUploadComplete && ncUploadComplete) {
+            if (bomUploadComplete && ncUploadComplete && constructorPdfUploadComplete && installedPlanePdfUploadComplete && designedPlanePdfUploadComplete) {
               // All uploads are complete, invalidate queries and navigate
               queryClient.invalidateQueries({
                 queryKey: trpc.basicInfo.readCustomerProjects.queryKey(),
@@ -155,6 +191,78 @@ function RouteComponent() {
           } else {
             // No NC file to upload, mark as complete
             ncUploadComplete = true;
+          }
+
+          // Constructor PDF upload
+          if (constructorPDF instanceof File) {
+            const constructorPdfPromise = uploadConstructorPdf(
+              { projectId, constructorPDFFile: constructorPDF },
+              {
+                onUploadProgress: (progress: number) => {
+                  updateFileProgress("constructorPDF", "upload", progress, 0);
+                },
+                onComplete: () => {
+                  updateFileProgress("constructorPDF", "complete", 100, 0);
+                  constructorPdfUploadComplete = true;
+                  checkAllUploadsAndNavigate();
+                },
+                onError: (error) => {
+                  updateFileProgress("constructorPDF", "error", 0, 0);
+                  console.error("Constructor PDF upload failed:", error);
+                },
+              }
+            );
+            uploadPromises.push(constructorPdfPromise);
+          } else {
+            constructorPdfUploadComplete = true;
+          }
+
+          // Installed Plane PDF upload
+          if (installedPlanePDF instanceof File) {
+            const installedPlanePdfPromise = uploadInstalledPlanePdf(
+              { projectId, installedPlanePDFFile: installedPlanePDF },
+              {
+                onUploadProgress: (progress: number) => {
+                  updateFileProgress("installedPlanePDF", "upload", progress, 0);
+                },
+                onComplete: () => {
+                  updateFileProgress("installedPlanePDF", "complete", 100, 0);
+                  installedPlanePdfUploadComplete = true;
+                  checkAllUploadsAndNavigate();
+                },
+                onError: (error) => {
+                  updateFileProgress("installedPlanePDF", "error", 0, 0);
+                  console.error("Installed Plane PDF upload failed:", error);
+                },
+              }
+            );
+            uploadPromises.push(installedPlanePdfPromise);
+          } else {
+            installedPlanePdfUploadComplete = true;
+          }
+
+          // Designed Plane PDF upload
+          if (designedPlanePDF instanceof File) {
+            const designedPlanePdfPromise = uploadDesignedPlanePdf(
+              { projectId, designedPlanePDFFile: designedPlanePDF },
+              {
+                onUploadProgress: (progress: number) => {
+                  updateFileProgress("designedPlanePDF", "upload", progress, 0);
+                },
+                onComplete: () => {
+                  updateFileProgress("designedPlanePDF", "complete", 100, 0);
+                  designedPlanePdfUploadComplete = true;
+                  checkAllUploadsAndNavigate();
+                },
+                onError: (error) => {
+                  updateFileProgress("designedPlanePDF", "error", 0, 0);
+                  console.error("Designed Plane PDF upload failed:", error);
+                },
+              }
+            );
+            uploadPromises.push(designedPlanePdfPromise);
+          } else {
+            designedPlanePdfUploadComplete = true;
           }
 
           // Wait for all uploads to complete or fail
