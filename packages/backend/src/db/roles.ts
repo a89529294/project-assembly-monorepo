@@ -5,6 +5,6 @@ export const roleIds = {
   adminRoleId: randomUUID(),
   basicInfoManagementRoleId: randomUUID(),
   personnelPermissionManagementRoleId: randomUUID(),
-  storageManagementRoleId: randomUUID(),
+  warehouseManagementRoleId: randomUUID(),
   productionManagementRoleId: randomUUID(),
 };

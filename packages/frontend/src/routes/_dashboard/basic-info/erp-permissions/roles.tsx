@@ -117,7 +117,7 @@ function RouteComponent() {
     },
     {
       title: "倉庫管理",
-      roleName: "StorageManagement",
+      roleName: "WarehouseManagement",
     },
     {
       title: "生產管理",

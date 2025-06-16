@@ -1,7 +1,5 @@
 import {
-  Delete,
   Home,
-  Inbox,
   LucideBadgePlus,
   LucideFileLock2,
   LucideFilePlus,
@@ -13,7 +11,6 @@ import {
   LucideRocket,
   LucideRows4,
   LucideTable2,
-  RefreshCcw,
 } from "lucide-react";
 
 import { BuildingSVG } from "@/components/svg/sidebar/building-svg";
@@ -180,40 +177,13 @@ export const genPaths = ({
     ],
     warehouseRoutes: [
       {
-        title: "Create",
-        basePath: "/warehouse/create",
+        title: "進貨明細",
+        basePath: "/warehouse/purchases",
         linkOptions: {
-          to: "/warehouse/create",
+          to: "/warehouse/purchases",
         },
         icon: Home,
-        roleNames: ["ProductionManagement", "AdminManagement"],
-      },
-      {
-        title: "Read",
-        basePath: "/warehouse/read",
-        linkOptions: {
-          to: "/warehouse/read",
-        },
-        icon: Inbox,
-        roleNames: ["ProductionManagement", "AdminManagement"],
-      },
-      {
-        title: "Update",
-        basePath: "/warehouse/update",
-        linkOptions: {
-          to: "/warehouse/update",
-        },
-        icon: RefreshCcw,
-        roleNames: ["ProductionManagement", "AdminManagement"],
-      },
-      {
-        title: "Delete",
-        basePath: "/warehouse/delete",
-        linkOptions: {
-          to: "/warehouse/delete",
-        },
-        icon: Delete,
-        roleNames: ["ProductionManagement", "AdminManagement"],
+        roleNames: ["WarehouseManagement", "AdminManagement"],
       },
     ],
   }) satisfies Record<string, NavItem[]>;

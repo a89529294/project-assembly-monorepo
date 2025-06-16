@@ -19,10 +19,9 @@ import { Route as DashboardProductionRouteImport } from './routes/_dashboard/pro
 import { Route as DashboardCustomersRouteImport } from './routes/_dashboard/customers/route'
 import { Route as DashboardBasicInfoRouteImport } from './routes/_dashboard/basic-info/route'
 import { Route as DashboardProductionIndexImport } from './routes/_dashboard/production/index'
-import { Route as DashboardWarehouseUpdateImport } from './routes/_dashboard/warehouse/update'
-import { Route as DashboardWarehouseReadImport } from './routes/_dashboard/warehouse/read'
-import { Route as DashboardWarehouseDeleteImport } from './routes/_dashboard/warehouse/delete'
-import { Route as DashboardWarehouseCreateImport } from './routes/_dashboard/warehouse/create'
+import { Route as DashboardWarehouseStockedImport } from './routes/_dashboard/warehouse/stocked'
+import { Route as DashboardWarehousePurchasesImport } from './routes/_dashboard/warehouse/purchases'
+import { Route as DashboardWarehouseConsumedImport } from './routes/_dashboard/warehouse/consumed'
 import { Route as DashboardCustomersCreateImport } from './routes/_dashboard/customers/create'
 import { Route as DashboardBasicInfoCompanyInfoImport } from './routes/_dashboard/basic-info/company-info'
 import { Route as DashboardCustomersSummaryIndexImport } from './routes/_dashboard/customers/summary/index'
@@ -89,29 +88,26 @@ const DashboardProductionIndexRoute = DashboardProductionIndexImport.update({
   getParentRoute: () => DashboardProductionRouteRoute,
 } as any)
 
-const DashboardWarehouseUpdateRoute = DashboardWarehouseUpdateImport.update({
-  id: '/update',
-  path: '/update',
+const DashboardWarehouseStockedRoute = DashboardWarehouseStockedImport.update({
+  id: '/stocked',
+  path: '/stocked',
   getParentRoute: () => DashboardWarehouseRouteRoute,
 } as any)
 
-const DashboardWarehouseReadRoute = DashboardWarehouseReadImport.update({
-  id: '/read',
-  path: '/read',
-  getParentRoute: () => DashboardWarehouseRouteRoute,
-} as any)
+const DashboardWarehousePurchasesRoute =
+  DashboardWarehousePurchasesImport.update({
+    id: '/purchases',
+    path: '/purchases',
+    getParentRoute: () => DashboardWarehouseRouteRoute,
+  } as any)
 
-const DashboardWarehouseDeleteRoute = DashboardWarehouseDeleteImport.update({
-  id: '/delete',
-  path: '/delete',
-  getParentRoute: () => DashboardWarehouseRouteRoute,
-} as any)
-
-const DashboardWarehouseCreateRoute = DashboardWarehouseCreateImport.update({
-  id: '/create',
-  path: '/create',
-  getParentRoute: () => DashboardWarehouseRouteRoute,
-} as any)
+const DashboardWarehouseConsumedRoute = DashboardWarehouseConsumedImport.update(
+  {
+    id: '/consumed',
+    path: '/consumed',
+    getParentRoute: () => DashboardWarehouseRouteRoute,
+  } as any,
+)
 
 const DashboardCustomersCreateRoute = DashboardCustomersCreateImport.update({
   id: '/create',
@@ -291,32 +287,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCustomersCreateImport
       parentRoute: typeof DashboardCustomersRouteImport
     }
-    '/_dashboard/warehouse/create': {
-      id: '/_dashboard/warehouse/create'
-      path: '/create'
-      fullPath: '/warehouse/create'
-      preLoaderRoute: typeof DashboardWarehouseCreateImport
+    '/_dashboard/warehouse/consumed': {
+      id: '/_dashboard/warehouse/consumed'
+      path: '/consumed'
+      fullPath: '/warehouse/consumed'
+      preLoaderRoute: typeof DashboardWarehouseConsumedImport
       parentRoute: typeof DashboardWarehouseRouteImport
     }
-    '/_dashboard/warehouse/delete': {
-      id: '/_dashboard/warehouse/delete'
-      path: '/delete'
-      fullPath: '/warehouse/delete'
-      preLoaderRoute: typeof DashboardWarehouseDeleteImport
+    '/_dashboard/warehouse/purchases': {
+      id: '/_dashboard/warehouse/purchases'
+      path: '/purchases'
+      fullPath: '/warehouse/purchases'
+      preLoaderRoute: typeof DashboardWarehousePurchasesImport
       parentRoute: typeof DashboardWarehouseRouteImport
     }
-    '/_dashboard/warehouse/read': {
-      id: '/_dashboard/warehouse/read'
-      path: '/read'
-      fullPath: '/warehouse/read'
-      preLoaderRoute: typeof DashboardWarehouseReadImport
-      parentRoute: typeof DashboardWarehouseRouteImport
-    }
-    '/_dashboard/warehouse/update': {
-      id: '/_dashboard/warehouse/update'
-      path: '/update'
-      fullPath: '/warehouse/update'
-      preLoaderRoute: typeof DashboardWarehouseUpdateImport
+    '/_dashboard/warehouse/stocked': {
+      id: '/_dashboard/warehouse/stocked'
+      path: '/stocked'
+      fullPath: '/warehouse/stocked'
+      preLoaderRoute: typeof DashboardWarehouseStockedImport
       parentRoute: typeof DashboardWarehouseRouteImport
     }
     '/_dashboard/production/': {
@@ -513,18 +502,16 @@ const DashboardProductionRouteRouteWithChildren =
   )
 
 interface DashboardWarehouseRouteRouteChildren {
-  DashboardWarehouseCreateRoute: typeof DashboardWarehouseCreateRoute
-  DashboardWarehouseDeleteRoute: typeof DashboardWarehouseDeleteRoute
-  DashboardWarehouseReadRoute: typeof DashboardWarehouseReadRoute
-  DashboardWarehouseUpdateRoute: typeof DashboardWarehouseUpdateRoute
+  DashboardWarehouseConsumedRoute: typeof DashboardWarehouseConsumedRoute
+  DashboardWarehousePurchasesRoute: typeof DashboardWarehousePurchasesRoute
+  DashboardWarehouseStockedRoute: typeof DashboardWarehouseStockedRoute
 }
 
 const DashboardWarehouseRouteRouteChildren: DashboardWarehouseRouteRouteChildren =
   {
-    DashboardWarehouseCreateRoute: DashboardWarehouseCreateRoute,
-    DashboardWarehouseDeleteRoute: DashboardWarehouseDeleteRoute,
-    DashboardWarehouseReadRoute: DashboardWarehouseReadRoute,
-    DashboardWarehouseUpdateRoute: DashboardWarehouseUpdateRoute,
+    DashboardWarehouseConsumedRoute: DashboardWarehouseConsumedRoute,
+    DashboardWarehousePurchasesRoute: DashboardWarehousePurchasesRoute,
+    DashboardWarehouseStockedRoute: DashboardWarehouseStockedRoute,
   }
 
 const DashboardWarehouseRouteRouteWithChildren =
@@ -562,10 +549,9 @@ export interface FileRoutesByFullPath {
   '/': typeof DashboardIndexRoute
   '/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/customers/create': typeof DashboardCustomersCreateRoute
-  '/warehouse/create': typeof DashboardWarehouseCreateRoute
-  '/warehouse/delete': typeof DashboardWarehouseDeleteRoute
-  '/warehouse/read': typeof DashboardWarehouseReadRoute
-  '/warehouse/update': typeof DashboardWarehouseUpdateRoute
+  '/warehouse/consumed': typeof DashboardWarehouseConsumedRoute
+  '/warehouse/purchases': typeof DashboardWarehousePurchasesRoute
+  '/warehouse/stocked': typeof DashboardWarehouseStockedRoute
   '/production/': typeof DashboardProductionIndexRoute
   '/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
   '/basic-info/erp-permissions/app-machine-permissions': typeof DashboardBasicInfoErpPermissionsAppMachinePermissionsRoute
@@ -591,10 +577,9 @@ export interface FileRoutesByTo {
   '/': typeof DashboardIndexRoute
   '/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/customers/create': typeof DashboardCustomersCreateRoute
-  '/warehouse/create': typeof DashboardWarehouseCreateRoute
-  '/warehouse/delete': typeof DashboardWarehouseDeleteRoute
-  '/warehouse/read': typeof DashboardWarehouseReadRoute
-  '/warehouse/update': typeof DashboardWarehouseUpdateRoute
+  '/warehouse/consumed': typeof DashboardWarehouseConsumedRoute
+  '/warehouse/purchases': typeof DashboardWarehousePurchasesRoute
+  '/warehouse/stocked': typeof DashboardWarehouseStockedRoute
   '/production': typeof DashboardProductionIndexRoute
   '/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
   '/basic-info/erp-permissions/app-machine-permissions': typeof DashboardBasicInfoErpPermissionsAppMachinePermissionsRoute
@@ -623,10 +608,9 @@ export interface FileRoutesById {
   '/_dashboard/': typeof DashboardIndexRoute
   '/_dashboard/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/_dashboard/customers/create': typeof DashboardCustomersCreateRoute
-  '/_dashboard/warehouse/create': typeof DashboardWarehouseCreateRoute
-  '/_dashboard/warehouse/delete': typeof DashboardWarehouseDeleteRoute
-  '/_dashboard/warehouse/read': typeof DashboardWarehouseReadRoute
-  '/_dashboard/warehouse/update': typeof DashboardWarehouseUpdateRoute
+  '/_dashboard/warehouse/consumed': typeof DashboardWarehouseConsumedRoute
+  '/_dashboard/warehouse/purchases': typeof DashboardWarehousePurchasesRoute
+  '/_dashboard/warehouse/stocked': typeof DashboardWarehouseStockedRoute
   '/_dashboard/production/': typeof DashboardProductionIndexRoute
   '/_dashboard/basic-info/employees/create': typeof DashboardBasicInfoEmployeesCreateRoute
   '/_dashboard/basic-info/erp-permissions/app-machine-permissions': typeof DashboardBasicInfoErpPermissionsAppMachinePermissionsRoute
@@ -656,10 +640,9 @@ export interface FileRouteTypes {
     | '/'
     | '/basic-info/company-info'
     | '/customers/create'
-    | '/warehouse/create'
-    | '/warehouse/delete'
-    | '/warehouse/read'
-    | '/warehouse/update'
+    | '/warehouse/consumed'
+    | '/warehouse/purchases'
+    | '/warehouse/stocked'
     | '/production/'
     | '/basic-info/employees/create'
     | '/basic-info/erp-permissions/app-machine-permissions'
@@ -684,10 +667,9 @@ export interface FileRouteTypes {
     | '/'
     | '/basic-info/company-info'
     | '/customers/create'
-    | '/warehouse/create'
-    | '/warehouse/delete'
-    | '/warehouse/read'
-    | '/warehouse/update'
+    | '/warehouse/consumed'
+    | '/warehouse/purchases'
+    | '/warehouse/stocked'
     | '/production'
     | '/basic-info/employees/create'
     | '/basic-info/erp-permissions/app-machine-permissions'
@@ -714,10 +696,9 @@ export interface FileRouteTypes {
     | '/_dashboard/'
     | '/_dashboard/basic-info/company-info'
     | '/_dashboard/customers/create'
-    | '/_dashboard/warehouse/create'
-    | '/_dashboard/warehouse/delete'
-    | '/_dashboard/warehouse/read'
-    | '/_dashboard/warehouse/update'
+    | '/_dashboard/warehouse/consumed'
+    | '/_dashboard/warehouse/purchases'
+    | '/_dashboard/warehouse/stocked'
     | '/_dashboard/production/'
     | '/_dashboard/basic-info/employees/create'
     | '/_dashboard/basic-info/erp-permissions/app-machine-permissions'
@@ -812,10 +793,9 @@ export const routeTree = rootRoute
       "filePath": "_dashboard/warehouse/route.tsx",
       "parent": "/_dashboard",
       "children": [
-        "/_dashboard/warehouse/create",
-        "/_dashboard/warehouse/delete",
-        "/_dashboard/warehouse/read",
-        "/_dashboard/warehouse/update"
+        "/_dashboard/warehouse/consumed",
+        "/_dashboard/warehouse/purchases",
+        "/_dashboard/warehouse/stocked"
       ]
     },
     "/_dashboard/": {
@@ -830,20 +810,16 @@ export const routeTree = rootRoute
       "filePath": "_dashboard/customers/create.tsx",
       "parent": "/_dashboard/customers"
     },
-    "/_dashboard/warehouse/create": {
-      "filePath": "_dashboard/warehouse/create.tsx",
+    "/_dashboard/warehouse/consumed": {
+      "filePath": "_dashboard/warehouse/consumed.tsx",
       "parent": "/_dashboard/warehouse"
     },
-    "/_dashboard/warehouse/delete": {
-      "filePath": "_dashboard/warehouse/delete.tsx",
+    "/_dashboard/warehouse/purchases": {
+      "filePath": "_dashboard/warehouse/purchases.tsx",
       "parent": "/_dashboard/warehouse"
     },
-    "/_dashboard/warehouse/read": {
-      "filePath": "_dashboard/warehouse/read.tsx",
-      "parent": "/_dashboard/warehouse"
-    },
-    "/_dashboard/warehouse/update": {
-      "filePath": "_dashboard/warehouse/update.tsx",
+    "/_dashboard/warehouse/stocked": {
+      "filePath": "_dashboard/warehouse/stocked.tsx",
       "parent": "/_dashboard/warehouse"
     },
     "/_dashboard/production/": {

@@ -93,9 +93,10 @@ function ErrorComponent({ error }: { error: Error }) {
     if (!error) return;
 
     const redirect = location.pathname + location.search;
+    console.log("||");
     if (error instanceof TRPCClientError) {
       if (error.message === "UNAUTHORIZED") {
-        console.log("wtd");
+        console.log("--");
         clearAuth();
         navigate({ to: "/login", search: { redirect } });
       } else if (error.message === "FORBIDDEN") {

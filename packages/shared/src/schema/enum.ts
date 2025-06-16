@@ -62,8 +62,21 @@ export const roleNameEnum = pgEnum("role_name", [
   "AdminManagement",
   "BasicInfoManagement", // 基本資料
   "PersonnelPermissionManagement", // 人事權限
-  "StorageManagement", // 倉管管理
+  "WarehouseManagement", // 倉管管理
   "ProductionManagement", // 生產管理
 ]);
 
 export type RoleName = (typeof roleNameEnum.enumValues)[number];
+
+export const MATERIAL_STATUS = [
+  "TRANSPORTING",
+  "ARRIVED",
+  "STOCKED",
+  "CONSUMED",
+] as const;
+
+export const materialStatusEnum = pgEnum("material_status", MATERIAL_STATUS);
+
+export const MATERIAL_SOURCE = ["EXCEL", "MANUAL", "SYNC"] as const;
+
+export const materialSourceEnum = pgEnum("material_source", MATERIAL_SOURCE);

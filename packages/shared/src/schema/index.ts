@@ -1,5 +1,7 @@
 import type { InferSelectModel } from "drizzle-orm";
-import { eq, relations, sql } from "drizzle-orm";
+import { relations, eq, sql } from "drizzle-orm";
+import { warehouseLocationsTable } from './warehouse-location';
+import { warehouseSubLocationsTable } from './warehouse-sub-location';
 
 import {
   boolean,
@@ -613,6 +615,8 @@ export type AppUserRefreshTokenFromDb = InferSelectModel<
   typeof appUserRefreshTokensTable
 >;
 export type CompanyInfoFromDb = InferSelectModel<typeof companyInfoTable>;
+export type WarehouseLocationFromDb = InferSelectModel<typeof warehouseLocationsTable>;
+export type WarehouseSubLocationFromDb = InferSelectModel<typeof warehouseSubLocationsTable>;
 
 export type BomProcessJobRecord = InferSelectModel<
   typeof projectBomImportJobRecordTable
@@ -645,6 +649,12 @@ export * from "./project-assembly-process";
 
 // Project Part
 export * from "./project-part";
+
+// Warehouse Location
+export * from "./warehouse-location";
+
+// Warehouse Sub-Location
+export * from "./warehouse-sub-location";
 
 export * from "./employees";
 

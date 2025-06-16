@@ -19,6 +19,11 @@ import {
   appUserRefreshTokensTable,
   roleNameEnum,
   processWorkTypesTable,
+  warehouseLocationsTable,
+  warehouseSubLocationsTable,
+  materialsTable,
+  MATERIAL_STATUS,
+  MATERIAL_SOURCE,
 } from "./schema.js";
 import { db } from "./index.js";
 import { randomUUID } from "crypto";
@@ -47,6 +52,8 @@ async function main() {
   // await db.delete(rolesTable);
   // await db.delete(projectsTable);
   // await db.delete(contactsTable);
+  // await db.delete(warehouseSubLocationsTable);
+  // await db.delete(warehouseLocationsTable);
   // await db.delete(customersTable);
 
   // Set role IDs for permissions.ts
@@ -54,7 +61,7 @@ async function main() {
     adminRoleId,
     basicInfoManagementRoleId,
     personnelPermissionManagementRoleId,
-    storageManagementRoleId,
+    warehouseManagementRoleId,
     productionManagementRoleId,
   } = roleIds;
 
@@ -76,8 +83,8 @@ async function main() {
     },
 
     {
-      id: storageManagementRoleId,
-      name: roleNameEnum.enumValues[3], // important this is used to identify storageManagement role
+      id: warehouseManagementRoleId,
+      name: roleNameEnum.enumValues[3], // important this is used to identify warehouseManagement role
       chinese_name: "倉庫管理",
     },
     {
@@ -92,6 +99,156 @@ async function main() {
 
   // Sync permissions from code to DB
   // await syncPermissionsToDB();
+
+  console.log("Seeding warehouse locations...");
+
+  // Create warehouse locations
+  const warehouseLocations = [
+    {
+      id: randomUUID(),
+      district: "北區倉庫",
+      createdBy: "seed",
+      updatedBy: "seed",
+    },
+    {
+      id: randomUUID(),
+      district: "中區倉庫",
+      createdBy: "seed",
+      updatedBy: "seed",
+    },
+    {
+      id: randomUUID(),
+      district: "南區倉庫",
+      createdBy: "seed",
+      updatedBy: "seed",
+    },
+  ];
+
+  await db.insert(warehouseLocationsTable).values(warehouseLocations);
+  console.log(`Created ${warehouseLocations.length} warehouse locations`);
+
+  // Create warehouse sub-locations
+  const warehouseSubLocations = [
+    // North Warehouse Sub-locations
+    {
+      id: randomUUID(),
+      name: "A區",
+      warehouseLocationId: warehouseLocations[0].id,
+      createdBy: "seed",
+      updatedBy: "seed",
+    },
+    {
+      id: randomUUID(),
+      name: "B區",
+      warehouseLocationId: warehouseLocations[0].id,
+      createdBy: "seed",
+      updatedBy: "seed",
+    },
+    // Central Warehouse Sub-locations
+    {
+      id: randomUUID(),
+      name: "C區",
+      warehouseLocationId: warehouseLocations[1].id,
+      createdBy: "seed",
+      updatedBy: "seed",
+    },
+    {
+      id: randomUUID(),
+      name: "D區",
+      warehouseLocationId: warehouseLocations[1].id,
+      createdBy: "seed",
+      updatedBy: "seed",
+    },
+    // South Warehouse Sub-locations
+    {
+      id: randomUUID(),
+      name: "E區",
+      warehouseLocationId: warehouseLocations[2].id,
+      createdBy: "seed",
+      updatedBy: "seed",
+    },
+    {
+      id: randomUUID(),
+      name: "F區",
+      warehouseLocationId: warehouseLocations[2].id,
+      createdBy: "seed",
+      updatedBy: "seed",
+    },
+  ];
+
+  await db.insert(warehouseSubLocationsTable).values(warehouseSubLocations);
+  console.log(
+    `Created ${warehouseSubLocations.length} warehouse sub-locations`
+  );
+
+  console.log("Seeding materials...");
+
+  // Material types and specifications for realistic data
+  const materialTypes = [
+    {
+      material: "SS400",
+      specs: ["100x100x6", "150x150x8", "200x200x10"],
+      weights: ["15.0", "24.0", "35.0"],
+    },
+    {
+      material: "A36",
+      specs: ["100x50x5", "150x75x6", "200x100x8"],
+      weights: ["12.0", "18.0", "25.0"],
+    },
+    {
+      material: "S45C",
+      specs: ["D20", "D25", "D30"],
+      weights: ["2.5", "3.9", "5.6"],
+    },
+    {
+      material: "SUS304",
+      specs: ["50x50x3", "75x75x4", "100x100x5"],
+      weights: ["4.5", "8.9", "14.0"],
+    },
+    {
+      material: "SPCC",
+      specs: ["t1.2", "t1.6", "t2.0"],
+      weights: ["9.4", "12.6", "15.7"],
+    },
+  ];
+
+  // Generate 30 materials
+  const materials = Array.from({ length: 30 }, (_, i) => {
+    const typeIndex = i % materialTypes.length;
+    const specIndex = Math.floor(
+      Math.random() * materialTypes[typeIndex].specs.length
+    );
+    const materialType = materialTypes[typeIndex];
+    const status = MATERIAL_STATUS[0];
+    const subLocation =
+      warehouseSubLocations[
+        Math.floor(Math.random() * warehouseSubLocations.length)
+      ];
+
+    // Generate a realistic label ID based on material and spec
+    const labelId = `MAT-${materialType.material}-${materialType.specs[specIndex].replace(/[^a-zA-Z0-9]/g, "")}-${String(i + 1).padStart(4, "0")}`;
+
+    const materialData = {
+      id: randomUUID(),
+      supplier: `中龍`,
+      typeName: `型號-${String.fromCharCode(65 + (i % 5))}${i % 10}`,
+      labelId,
+      material: materialType.material,
+      specification: materialType.specs[specIndex],
+      length: (Math.floor(Math.random() * 30) + 1).toString(), // 1-30 meters
+      weight: materialType.weights[specIndex],
+      status: status,
+      originalSource: MATERIAL_SOURCE[1],
+      currentSource: MATERIAL_SOURCE[1],
+    };
+
+    return materialData;
+  });
+
+  await db.insert(materialsTable).values(materials);
+  console.log(`Created ${materials.length} materials`);
+
+  console.log("Seeding complete!");
 
   // Create departments
   const hrDeptId = randomUUID();
@@ -200,7 +357,7 @@ async function main() {
     // Storage Management role in Operations department
     {
       id: randomUUID(),
-      roleId: storageManagementRoleId,
+      roleId: warehouseManagementRoleId,
       departmentId: operationsDeptId,
     },
 

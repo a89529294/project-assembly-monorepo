@@ -4,6 +4,7 @@ import { basicInfoRouter } from "./basic-info/router.js";
 import { router } from "./core.js";
 import { personnelPermissionRouter } from "./personnel-permission/router.js";
 import { productionRouter } from "./production/router.js";
+import { warehouseRouter } from "./warehouse/router.js";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 
@@ -12,6 +13,7 @@ export const appRouter = router({
   basicInfo: basicInfoRouter,
   personnelPermission: personnelPermissionRouter,
   production: productionRouter,
+  warehouse: warehouseRouter,
 });
 
 export type AppRouter = typeof appRouter;
