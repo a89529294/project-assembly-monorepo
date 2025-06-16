@@ -32,6 +32,11 @@ interface Material {
   // Add other fields as necessary from the full schema
 }
 
+interface MaterialPage {
+  items: Material[];
+  nextCursor?: number | null;
+}
+
 const materialTableColumns = [
   { accessorKey: "supplier", header: "Supplier" },
   { accessorKey: "labelId", header: "Material ID" },
@@ -67,7 +72,7 @@ function RouteComponent() {
       trpc.warehouse.readPurchases.infiniteQueryOptions(
         { cursor: 0 },
         {
-          getNextPageParam: (lastPage) => lastPage.nextCursor,
+          getNextPageParam: (lastPage: MaterialPage) => lastPage.nextCursor,
         }
       )
     );
@@ -76,7 +81,7 @@ function RouteComponent() {
 
   
 
-  const allMaterials = data?.pages.flatMap((page) => page.items) ?? [];
+  const allMaterials = data?.pages.flatMap((page: MaterialPage) => page.items) ?? [];
 
   return (
     <PageShell
@@ -166,7 +171,7 @@ function RouteComponent() {
                     </TableCell>
                   </TableRow>
                 ) : allMaterials.length > 0 ? (
-                  allMaterials.map((material: Material, index) => (
+                  allMaterials.map((material: Material, index: number) => (
                     <TableRow
                       key={material.id}
                       ref={index === allMaterials.length - 1 ? ref : null}
