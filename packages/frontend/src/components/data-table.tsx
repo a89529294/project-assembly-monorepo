@@ -15,13 +15,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, Ref, SetStateAction, useState } from "react";
 
 interface DataTableProps<TData extends Record<"id", string>, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   rowSelection?: RowSelectionState;
   setRowSelection?: Dispatch<SetStateAction<RowSelectionState>>;
+  lastRowRef?: Ref<HTMLTableRowElement>;
 }
 
 //Tip: If you find yourself using <DataTable /> in multiple places, this is the component you could make reusable by extracting it to components/ui/data-table.tsx.
@@ -33,6 +34,7 @@ export function DataTable<TData extends Record<"id", string>, TValue>({
   data,
   rowSelection,
   setRowSelection,
+  lastRowRef,
 }: DataTableProps<TData, TValue>) {
   const [innerRowSelection, setInnerRowSelection] = useState<RowSelectionState>(
     {}
@@ -82,10 +84,11 @@ export function DataTable<TData extends Record<"id", string>, TValue>({
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
+            table.getRowModel().rows.map((row, index) => (
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                ref={index === data.length - 1 ? lastRowRef : undefined}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

@@ -213,7 +213,7 @@ async function main() {
   ];
 
   // Generate 30 materials
-  const materials = Array.from({ length: 30 }, (_, i) => {
+  const materials = Array.from({ length: 1000 }, (_, i) => {
     const typeIndex = i % materialTypes.length;
     const specIndex = Math.floor(
       Math.random() * materialTypes[typeIndex].specs.length

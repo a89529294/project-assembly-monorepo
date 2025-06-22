@@ -1,18 +1,10 @@
-// src/schemas/material.schema.ts
-import { relations } from "drizzle-orm";
-import {
-  boolean,
-  decimal,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  varchar,
-} from "drizzle-orm/pg-core";
+import { getTableColumns, relations } from "drizzle-orm";
+import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { z } from "zod";
 import { baseSchema } from "./common";
-import { projectAssemblyMaterialRelation } from "./project-assembly";
-import { materialSourceEnum, materialStatusEnum } from "./enum";
 import { employeesTable } from "./employees";
+import { materialSourceEnum, materialStatusEnum } from "./enum";
+import { projectAssemblyMaterialRelation } from "./project-assembly";
 import { warehouseSubLocationsTable } from "./warehouse-sub-location"; // Added for relation
 
 export const materialsTable = pgTable("materials", {
@@ -72,3 +64,10 @@ export const materialRelations = relations(materialsTable, ({ one, many }) => ({
 
 export type Material = typeof materialsTable.$inferSelect;
 export type NewMaterial = typeof materialsTable.$inferInsert;
+const materialColumns = getTableColumns(materialsTable);
+export const materialKeys = Object.keys(materialColumns) as [
+  keyof Material,
+  ...(keyof Material)[],
+];
+export type MaterialKey = (typeof materialKeys)[number];
+export const keyOfMaterialSchema = z.enum(materialKeys);
