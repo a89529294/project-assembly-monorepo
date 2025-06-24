@@ -16,7 +16,12 @@ import {
 } from "@/components/ui/popover";
 import { YearMonthDateCalendar } from "@/components/year-month-date-calendar";
 import { cn } from "@/lib/utils";
-import { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
+import {
+  FieldPathByValue,
+  FieldValues,
+  PathValue,
+  UseFormReturn,
+} from "react-hook-form";
 
 export function DateField<T extends FieldValues>({
   form,
@@ -25,7 +30,7 @@ export function DateField<T extends FieldValues>({
   label,
 }: {
   form: UseFormReturn<T>;
-  name: FieldPath<T>;
+  name: FieldPathByValue<T, Date | null | undefined>;
   required: boolean;
   label?: string;
 }) {
@@ -63,7 +68,9 @@ export function DateField<T extends FieldValues>({
               <PopoverContent className="w-auto p-0" align="start">
                 <YearMonthDateCalendar
                   value={form.getValues(name)}
-                  onChange={(s) => form.setValue(name, s)}
+                  onChange={(s) =>
+                    form.setValue(name, s as PathValue<T, typeof name>)
+                  }
                 />
               </PopoverContent>
             </Popover>

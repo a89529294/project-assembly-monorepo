@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { and, eq, ilike, or } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "../../../db";
 import { protectedProcedure } from "../../core";
 import {
@@ -7,7 +7,32 @@ import {
   Material,
   MATERIAL_STATUS,
   keyOfMaterialSchema,
+  MaterialKey,
 } from "@myapp/shared";
+
+const DATE_FIELDS = new Set([
+  "arrivalDate",
+  "consumedDate",
+  "loadingDate",
+  "stockedDate",
+]);
+
+// Helper function to check if a value is a valid date string
+function isValidDateString(value: string): boolean {
+  return !isNaN(Date.parse(value));
+}
+
+// Helper function to create filter condition based on field type
+function createFilterCondition(field: MaterialKey, value: string) {
+  const column = materialsTable[field];
+
+  if (DATE_FIELDS.has(field) && isValidDateString(value)) {
+    return sql`DATE(${column}) = ${value}`;
+  }
+
+  // For all other fields, use ILIKE for partial matching
+  return ilike(column, `%${value}%`);
+}
 
 export const readPurchasesProcedure = protectedProcedure([
   "WarehouseManagement",
@@ -47,8 +72,7 @@ export const readPurchasesProcedure = protectedProcedure([
 
     if (filters && filters.length > 0) {
       const filterConditions = filters.map((filter) => {
-        const column = materialsTable[filter.field];
-        return ilike(column, `%${filter.value}%`);
+        return createFilterCondition(filter.field, filter.value);
       });
 
       whereConditions.push(and(...filterConditions));
@@ -58,7 +82,8 @@ export const readPurchasesProcedure = protectedProcedure([
       .select()
       .from(materialsTable)
       .where(and(...whereConditions))
-      .orderBy(materialsTable.labelId) // Order is important for consistent pagination
+      .orderBy(desc(materialsTable.createdAt))
+
       .limit(limit)
       .offset(offset);
 

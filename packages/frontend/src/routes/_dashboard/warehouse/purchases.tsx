@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DataTable } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
-
 import { useInView } from "react-intersection-observer";
 import { useMemo } from "react";
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
@@ -17,9 +15,10 @@ import { materialColumns } from "@/features/materials/columns";
 import { keyOfMaterialSchema, Material, MaterialKey } from "@myapp/shared";
 import { FilterPills } from "@/components/ui/filter-pills";
 import { AccessorColumnDef } from "@tanstack/react-table";
-import { cn } from "@/lib/utils";
+import { cn, isValidDateString } from "@/lib/utils";
 import { PendingComponent } from "@/components/pending-component";
 import { z } from "zod";
+import { format } from "date-fns";
 
 export const Route = createFileRoute("/_dashboard/warehouse/purchases")({
   validateSearch: z.object({
@@ -31,7 +30,7 @@ export const Route = createFileRoute("/_dashboard/warehouse/purchases")({
         })
       )
       .optional()
-      .default([{ field: "labelId" as const, value: "" }]),
+      .default([]),
   }),
   pendingComponent: PendingComponent,
   component: RouteComponent,
@@ -62,12 +61,24 @@ function RouteComponent() {
 
   const handleSearch = (searchFilters: MaterialSearchFilter[]) => {
     navigate({
-      search: (prev) => ({ ...prev, filters: searchFilters }),
+      search: (prev) => ({
+        ...prev,
+        filters: searchFilters.map((v) => {
+          if (isValidDateString(v.value))
+            return {
+              field: v.field,
+              value: format(v.value, "yyyy-MM-dd"),
+            };
+
+          return v;
+        }),
+      }),
     });
   };
 
   const handleRemoveFilter = (field: string) => {
-    const newFilters = filters.filter((f) => f.field !== field && f.value);
+    const newFilters = filters.filter((f) => f.field !== field);
+
     navigate({
       search: (prev) => ({ ...prev, filters: newFilters }),
     });
@@ -75,7 +86,10 @@ function RouteComponent() {
 
   const handleClearFilters = () => {
     navigate({
-      search: (prev) => ({ ...prev, filters: [] }),
+      search: (prev) => ({
+        ...prev,
+        filters: [],
+      }),
     });
   };
 
@@ -99,7 +113,6 @@ function RouteComponent() {
           <div className="flex space-x-2">
             <MaterialSearchDialog onSearch={handleSearch} />
             <MaterialCreateDialog />
-            <Button variant="secondary">編輯素材</Button>{" "}
           </div>
         </div>
       }
@@ -114,9 +127,7 @@ function RouteComponent() {
         />
         <div className="border flex-1 relative ">
           <div className="absolute w-full inset-0">
-            <ScrollArea
-              className={cn("h-full", isFetching && "opacity-50")}
-            >
+            <ScrollArea className={cn("h-full", isFetching && "opacity-50")}>
               <DataTable
                 columns={materialColumns}
                 data={allMaterials}

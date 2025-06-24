@@ -1,5 +1,7 @@
+import { MaterialCreateDialog } from "@/components/dialogs/material-create-dialog";
 import { Material } from "@myapp/shared";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import { format } from "date-fns";
 
 const columnHelper = createColumnHelper<Material>();
 
@@ -26,8 +28,12 @@ export const materialColumns = [
     id: "arrivalDate",
     cell: (info) => {
       const date = info.getValue();
-      return date ? new Date(date).toLocaleDateString() : "";
+      return date ? format(date, "yyyy/MM/dd") : "";
     },
   }),
   columnHelper.accessor("status", { header: "狀態", id: "status" }),
+  columnHelper.display({
+    id: "actions",
+    cell: ({ row }) => <MaterialCreateDialog material={row.original} />,
+  }),
 ] as ColumnDef<Material>[];

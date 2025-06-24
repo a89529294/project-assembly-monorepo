@@ -21,6 +21,15 @@ import { XIcon } from "lucide-react";
 import { Material, MaterialKey } from "@myapp/shared";
 import { AccessorColumnDef } from "@tanstack/react-table";
 import { getRouteApi } from "@tanstack/react-router";
+import { YearMonthDateCalendar } from "@/components/year-month-date-calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 
 export type MaterialSearchFilter = {
   field: MaterialKey;
@@ -31,11 +40,20 @@ interface MaterialSearchDialogProps {
   onSearch: (filters: MaterialSearchFilter[]) => void;
 }
 
+const defaultFilters = [
+  {
+    field: "labelId" as const,
+    value: "",
+  },
+];
+
 const searchableFields = materialColumns
   .filter((c): c is AccessorColumnDef<Material> => "accessorKey" in c)
   .map((c) => ({ key: c.id as MaterialKey, header: c.header }));
 
 const purchasesRouteApi = getRouteApi("/_dashboard/warehouse/purchases");
+
+const dateFields = ["arrivalDate"];
 
 export function MaterialSearchDialog({ onSearch }: MaterialSearchDialogProps) {
   const { filters: routeFilters } = purchasesRouteApi.useSearch();
@@ -44,7 +62,7 @@ export function MaterialSearchDialog({ onSearch }: MaterialSearchDialogProps) {
 
   useEffect(() => {
     if (open) {
-      setLocalFilters(routeFilters);
+      setLocalFilters(routeFilters.length ? routeFilters : defaultFilters);
     }
   }, [open, routeFilters]);
 
@@ -58,39 +76,37 @@ export function MaterialSearchDialog({ onSearch }: MaterialSearchDialogProps) {
   };
 
   const handleRemoveFilter = (field: MaterialKey) => {
-    if (localFilters.length === 1) return;
-
     setLocalFilters(localFilters.filter((f) => f.field !== field));
   };
 
   const handleReset = () => {
-    setLocalFilters([]);
+    setLocalFilters(defaultFilters);
   };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">搜尋</Button>
+        <Button variant="outline">素材搜尋</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>素材搜尋</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-4 py-4">
+        <div className="grid grid-cols-2 gap-y-4 gap-x-2 py-4">
           {localFilters.map((filter, index) => (
             <div key={filter.field} className="flex items-center gap-2">
               <Select
                 value={filter.field}
-                onValueChange={(value: MaterialKey) => {
+                onValueChange={(field: MaterialKey) => {
                   const newFilters = [...localFilters];
                   newFilters[index] = {
-                    ...newFilters[index],
-                    field: value,
+                    field,
                     value: "",
                   };
                   setLocalFilters(newFilters);
                 }}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[104px] shrink-0">
                   <SelectValue placeholder="Select a field" />
                 </SelectTrigger>
                 <SelectContent>
@@ -105,28 +121,44 @@ export function MaterialSearchDialog({ onSearch }: MaterialSearchDialogProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <Input
-                placeholder="Value"
-                value={filter.value}
-                onChange={(e) => {
-                  const newFilters = [...localFilters];
-                  newFilters[index] = {
-                    ...newFilters[index],
-                    value: e.target.value,
-                  };
-                  setLocalFilters(newFilters);
-                }}
-                className="flex-grow"
-              />
-              {localFilters.length !== 1 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemoveFilter(filter.field)}
-                >
-                  <XIcon className="h-4 w-4" />
-                </Button>
+
+              {dateFields.includes(filter.field) ? (
+                <PopoverCalendar
+                  filter={filter}
+                  onChange={(s) => {
+                    console.log(s);
+                    const newFilters = [...localFilters];
+                    newFilters[index] = {
+                      ...newFilters[index],
+                      value: s?.toISOString() ?? "",
+                    };
+                    setLocalFilters(newFilters);
+                  }}
+                />
+              ) : (
+                <Input
+                  placeholder="Value"
+                  value={filter.value}
+                  onChange={(e) => {
+                    const newFilters = [...localFilters];
+                    newFilters[index] = {
+                      ...newFilters[index],
+                      value: e.target.value,
+                    };
+                    setLocalFilters(newFilters);
+                  }}
+                  className=""
+                />
               )}
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleRemoveFilter(filter.field)}
+                className="-ml-2"
+              >
+                <XIcon className="h-4 w-4" />
+              </Button>
             </div>
           ))}
         </div>
@@ -145,7 +177,7 @@ export function MaterialSearchDialog({ onSearch }: MaterialSearchDialogProps) {
             <Button
               onClick={() => {
                 const searchPayload = localFilters
-                  .filter((f) => f.field && f.value)
+                  .filter((f) => f.value)
                   .map(({ field, value }) => ({ field, value }));
                 onSearch(searchPayload);
                 setOpen(false);
@@ -157,5 +189,44 @@ export function MaterialSearchDialog({ onSearch }: MaterialSearchDialogProps) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PopoverCalendar({
+  filter,
+  onChange,
+}: {
+  filter: MaterialSearchFilter;
+  onChange: (s: Date | null | undefined) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant={"outline"}
+          className={cn(
+            "pl-3 text-left font-normal disabled:opacity-50 flex-1",
+            !filter.value && "text-muted-foreground"
+          )}
+        >
+          {filter.value ? (
+            format(filter.value, "yyyy年MM月dd日")
+          ) : (
+            <span>選一個日期</span>
+          )}
+          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <YearMonthDateCalendar
+          value={filter.value ? new Date(filter.value) : undefined}
+          onChange={(s) => {
+            onChange(s);
+            setOpen(false);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }

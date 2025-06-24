@@ -113,3 +113,7 @@ export const uploadToS3 = (
     xhr.send(file);
   });
 };
+
+export function isValidDateString(value: string): boolean {
+  return !isNaN(Date.parse(value));
+}

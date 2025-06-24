@@ -12,7 +12,7 @@ import {
 
 export function YearMonthDateCalendar(props: {
   value: Date | undefined;
-  onChange: (...args: any[]) => void;
+  onChange: (date: Date | null | undefined) => void;
 }) {
   const handleCalendarChange = (
     _value: string | number,
@@ -31,7 +31,7 @@ export function YearMonthDateCalendar(props: {
       <Calendar
         mode="single"
         selected={props.value}
-        onSelect={(date1, _, m, __) => {
+        onSelect={(date1, _, m) => {
           if (m.selected) props.onChange(null);
           else props.onChange(date1);
         }}

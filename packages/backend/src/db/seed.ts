@@ -1,6 +1,6 @@
 // import * as dotenv from "dotenv";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   usersTable,
   rolesTable,
@@ -228,6 +228,8 @@ async function main() {
     // Generate a realistic label ID based on material and spec
     const labelId = `MAT-${materialType.material}-${materialType.specs[specIndex].replace(/[^a-zA-Z0-9]/g, "")}-${String(i + 1).padStart(4, "0")}`;
 
+    const daysAgo = Math.floor(Math.random() * 365 * 5);
+
     const materialData = {
       id: randomUUID(),
       supplier: `中龍`,
@@ -240,6 +242,7 @@ async function main() {
       status: status,
       originalSource: MATERIAL_SOURCE[1],
       currentSource: MATERIAL_SOURCE[1],
+      arrivalDate: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000),
     };
 
     return materialData;

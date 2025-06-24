@@ -78,6 +78,8 @@ function Calendar({
     ...userComponents,
   };
 
+  console.log(props);
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
