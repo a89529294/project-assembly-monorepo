@@ -6,12 +6,7 @@ export interface AuthContext {
   sessionToken: string | null;
   user: User | null;
   logout: (onSuccess: () => void, onError?: () => void) => Promise<void>;
-  login: (
-    account: string,
-    password: string,
-    onSuccess: () => void,
-    onError?: () => void
-  ) => Promise<void>;
+  login: (account: string, password: string) => Promise<void>;
   clearAuth: () => void;
 }
 

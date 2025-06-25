@@ -77,21 +77,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const login: AuthContext["login"] = React.useCallback(
-    async (account, password, onSuccess, onError) => {
+    async (account, password) => {
       try {
         const data = await trcpLogin({ account: account, password: password });
-        setAuth({
+        const newAuth = {
           sessionToken: data.sessionToken,
           user: data.user,
-        });
-        setStoredAuth({
-          sessionToken: data.sessionToken,
-          user: data.user,
-        });
-        onSuccess();
+        };
+        setAuth(newAuth);
+        setStoredAuth(newAuth);
       } catch (e) {
         console.error(e);
-        if (onError) onError();
+        throw e;
       }
     },
     [trcpLogin]

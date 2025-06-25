@@ -181,78 +181,6 @@ async function main() {
     `Created ${warehouseSubLocations.length} warehouse sub-locations`
   );
 
-  console.log("Seeding materials...");
-
-  // Material types and specifications for realistic data
-  const materialTypes = [
-    {
-      material: "SS400",
-      specs: ["100x100x6", "150x150x8", "200x200x10"],
-      weights: ["15.0", "24.0", "35.0"],
-    },
-    {
-      material: "A36",
-      specs: ["100x50x5", "150x75x6", "200x100x8"],
-      weights: ["12.0", "18.0", "25.0"],
-    },
-    {
-      material: "S45C",
-      specs: ["D20", "D25", "D30"],
-      weights: ["2.5", "3.9", "5.6"],
-    },
-    {
-      material: "SUS304",
-      specs: ["50x50x3", "75x75x4", "100x100x5"],
-      weights: ["4.5", "8.9", "14.0"],
-    },
-    {
-      material: "SPCC",
-      specs: ["t1.2", "t1.6", "t2.0"],
-      weights: ["9.4", "12.6", "15.7"],
-    },
-  ];
-
-  // Generate 30 materials
-  const materials = Array.from({ length: 1000 }, (_, i) => {
-    const typeIndex = i % materialTypes.length;
-    const specIndex = Math.floor(
-      Math.random() * materialTypes[typeIndex].specs.length
-    );
-    const materialType = materialTypes[typeIndex];
-    const status = MATERIAL_STATUS[0];
-    const subLocation =
-      warehouseSubLocations[
-        Math.floor(Math.random() * warehouseSubLocations.length)
-      ];
-
-    // Generate a realistic label ID based on material and spec
-    const labelId = `MAT-${materialType.material}-${materialType.specs[specIndex].replace(/[^a-zA-Z0-9]/g, "")}-${String(i + 1).padStart(4, "0")}`;
-
-    const daysAgo = Math.floor(Math.random() * 365 * 5);
-
-    const materialData = {
-      id: randomUUID(),
-      supplier: `中龍`,
-      typeName: `型號-${String.fromCharCode(65 + (i % 5))}${i % 10}`,
-      labelId,
-      material: materialType.material,
-      specification: materialType.specs[specIndex],
-      length: (Math.floor(Math.random() * 30) + 1).toString(), // 1-30 meters
-      weight: materialType.weights[specIndex],
-      status: status,
-      originalSource: MATERIAL_SOURCE[1],
-      currentSource: MATERIAL_SOURCE[1],
-      arrivalDate: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000),
-    };
-
-    return materialData;
-  });
-
-  await db.insert(materialsTable).values(materials);
-  console.log(`Created ${materials.length} materials`);
-
-  console.log("Seeding complete!");
-
   // Create departments
   const hrDeptId = randomUUID();
   const financeDeptId = randomUUID();
@@ -401,6 +329,77 @@ async function main() {
   }));
 
   const employeesFromDB = await seedEmployees(departmentConfigs);
+
+  console.log("Seeding materials...");
+
+  // Material types and specifications for realistic data
+  const materialTypes = [
+    {
+      material: "SS400",
+      specs: ["100x100x6", "150x150x8", "200x200x10"],
+      weights: ["15.0", "24.0", "35.0"],
+    },
+    {
+      material: "A36",
+      specs: ["100x50x5", "150x75x6", "200x100x8"],
+      weights: ["12.0", "18.0", "25.0"],
+    },
+    {
+      material: "S45C",
+      specs: ["D20", "D25", "D30"],
+      weights: ["2.5", "3.9", "5.6"],
+    },
+    {
+      material: "SUS304",
+      specs: ["50x50x3", "75x75x4", "100x100x5"],
+      weights: ["4.5", "8.9", "14.0"],
+    },
+    {
+      material: "SPCC",
+      specs: ["t1.2", "t1.6", "t2.0"],
+      weights: ["9.4", "12.6", "15.7"],
+    },
+  ];
+
+  // Generate 30 materials
+  const materials = Array.from({ length: 1000 }, (_, i) => {
+    const typeIndex = i % materialTypes.length;
+    const specIndex = Math.floor(
+      Math.random() * materialTypes[typeIndex].specs.length
+    );
+    const materialType = materialTypes[typeIndex];
+    const status = MATERIAL_STATUS[0];
+    const subLocation =
+      warehouseSubLocations[
+        Math.floor(Math.random() * warehouseSubLocations.length)
+      ];
+
+    // Generate a realistic label ID based on material and spec
+    const labelId = `MAT-${materialType.material}-${materialType.specs[specIndex].replace(/[^a-zA-Z0-9]/g, "")}-${String(i + 1).padStart(4, "0")}`;
+
+    const daysAgo = Math.floor(Math.random() * 365 * 5);
+
+    const materialData = {
+      id: randomUUID(),
+      supplier: `中龍`,
+      typeName: `型號-${String.fromCharCode(65 + (i % 5))}${i % 10}`,
+      labelId,
+      material: materialType.material,
+      specification: materialType.specs[specIndex],
+      length: (Math.floor(Math.random() * 30) + 1).toString(), // 1-30 meters
+      weight: materialType.weights[specIndex],
+      status: status,
+      originalSource: MATERIAL_SOURCE[1],
+      currentSource: MATERIAL_SOURCE[1],
+      arrivalDate: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000),
+      arrivalConfirmedEmployeeId: employeesFromDB[0].id,
+    };
+
+    return materialData;
+  });
+
+  await db.insert(materialsTable).values(materials);
+  console.log(`Created ${materials.length} materials`);
 
   // --- Give at least 5 employees an extra department ---
   // Fetch all departments again for assignment

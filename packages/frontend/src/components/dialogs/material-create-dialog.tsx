@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -23,8 +23,16 @@ import { createPurchaseInputSchema, Material } from "@myapp/shared";
 import { trpc } from "@/trpc";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { YearMonthDateCalendar } from "@/components/year-month-date-calendar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function MaterialCreateDialog({ material }: { material?: Material }) {
   const [open, setOpen] = useState(false);
@@ -44,7 +52,7 @@ export function MaterialCreateDialog({ material }: { material?: Material }) {
 
   const isPending = isCreating || isUpdating;
 
-        useEffect(() => {
+  useEffect(() => {
     if (material) {
       form.reset({
         ...material,
@@ -54,11 +62,11 @@ export function MaterialCreateDialog({ material }: { material?: Material }) {
         procurementNumber: material.procurementNumber ?? undefined,
         loadingNumber: material.loadingNumber ?? undefined,
         furnaceNumber: material.furnaceNumber ?? undefined,
+        millSheetNoU: material.millSheetNoU ?? undefined,
         millSheetNo: material.millSheetNo ?? undefined,
         millSheetNoNR: material.millSheetNoNR ?? undefined,
-        loadingDate: material.loadingDate
-          ? format(material.loadingDate, "yyyy-MM-dd")
-          : undefined,
+        loadingDate: material.loadingDate ?? undefined,
+        arrivalDate: material.arrivalDate ?? undefined,
         length: Number(material.length),
         weight: Number(material.weight),
       });
@@ -69,14 +77,16 @@ export function MaterialCreateDialog({ material }: { material?: Material }) {
     values: z.infer<typeof createPurchaseInputSchema>
   ) => {
     try {
-            if (material) {
+      if (material) {
         await updatePurchase({ ...values, id: material.id });
       } else {
         await createPurchase(values);
       }
 
-      // Reset query and navigate first to let the background update
-      await queryClient.resetQueries({
+      form.reset();
+      setOpen(false);
+
+      await queryClient.invalidateQueries({
         queryKey: trpc.warehouse.readPurchases.infiniteQueryKey(),
       });
       navigate({
@@ -85,10 +95,6 @@ export function MaterialCreateDialog({ material }: { material?: Material }) {
           filters: [],
         }),
       });
-
-      // Reset form and close dialog last, once the UI is stable
-      form.reset();
-      setOpen(false);
     } catch (error) {
       console.error("Failed to create purchase:", error);
     }
@@ -109,185 +115,198 @@ export function MaterialCreateDialog({ material }: { material?: Material }) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="supplier"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>供應商</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="labelId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>素材ID</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="typeName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>素材型號</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="material"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      材質<span className="text-red-400"> *</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="specification"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      斷面規格<span className="text-red-400"> *</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="length"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      長度<span className="text-red-400"> *</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="weight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      重量<span className="text-red-400"> *</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="procurementNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>採購案號</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="loadingNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>裝車單號</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="loadingDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>供應商出廠日期</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="furnaceNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>爐號</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="millSheetNo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>材質證明</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="millSheetNoNR"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>無輻射證明</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <ScrollArea className="h-96">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="supplier"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>供應商</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="labelId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>素材ID</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="typeName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>素材型號</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="material"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        材質<span className="text-red-400"> *</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="specification"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        斷面規格<span className="text-red-400"> *</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="length"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        長度<span className="text-red-400"> *</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="weight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        重量<span className="text-red-400"> *</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="procurementNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>採購案號</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="loadingNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>裝車單號</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormPopoverCalendar
+                  form={form}
+                  label="供應商出廠日期"
+                  name="loadingDate"
+                />
+                <FormField
+                  control={form.control}
+                  name="furnaceNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>爐號</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="millSheetNo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>材質證明</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="millSheetNoNR"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>無輻射證明</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="millSheetNoU"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>超音波證明</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormPopoverCalendar
+                  form={form}
+                  label="進貨日期"
+                  name="arrivalDate"
+                />
+              </div>
+            </ScrollArea>
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               提交
@@ -296,5 +315,54 @@ export function MaterialCreateDialog({ material }: { material?: Material }) {
         </Form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function FormPopoverCalendar({
+  form,
+  name,
+  label,
+}: {
+  form: UseFormReturn<z.infer<typeof createPurchaseInputSchema>>;
+  name: "arrivalDate" | "loadingDate";
+  label: string;
+}) {
+  return (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-col">
+          <FormLabel>{label}</FormLabel>
+          <Popover>
+            <PopoverTrigger asChild>
+              <FormControl>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "pl-3 text-left font-normal disabled:opacity-50 flex-1",
+                    !field.value && "text-muted-foreground"
+                  )}
+                >
+                  {field.value ? (
+                    format(field.value, "yyyy年MM月dd日")
+                  ) : (
+                    <span>選擇日期</span>
+                  )}
+                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                </Button>
+              </FormControl>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <YearMonthDateCalendar
+                value={field.value ?? undefined}
+                onChange={field.onChange}
+              />
+            </PopoverContent>
+          </Popover>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 }

@@ -1,7 +1,7 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { relations, eq, sql } from "drizzle-orm";
-import { warehouseLocationsTable } from './warehouse-location';
-import { warehouseSubLocationsTable } from './warehouse-sub-location';
+import { warehouseLocationsTable } from "./warehouse-location";
+import { warehouseSubLocationsTable } from "./warehouse-sub-location";
 
 import {
   boolean,
@@ -615,8 +615,12 @@ export type AppUserRefreshTokenFromDb = InferSelectModel<
   typeof appUserRefreshTokensTable
 >;
 export type CompanyInfoFromDb = InferSelectModel<typeof companyInfoTable>;
-export type WarehouseLocationFromDb = InferSelectModel<typeof warehouseLocationsTable>;
-export type WarehouseSubLocationFromDb = InferSelectModel<typeof warehouseSubLocationsTable>;
+export type WarehouseLocationFromDb = InferSelectModel<
+  typeof warehouseLocationsTable
+>;
+export type WarehouseSubLocationFromDb = InferSelectModel<
+  typeof warehouseSubLocationsTable
+>;
 
 export type BomProcessJobRecord = InferSelectModel<
   typeof projectBomImportJobRecordTable

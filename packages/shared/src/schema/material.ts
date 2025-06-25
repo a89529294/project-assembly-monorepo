@@ -23,6 +23,7 @@ export const materialsTable = pgTable("materials", {
     mode: "date",
   }), // 中龍出廠日期
   furnaceNumber: text("furnace_number"),
+  millSheetNoU: text("mill_sheet_no_u"), // 超音波證明
   millSheetNo: text("mill_sheet_no"), // 材質證明
   millSheetNoNR: text("mill_sheet_no_nr"), // 無輻射證明,
   // if millSheetNoNR is provided in xlsx use it
@@ -95,8 +96,46 @@ export const createPurchaseInputSchema = z.object({
   weight: z.coerce.number({ invalid_type_error: "Weight must be a number" }),
   procurementNumber: z.string().trim().optional(),
   loadingNumber: z.string().trim().optional(),
-  loadingDate: z.string().optional(),
+  loadingDate: z.date().optional(),
   furnaceNumber: z.string().trim().optional(),
   millSheetNo: z.string().trim().optional(),
   millSheetNoNR: z.string().trim().optional(),
+  millSheetNoU: z.string().trim().optional(),
+  arrivalDate: z.date().nullable(),
 });
+
+export const uploadMaterialRowSchema = z.object({
+  supplier: z.string().nullable(),
+  labelId: z.string().nullable(),
+  typeName: z.string().nullable(),
+  material: z.string(),
+  specification: z.string(),
+  length: z.number(),
+  weight: z.number(),
+  procurementNumber: z.string().nullable(),
+  loadingNumber: z.string().nullable(),
+  furnaceNumber: z.string().nullable(),
+  millSheetNo: z.string().nullable(),
+  millSheetNoNR: z.string().nullable(),
+  millSheetNoU: z.string().trim().optional(),
+  arrivalConfirmedEmployeeName: z.string().nullable(),
+  arrivalDate: z.date().nullable(),
+  consumedByEmployeeName: z.string().nullable(),
+  consumedDate: z.date().nullable(),
+  defaultCode: z.string().nullable(),
+  memo1: z.string().nullable(),
+  memo2: z.string().nullable(),
+  memo3: z.string().nullable(),
+  memo4: z.string().nullable(),
+  memo5: z.string().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const uploadMaterialsUsingXLSXInputSchema = z.array(
+  uploadMaterialRowSchema
+);
+
+export type UploadMaterialsUsingXLSXInputSchema = z.infer<
+  typeof uploadMaterialsUsingXLSXInputSchema
+>;

@@ -1,10 +1,5 @@
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-  useRouter,
-} from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/auth/use-auth";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
@@ -25,15 +20,19 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
-  const router = useRouter();
   const navigate = useNavigate();
   const search = Route.useSearch();
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [logginIn, setLogginIn] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
 
-  // TODO: implement auth fail handling
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate({ to: search.redirect || "/" });
+    }
+  }, [isAuthenticated, navigate, search.redirect]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -43,21 +42,13 @@ function Login() {
     }
 
     setLogginIn(true);
-    await login(
-      account,
-      password,
-      async () => {
-        await router.invalidate();
-
-        // may need this if auth state hasnt updated yet
-
-        await navigate({ to: search.redirect || "/" });
-        setLogginIn(false);
-      },
-      () => {
-        setLogginIn(false);
-      }
-    );
+    try {
+      await login(account, password);
+    } catch (error) {
+      // TODO: Replace with a user-friendly toast notification
+      console.error("Login failed:", error);
+      setLogginIn(false);
+    }
   };
 
   return (

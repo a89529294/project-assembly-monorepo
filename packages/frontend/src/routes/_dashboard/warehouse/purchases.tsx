@@ -2,8 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DataTable } from "@/components/data-table";
 import { useInView } from "react-intersection-observer";
 import { useMemo } from "react";
-import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
-import { trpc } from "@/trpc";
 import { PageShell } from "@/components/layout/page-shell";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -15,10 +13,15 @@ import { materialColumns } from "@/features/materials/columns";
 import { keyOfMaterialSchema, Material, MaterialKey } from "@myapp/shared";
 import { FilterPills } from "@/components/ui/filter-pills";
 import { AccessorColumnDef } from "@tanstack/react-table";
-import { cn, isValidDateString } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { PendingComponent } from "@/components/pending-component";
 import { z } from "zod";
 import { format } from "date-fns";
+import { UploadMaterialsXLSXButton } from "@/components/upload-materials-xlsx-button";
+import {
+  usePurchasesInfiniteQuery,
+  PurchasesInfiniteQueryResult,
+} from "@/features/materials/use-purchases-infinite-query";
 
 export const Route = createFileRoute("/_dashboard/warehouse/purchases")({
   validateSearch: z.object({
@@ -40,15 +43,13 @@ function RouteComponent() {
   const { filters } = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } =
-    useSuspenseInfiniteQuery(
-      trpc.warehouse.readPurchases.infiniteQueryOptions(
-        { cursor: 0, filters },
-        {
-          getNextPageParam: (lastPage) => lastPage.nextCursor,
-        }
-      )
-    );
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+  }: PurchasesInfiniteQueryResult = usePurchasesInfiniteQuery(filters);
 
   const { ref } = useInView({
     threshold: 0,
@@ -64,14 +65,18 @@ function RouteComponent() {
       search: (prev) => ({
         ...prev,
         filters: searchFilters.map((v) => {
-          if (isValidDateString(v.value))
+          if (v.field === "arrivalDate")
             return {
               field: v.field,
               value: format(v.value, "yyyy-MM-dd"),
             };
 
-          return v;
+          return {
+            field: v.field,
+            value: v.value,
+          };
         }),
+        // filters: [{ field: "labelId", value: "0007" }],
       }),
     });
   };
@@ -113,6 +118,7 @@ function RouteComponent() {
           <div className="flex space-x-2">
             <MaterialSearchDialog onSearch={handleSearch} />
             <MaterialCreateDialog />
+            <UploadMaterialsXLSXButton />
           </div>
         </div>
       }

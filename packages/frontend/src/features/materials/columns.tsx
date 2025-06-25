@@ -1,9 +1,11 @@
 import { MaterialCreateDialog } from "@/components/dialogs/material-create-dialog";
+import { MaterialCuttingDialog } from "@/components/dialogs/material-cutting-dialog";
+import { PurchasesColumns } from "@/features/materials/use-purchases-infinite-query";
 import { Material } from "@myapp/shared";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { format } from "date-fns";
 
-const columnHelper = createColumnHelper<Material>();
+const columnHelper = createColumnHelper<PurchasesColumns>();
 
 export const materialColumns = [
   columnHelper.accessor("supplier", {
@@ -31,9 +33,17 @@ export const materialColumns = [
       return date ? format(date, "yyyy/MM/dd") : "";
     },
   }),
+  columnHelper.accessor("arrivalConfirmedEmployee.chName", {
+    header: "進貨人員",
+  }),
   columnHelper.accessor("status", { header: "狀態", id: "status" }),
   columnHelper.display({
     id: "actions",
-    cell: ({ row }) => <MaterialCreateDialog material={row.original} />,
+    cell: ({ row }) => (
+      <div className="flex space-x-2">
+        <MaterialCreateDialog material={row.original} />
+        <MaterialCuttingDialog material={row.original} />
+      </div>
+    ),
   }),
 ] as ColumnDef<Material>[];

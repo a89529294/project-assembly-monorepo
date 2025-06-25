@@ -4,9 +4,9 @@ import { basicInfoRouter } from "./basic-info/router.js";
 import { router } from "./core.js";
 import { personnelPermissionRouter } from "./personnel-permission/router.js";
 import { productionRouter } from "./production/router.js";
-import { warehouseRouter } from "./warehouse/router.js";
-
 type RouterOutput = inferRouterOutputs<AppRouter>;
+
+import { warehouseRouter } from "./warehouse/router.js";
 
 export const appRouter = router({
   auth: authRouter,

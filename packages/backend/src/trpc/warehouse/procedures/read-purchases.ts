@@ -1,14 +1,15 @@
+import {
+  employeesTable,
+  keyOfMaterialSchema,
+  MATERIAL_STATUS,
+  MaterialKey,
+  materialsTable,
+} from "@myapp/shared";
+import { TRPCError } from "@trpc/server";
+import { and, desc, eq, getTableColumns, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "../../../db";
 import { protectedProcedure } from "../../core";
-import {
-  materialsTable,
-  Material,
-  MATERIAL_STATUS,
-  keyOfMaterialSchema,
-  MaterialKey,
-} from "@myapp/shared";
 
 const DATE_FIELDS = new Set([
   "arrivalDate",
@@ -50,14 +51,6 @@ export const readPurchasesProcedure = protectedProcedure([
         .optional(),
     })
   )
-  .output(
-    z.object({
-      items: z.array(
-        z.custom<Material>((data) => typeof data === "object" && data !== null)
-      ),
-      nextCursor: z.number().nullish(),
-    })
-  )
   .query(async ({ input }) => {
     const { cursor, filters } = input;
     const limit = 20;
@@ -78,22 +71,42 @@ export const readPurchasesProcedure = protectedProcedure([
       whereConditions.push(and(...filterConditions));
     }
 
-    const items = await db
-      .select()
+    let query = db
+      .select({
+        ...getTableColumns(materialsTable),
+        arrivalConfirmedEmployee: {
+          id: employeesTable.id,
+          chName: employeesTable.chName,
+        },
+      })
       .from(materialsTable)
+      .leftJoin(
+        employeesTable,
+        eq(materialsTable.arrivalConfirmedEmployeeId, employeesTable.id)
+      )
       .where(and(...whereConditions))
       .orderBy(desc(materialsTable.createdAt))
-
       .limit(limit)
       .offset(offset);
 
-    let nextCursor: number | undefined = undefined;
-    if (items.length === limit) {
-      nextCursor = offset + items.length;
-    }
+    try {
+      const materials = await query;
 
-    return {
-      items,
-      nextCursor,
-    };
+      let nextCursor: number | undefined = undefined;
+      if (materials.length === limit) {
+        nextCursor = offset + materials.length;
+      }
+
+      return {
+        items: materials,
+        nextCursor,
+      };
+    } catch (error) {
+      console.error("Failed to read purchases:", error);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "An unexpected error occurred while reading purchases.",
+        cause: error,
+      });
+    }
   });
