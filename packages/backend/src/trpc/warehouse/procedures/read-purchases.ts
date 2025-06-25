@@ -85,7 +85,7 @@ export const readPurchasesProcedure = protectedProcedure([
         eq(materialsTable.arrivalConfirmedEmployeeId, employeesTable.id)
       )
       .where(and(...whereConditions))
-      .orderBy(desc(materialsTable.createdAt))
+      .orderBy(desc(materialsTable.updatedAt))
       .limit(limit)
       .offset(offset);
 

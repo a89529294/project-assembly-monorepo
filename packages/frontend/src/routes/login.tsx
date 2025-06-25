@@ -25,9 +25,12 @@ function Login() {
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [logginIn, setLogginIn] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
+
+  console.log(isAuthenticated, user);
 
   useEffect(() => {
+    console.log(isAuthenticated, user);
     if (isAuthenticated) {
       navigate({ to: search.redirect || "/" });
     }
