@@ -36,7 +36,9 @@ function getStoredAuth() {
 function setStoredAuth(storedAuth: StoredAuth | null) {
   if (storedAuth) {
     localStorage.setItem(userKey, JSON.stringify(storedAuth.user));
+    console.log("setting session token key in localstorage");
     localStorage.setItem(sessionTokenKey, storedAuth.sessionToken);
+    console.log(storedAuth.sessionToken);
   } else {
     // if (import.meta.env.PROD) {
     localStorage.removeItem(userKey);
@@ -84,8 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sessionToken: data.sessionToken,
           user: data.user,
         };
-        setAuth(newAuth);
         setStoredAuth(newAuth);
+        setAuth(newAuth);
       } catch (e) {
         console.error(e);
         throw e;

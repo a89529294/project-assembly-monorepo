@@ -8,6 +8,8 @@ import {
   createEmployeeProcedure,
   deleteEmployeesProcedure,
   readEmployeeByIdProcedure,
+  readEmployeeDepartmentsProcedure,
+  readEmployeesByDepartmentProcedure,
   readEmployeesProcedure,
   updateEmployeeByIdProcedure,
 } from "./employee-procedures.js";
@@ -30,8 +32,10 @@ import {
 } from "./projects-procedures.js";
 
 export const basicInfoRouter = router({
+  readEmployeeDepartments: readEmployeeDepartmentsProcedure,
   createEmployee: createEmployeeProcedure,
   readEmployees: readEmployeesProcedure,
+  readEmployeesByDepartment: readEmployeesByDepartmentProcedure,
   readEmployeeById: readEmployeeByIdProcedure,
   updateEmployeeById: updateEmployeeByIdProcedure,
   deleteEmployees: deleteEmployeesProcedure,

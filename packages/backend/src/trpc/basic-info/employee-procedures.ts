@@ -4,6 +4,7 @@ import {
   paginatedEmployeeSummarySchema,
   usersTable,
   selectionInputSchema,
+  employeeSummarySchema,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
 import {
@@ -296,4 +297,39 @@ export const deleteEmployeesProcedure = protectedProcedure([
         .where(inArray(employeesTable.id, employeeIds));
       return { success: true, count: employeeIds.length };
     });
+  });
+
+export const readEmployeesByDepartmentProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
+  .input(z.string())
+  .output(z.array(employeeSummarySchema))
+  .query(async ({ input: departmentId }) => {
+    const results = await db
+      .select()
+      .from(employeesTable)
+      .innerJoin(
+        employeeDepartmentsTable,
+        eq(employeeDepartmentsTable.employeeId, employeesTable.id)
+      )
+      .where(eq(employeeDepartmentsTable.departmentId, departmentId));
+
+    return results.map((v) => v.employees);
+  });
+
+export const readEmployeeDepartmentsProcedure = protectedProcedure([
+  "BasicInfoManagement",
+  "PersonnelPermissionManagement",
+])
+  .output(z.array(z.object({ id: z.string(), name: z.string() })))
+  .query(async () => {
+    const results = await db
+      .select({
+        id: departmentsTable.id,
+        name: departmentsTable.name,
+      })
+      .from(departmentsTable);
+
+    return results;
   });

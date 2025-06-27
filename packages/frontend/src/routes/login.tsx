@@ -30,7 +30,6 @@ function Login() {
   console.log(isAuthenticated, user);
 
   useEffect(() => {
-    console.log(isAuthenticated, user);
     if (isAuthenticated) {
       navigate({ to: search.redirect || "/" });
     }

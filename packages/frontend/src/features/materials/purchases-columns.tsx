@@ -7,10 +7,22 @@ import { format } from "date-fns";
 
 const columnHelper = createColumnHelper<PurchasesColumns>();
 
-export const materialColumns = [
+export const purchasesColumns = [
   columnHelper.accessor("supplier", {
     header: "供應商",
     id: "supplier",
+  }),
+  columnHelper.accessor("millSheetNo", {
+    header: "材質證明",
+    id: "millSheetNo",
+  }),
+  columnHelper.accessor("millSheetNo", {
+    header: "無輻射",
+    id: "millSheetNoNR",
+  }),
+  columnHelper.accessor("millSheetNo", {
+    header: "超音波",
+    id: "millSheetNoU",
   }),
   columnHelper.accessor("labelId", { header: "素材ID", id: "labelId" }),
   columnHelper.accessor("typeName", { header: "素材型號", id: "typeName" }),

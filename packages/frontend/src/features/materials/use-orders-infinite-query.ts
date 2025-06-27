@@ -2,16 +2,16 @@ import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { trpc } from "@/trpc";
 import { MaterialSearchFilter } from "@/components/dialogs/material-search";
 
-export type PurchasesInfiniteQueryResult = ReturnType<
-  typeof usePurchasesInfiniteQuery
+export type OrdersInfiniteQueryResult = ReturnType<
+  typeof useOrdersInfiniteQuery
 >;
 
-export type PurchasesColumns =
-  PurchasesInfiniteQueryResult["data"]["pages"][number]["items"][number];
+export type OrdersColumns =
+  OrdersInfiniteQueryResult["data"]["pages"][number]["items"][number];
 
-export function usePurchasesInfiniteQuery(filters: MaterialSearchFilter[]) {
+export function useOrdersInfiniteQuery(filters: MaterialSearchFilter[]) {
   return useSuspenseInfiniteQuery(
-    trpc.warehouse.readPurchases.infiniteQueryOptions(
+    trpc.warehouse.readOrders.infiniteQueryOptions(
       { cursor: 0, filters },
       {
         initialCursor: 0,

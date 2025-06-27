@@ -1,4 +1,6 @@
 import {
+  Ambulance,
+  Database,
   Home,
   LucideBadgePlus,
   LucideFileLock2,
@@ -11,6 +13,7 @@ import {
   LucideRocket,
   LucideRows4,
   LucideTable2,
+  Radiation,
 } from "lucide-react";
 
 import { BuildingSVG } from "@/components/svg/sidebar/building-svg";
@@ -177,12 +180,39 @@ export const genPaths = ({
     ],
     warehouseRoutes: [
       {
+        title: "待進貨明細",
+        basePath: "/warehouse/orders",
+        linkOptions: {
+          to: "/warehouse/orders",
+        },
+        icon: Ambulance,
+        roleNames: ["WarehouseManagement", "AdminManagement"],
+      },
+      {
         title: "進貨明細",
         basePath: "/warehouse/purchases",
         linkOptions: {
           to: "/warehouse/purchases",
         },
         icon: Home,
+        roleNames: ["WarehouseManagement", "AdminManagement"],
+      },
+      {
+        title: "倉庫明細",
+        basePath: "/warehouse/stocked",
+        linkOptions: {
+          to: "/warehouse/stocked",
+        },
+        icon: Database,
+        roleNames: ["WarehouseManagement", "AdminManagement"],
+      },
+      {
+        title: "銷貨明細",
+        basePath: "/warehouse/consumed",
+        linkOptions: {
+          to: "/warehouse/consumed",
+        },
+        icon: Radiation,
         roleNames: ["WarehouseManagement", "AdminManagement"],
       },
     ],

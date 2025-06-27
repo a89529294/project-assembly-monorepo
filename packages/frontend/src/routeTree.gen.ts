@@ -21,6 +21,7 @@ import { Route as DashboardBasicInfoRouteImport } from './routes/_dashboard/basi
 import { Route as DashboardProductionIndexImport } from './routes/_dashboard/production/index'
 import { Route as DashboardWarehouseStockedImport } from './routes/_dashboard/warehouse/stocked'
 import { Route as DashboardWarehousePurchasesImport } from './routes/_dashboard/warehouse/purchases'
+import { Route as DashboardWarehouseOrdersImport } from './routes/_dashboard/warehouse/orders'
 import { Route as DashboardWarehouseConsumedImport } from './routes/_dashboard/warehouse/consumed'
 import { Route as DashboardCustomersCreateImport } from './routes/_dashboard/customers/create'
 import { Route as DashboardBasicInfoCompanyInfoImport } from './routes/_dashboard/basic-info/company-info'
@@ -100,6 +101,12 @@ const DashboardWarehousePurchasesRoute =
     path: '/purchases',
     getParentRoute: () => DashboardWarehouseRouteRoute,
   } as any)
+
+const DashboardWarehouseOrdersRoute = DashboardWarehouseOrdersImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => DashboardWarehouseRouteRoute,
+} as any)
 
 const DashboardWarehouseConsumedRoute = DashboardWarehouseConsumedImport.update(
   {
@@ -292,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/consumed'
       fullPath: '/warehouse/consumed'
       preLoaderRoute: typeof DashboardWarehouseConsumedImport
+      parentRoute: typeof DashboardWarehouseRouteImport
+    }
+    '/_dashboard/warehouse/orders': {
+      id: '/_dashboard/warehouse/orders'
+      path: '/orders'
+      fullPath: '/warehouse/orders'
+      preLoaderRoute: typeof DashboardWarehouseOrdersImport
       parentRoute: typeof DashboardWarehouseRouteImport
     }
     '/_dashboard/warehouse/purchases': {
@@ -503,6 +517,7 @@ const DashboardProductionRouteRouteWithChildren =
 
 interface DashboardWarehouseRouteRouteChildren {
   DashboardWarehouseConsumedRoute: typeof DashboardWarehouseConsumedRoute
+  DashboardWarehouseOrdersRoute: typeof DashboardWarehouseOrdersRoute
   DashboardWarehousePurchasesRoute: typeof DashboardWarehousePurchasesRoute
   DashboardWarehouseStockedRoute: typeof DashboardWarehouseStockedRoute
 }
@@ -510,6 +525,7 @@ interface DashboardWarehouseRouteRouteChildren {
 const DashboardWarehouseRouteRouteChildren: DashboardWarehouseRouteRouteChildren =
   {
     DashboardWarehouseConsumedRoute: DashboardWarehouseConsumedRoute,
+    DashboardWarehouseOrdersRoute: DashboardWarehouseOrdersRoute,
     DashboardWarehousePurchasesRoute: DashboardWarehousePurchasesRoute,
     DashboardWarehouseStockedRoute: DashboardWarehouseStockedRoute,
   }
@@ -550,6 +566,7 @@ export interface FileRoutesByFullPath {
   '/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/customers/create': typeof DashboardCustomersCreateRoute
   '/warehouse/consumed': typeof DashboardWarehouseConsumedRoute
+  '/warehouse/orders': typeof DashboardWarehouseOrdersRoute
   '/warehouse/purchases': typeof DashboardWarehousePurchasesRoute
   '/warehouse/stocked': typeof DashboardWarehouseStockedRoute
   '/production/': typeof DashboardProductionIndexRoute
@@ -578,6 +595,7 @@ export interface FileRoutesByTo {
   '/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/customers/create': typeof DashboardCustomersCreateRoute
   '/warehouse/consumed': typeof DashboardWarehouseConsumedRoute
+  '/warehouse/orders': typeof DashboardWarehouseOrdersRoute
   '/warehouse/purchases': typeof DashboardWarehousePurchasesRoute
   '/warehouse/stocked': typeof DashboardWarehouseStockedRoute
   '/production': typeof DashboardProductionIndexRoute
@@ -609,6 +627,7 @@ export interface FileRoutesById {
   '/_dashboard/basic-info/company-info': typeof DashboardBasicInfoCompanyInfoRoute
   '/_dashboard/customers/create': typeof DashboardCustomersCreateRoute
   '/_dashboard/warehouse/consumed': typeof DashboardWarehouseConsumedRoute
+  '/_dashboard/warehouse/orders': typeof DashboardWarehouseOrdersRoute
   '/_dashboard/warehouse/purchases': typeof DashboardWarehousePurchasesRoute
   '/_dashboard/warehouse/stocked': typeof DashboardWarehouseStockedRoute
   '/_dashboard/production/': typeof DashboardProductionIndexRoute
@@ -641,6 +660,7 @@ export interface FileRouteTypes {
     | '/basic-info/company-info'
     | '/customers/create'
     | '/warehouse/consumed'
+    | '/warehouse/orders'
     | '/warehouse/purchases'
     | '/warehouse/stocked'
     | '/production/'
@@ -668,6 +688,7 @@ export interface FileRouteTypes {
     | '/basic-info/company-info'
     | '/customers/create'
     | '/warehouse/consumed'
+    | '/warehouse/orders'
     | '/warehouse/purchases'
     | '/warehouse/stocked'
     | '/production'
@@ -697,6 +718,7 @@ export interface FileRouteTypes {
     | '/_dashboard/basic-info/company-info'
     | '/_dashboard/customers/create'
     | '/_dashboard/warehouse/consumed'
+    | '/_dashboard/warehouse/orders'
     | '/_dashboard/warehouse/purchases'
     | '/_dashboard/warehouse/stocked'
     | '/_dashboard/production/'
@@ -794,6 +816,7 @@ export const routeTree = rootRoute
       "parent": "/_dashboard",
       "children": [
         "/_dashboard/warehouse/consumed",
+        "/_dashboard/warehouse/orders",
         "/_dashboard/warehouse/purchases",
         "/_dashboard/warehouse/stocked"
       ]
@@ -812,6 +835,10 @@ export const routeTree = rootRoute
     },
     "/_dashboard/warehouse/consumed": {
       "filePath": "_dashboard/warehouse/consumed.tsx",
+      "parent": "/_dashboard/warehouse"
+    },
+    "/_dashboard/warehouse/orders": {
+      "filePath": "_dashboard/warehouse/orders.tsx",
       "parent": "/_dashboard/warehouse"
     },
     "/_dashboard/warehouse/purchases": {

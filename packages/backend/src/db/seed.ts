@@ -368,7 +368,7 @@ async function main() {
       Math.random() * materialTypes[typeIndex].specs.length
     );
     const materialType = materialTypes[typeIndex];
-    const status = MATERIAL_STATUS[0];
+
     const subLocation =
       warehouseSubLocations[
         Math.floor(Math.random() * warehouseSubLocations.length)
@@ -379,6 +379,8 @@ async function main() {
 
     const daysAgo = Math.floor(Math.random() * 365 * 5);
 
+    const isInTransport = Math.random() > 0.5;
+
     const materialData = {
       id: randomUUID(),
       supplier: `中龍`,
@@ -388,11 +390,15 @@ async function main() {
       specification: materialType.specs[specIndex],
       length: (Math.floor(Math.random() * 30) + 1).toString(), // 1-30 meters
       weight: materialType.weights[specIndex],
-      status: status,
+      status: isInTransport ? MATERIAL_STATUS[0] : MATERIAL_STATUS[1],
       originalSource: MATERIAL_SOURCE[1],
       currentSource: MATERIAL_SOURCE[1],
-      arrivalDate: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000),
-      arrivalConfirmedEmployeeId: employeesFromDB[0].id,
+      arrivalDate: isInTransport
+        ? undefined
+        : new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000),
+      arrivalConfirmedEmployeeId: isInTransport
+        ? undefined
+        : employeesFromDB[0].id,
     };
 
     return materialData;

@@ -9,7 +9,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { materialColumns } from "@/features/materials/columns";
 import {
   Select,
   SelectContent,
@@ -19,8 +18,8 @@ import {
 } from "@/components/ui/select";
 import { XIcon } from "lucide-react";
 import { Material, MaterialKey } from "@myapp/shared";
-import { AccessorColumnDef } from "@tanstack/react-table";
-import { getRouteApi } from "@tanstack/react-router";
+import { AccessorColumnDef, ColumnDef } from "@tanstack/react-table";
+
 import { YearMonthDateCalendar } from "@/components/year-month-date-calendar";
 import {
   Popover,
@@ -38,6 +37,8 @@ export type MaterialSearchFilter = {
 
 interface MaterialSearchDialogProps {
   onSearch: (filters: MaterialSearchFilter[]) => void;
+  routeFilters: MaterialSearchFilter[];
+  columns: ColumnDef<Material>[];
 }
 
 const defaultFilters = [
@@ -47,18 +48,18 @@ const defaultFilters = [
   },
 ];
 
-const searchableFields = materialColumns
-  .filter((c): c is AccessorColumnDef<Material> => "accessorKey" in c)
-  .map((c) => ({ key: c.id as MaterialKey, header: c.header }));
-
-const purchasesRouteApi = getRouteApi("/_dashboard/warehouse/purchases");
-
 const dateFields = ["arrivalDate"];
 
-export function MaterialSearchDialog({ onSearch }: MaterialSearchDialogProps) {
-  const { filters: routeFilters } = purchasesRouteApi.useSearch();
+export function MaterialSearchDialog({
+  onSearch,
+  routeFilters,
+  columns,
+}: MaterialSearchDialogProps) {
   const [open, setOpen] = useState(false);
   const [localFilters, setLocalFilters] = useState(routeFilters);
+  const searchableFields = columns
+    .filter((c): c is AccessorColumnDef<Material> => "accessorKey" in c)
+    .map((c) => ({ key: c.id as MaterialKey, header: c.header }));
 
   useEffect(() => {
     if (open) {
