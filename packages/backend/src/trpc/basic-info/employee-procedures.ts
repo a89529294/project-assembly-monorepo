@@ -306,6 +306,18 @@ export const readEmployeesByDepartmentProcedure = protectedProcedure([
   .input(z.string())
   .output(z.array(employeeSummarySchema))
   .query(async ({ input: departmentId }) => {
+    if (departmentId === "unassigned") {
+      const results = await db
+        .select()
+        .from(employeesTable)
+        .leftJoin(
+          employeeDepartmentsTable,
+          eq(employeeDepartmentsTable.employeeId, employeesTable.id)
+        )
+        .where(isNull(employeeDepartmentsTable.departmentId));
+      return results.map((v) => v.employees);
+    }
+
     const results = await db
       .select()
       .from(employeesTable)

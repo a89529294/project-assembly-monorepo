@@ -6,16 +6,7 @@ import {
   materialsTable,
 } from "@myapp/shared";
 import { TRPCError } from "@trpc/server";
-import {
-  and,
-  desc,
-  eq,
-  getTableColumns,
-  ilike,
-  or,
-  sql,
-  SQL,
-} from "drizzle-orm";
+import { and, desc, eq, getTableColumns, ilike, sql, SQL } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../../db";
 import { protectedProcedure } from "../../core";

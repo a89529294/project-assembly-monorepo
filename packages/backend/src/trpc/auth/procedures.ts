@@ -58,6 +58,8 @@ export const loginProcedure = publicProcedure
       user: {
         account: user.account,
         id: user.id,
+        employeeId: user.employeeId,
+        departmentIds: user.departmentIds,
         name: user.name,
         isAdmin: isAdminUser,
         roles: roles,
