@@ -11,7 +11,6 @@ const config = {
   // headers: generateHeaders,
   headers: () => {
     const token = localStorage.getItem(sessionTokenKey);
-    console.log(token);
     return token
       ? { Authorization: `Bearer ${token}` }
       : ({} as Record<string, never>);

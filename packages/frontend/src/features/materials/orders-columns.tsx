@@ -1,6 +1,6 @@
-import { MaterialCreateDialog } from "@/components/dialogs/material-create-dialog";
-import { MaterialCuttingDialog } from "@/components/dialogs/material-cutting-dialog";
+import { MaterialDetailDialog } from "@/components/dialogs/material-detail-dialog";
 import { OrdersColumns } from "@/features/materials/use-orders-infinite-query";
+import { trpc } from "@/trpc";
 import { Material } from "@myapp/shared";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 
@@ -41,8 +41,10 @@ export const ordersColumns = [
     id: "actions",
     cell: ({ row }) => (
       <div className="flex space-x-2">
-        <MaterialCreateDialog material={row.original} />
-        <MaterialCuttingDialog material={row.original} />
+        <MaterialDetailDialog
+          queryKeyToInvalidate={trpc.warehouse.readOrders.infiniteQueryKey()}
+          material={row.original}
+        />
       </div>
     ),
   }),

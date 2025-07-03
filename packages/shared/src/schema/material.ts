@@ -1,5 +1,12 @@
 import { getTableColumns, relations } from "drizzle-orm";
-import { numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { z } from "zod";
 import { baseSchema } from "./common";
 import { employeesTable } from "./employees";
@@ -63,6 +70,8 @@ export const materialsTable = pgTable("materials", {
   }),
   originalSource: materialSourceEnum("original_source").notNull(), // set once on creation
   currentSource: materialSourceEnum("current_source").notNull(), // updates everytime material is updated either through excel or sync, or manual if the material is created.
+
+  isCuttable: boolean("is_cuttable").$default(() => true),
 });
 
 export const materialRelations = relations(materialsTable, ({ one, many }) => ({

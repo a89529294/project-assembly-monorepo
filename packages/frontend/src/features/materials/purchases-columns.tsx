@@ -1,9 +1,10 @@
-import { MaterialCreateDialog } from "@/components/dialogs/material-create-dialog";
+import { MaterialDetailDialog } from "@/components/dialogs/material-detail-dialog";
 import { MaterialCuttingDialog } from "@/components/dialogs/material-cutting-dialog";
 import { PurchasesColumns } from "@/features/materials/use-purchases-infinite-query";
 import { Material } from "@myapp/shared";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { format } from "date-fns";
+import { trpc } from "@/trpc";
 
 const columnHelper = createColumnHelper<PurchasesColumns>();
 
@@ -53,8 +54,13 @@ export const purchasesColumns = [
     id: "actions",
     cell: ({ row }) => (
       <div className="flex space-x-2">
-        <MaterialCreateDialog material={row.original} />
-        <MaterialCuttingDialog material={row.original} />
+        <MaterialDetailDialog
+          queryKeyToInvalidate={trpc.warehouse.readPurchases.infiniteQueryKey()}
+          material={row.original}
+        />
+        {row.original.isCuttable && (
+          <MaterialCuttingDialog material={row.original} />
+        )}
       </div>
     ),
   }),

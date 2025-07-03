@@ -33,8 +33,16 @@ import {
 import { cn } from "@/lib/utils";
 import { YearMonthDateCalendar } from "@/components/year-month-date-calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+import { TRPCQueryKey } from "@trpc/tanstack-react-query";
 
-export function MaterialCreateDialog({ material }: { material?: Material }) {
+export function MaterialDetailDialog({
+  material,
+  queryKeyToInvalidate,
+}: {
+  material?: Material;
+  queryKeyToInvalidate: TRPCQueryKey;
+}) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate({ from: "/warehouse/purchases" });
   const queryClient = useQueryClient();
@@ -50,7 +58,14 @@ export function MaterialCreateDialog({ material }: { material?: Material }) {
     trpc.warehouse.updatePurchase.mutationOptions()
   );
 
-  const isPending = isCreating || isUpdating;
+  const deleteMaterial = useMutation(
+    trpc.warehouse.deleteMaterial.mutationOptions()
+  );
+
+  const isPending = isCreating || isUpdating || deleteMaterial.isPending;
+
+  const showSubmitSpinner = isCreating || isUpdating;
+  const showDeleteSpinner = deleteMaterial.isPending;
 
   useEffect(() => {
     if (material) {
@@ -86,8 +101,9 @@ export function MaterialCreateDialog({ material }: { material?: Material }) {
       form.reset();
       setOpen(false);
 
+      toast.success("成功更新素材");
       await queryClient.invalidateQueries({
-        queryKey: trpc.warehouse.readPurchases.infiniteQueryKey(),
+        queryKey: queryKeyToInvalidate,
       });
       navigate({
         search: (prev) => ({
@@ -98,6 +114,19 @@ export function MaterialCreateDialog({ material }: { material?: Material }) {
     } catch (error) {
       console.error("Failed to create purchase:", error);
     }
+  };
+
+  const handleDeleteMaterial = () => {
+    if (!material) return;
+
+    deleteMaterial.mutate(material.id, {
+      onSuccess() {
+        toast.success("成功移除素材");
+        queryClient.invalidateQueries({
+          queryKey: queryKeyToInvalidate,
+        });
+      },
+    });
   };
 
   return (
@@ -307,10 +336,28 @@ export function MaterialCreateDialog({ material }: { material?: Material }) {
                 />
               </div>
             </ScrollArea>
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              提交
-            </Button>
+            <footer className="flex gap-2 justify-end">
+              {material && (
+                <Button
+                  type="button"
+                  className=""
+                  disabled={isPending}
+                  variant="destructive"
+                  onClick={handleDeleteMaterial}
+                >
+                  {showDeleteSpinner && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  刪除素材
+                </Button>
+              )}
+              <Button type="submit" className="" disabled={isPending}>
+                {showSubmitSpinner && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                提交
+              </Button>
+            </footer>
           </form>
         </Form>
       </DialogContent>

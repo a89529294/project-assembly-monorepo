@@ -7,6 +7,8 @@ import {
 import { updatePurchaseProcedure } from "./procedures/update-purchase-procedure";
 import { confirmMaterialArrivalProcedure } from "./procedures/confirm-material-arrival-procedure";
 import { createPurchasesUsingXLSXProcedure } from "./procedures/create-purchases-using-xlsx.js";
+import { cutMaterialProcedure } from "./procedures/cut-material-procedure.js";
+import { deleteMaterialProcedure } from "./procedures/delete-material-procedure.js";
 
 export const warehouseRouter = router({
   createPurchase: createPurchaseProcedure,
@@ -15,4 +17,6 @@ export const warehouseRouter = router({
   updatePurchase: updatePurchaseProcedure,
   createPurchasesUsingXLSX: createPurchasesUsingXLSXProcedure,
   confirmMaterialArrival: confirmMaterialArrivalProcedure,
+  cutMaterial: cutMaterialProcedure,
+  deleteMaterial: deleteMaterialProcedure,
 });

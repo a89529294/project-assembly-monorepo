@@ -1,10 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { PendingComponent } from "@/components/pending-component";
-import { z } from "zod";
-import { useOrdersInfiniteQuery } from "@/features/materials/use-orders-infinite-query";
 import { MaterialTransactionPage } from "@/features/materials/components/material-transaction-page";
+import { useOrdersInfiniteQuery } from "@/features/materials/use-orders-infinite-query";
 import { keyOfMaterialSchema } from "@myapp/shared";
-import { ordersColumns } from "@/features/materials/orders-columns";
+import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 
 export const Route = createFileRoute("/_dashboard/warehouse/orders")({
   validateSearch: z.object({
@@ -26,13 +25,13 @@ function RouteComponent() {
   const { filters } = Route.useSearch();
   const navigate = Route.useNavigate();
 
+  useOrdersInfiniteQuery(filters);
+
   return (
     <MaterialTransactionPage
-      title="待進貨明細"
       filters={filters}
-      useInfiniteQuery={useOrdersInfiniteQuery}
       navigate={navigate}
-      columns={ordersColumns}
+      variant="orders"
     />
   );
 }

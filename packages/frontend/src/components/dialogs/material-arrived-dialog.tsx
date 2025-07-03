@@ -26,10 +26,12 @@ import { queryClient } from "@/query-client";
 
 interface MaterialArrivedDialogProps {
   selectedMaterials: Material[];
+  onSuccess: () => void;
 }
 
 export function MaterialArrivedDialog({
   selectedMaterials,
+  onSuccess,
 }: MaterialArrivedDialogProps) {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
@@ -65,6 +67,7 @@ export function MaterialArrivedDialog({
         queryClient.invalidateQueries({
           queryKey: trpc.warehouse.readOrders.infiniteQueryKey(),
         });
+        onSuccess();
       },
     })
   );
