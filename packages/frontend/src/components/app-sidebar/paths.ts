@@ -14,6 +14,7 @@ import {
   LucideRows4,
   LucideTable2,
   Radiation,
+  ShieldCheck,
 } from "lucide-react";
 
 import { BuildingSVG } from "@/components/svg/sidebar/building-svg";
@@ -213,6 +214,15 @@ export const genPaths = ({
           to: "/warehouse/consumed",
         },
         icon: Radiation,
+        roleNames: ["WarehouseManagement", "AdminManagement"],
+      },
+      {
+        title: "證明資料庫",
+        basePath: "/warehouse/certificates",
+        linkOptions: {
+          to: "/warehouse/certificates",
+        },
+        icon: ShieldCheck,
         roleNames: ["WarehouseManagement", "AdminManagement"],
       },
     ],
