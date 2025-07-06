@@ -11,7 +11,7 @@ import {
 } from "../../db/session-api.js";
 import { getUserRoles, isAdmin } from "../../helpers/auth.js";
 import { db } from "../../db/index.js";
-import { usersTable } from "../../db/schema.js";
+import { employeeDepartmentsTable, usersTable } from "../../db/schema.js";
 import { eq } from "drizzle-orm";
 import { protectedProcedure, publicProcedure } from "../../trpc/core.js";
 
@@ -132,6 +132,32 @@ export const updatePasswordProcedure = protectedProcedure()
       },
     };
   });
+
+export const validateSessionProcedure = protectedProcedure().query(async ({ ctx }) => {
+  const user = ctx.user;
+  let departmentIds: string[] = [];
+
+  if (user.employeeId) {
+    const departmentRelations = await db
+      .select({ departmentId: employeeDepartmentsTable.departmentId })
+      .from(employeeDepartmentsTable)
+      .where(eq(employeeDepartmentsTable.employeeId, user.employeeId));
+    departmentIds = departmentRelations.map((r) => r.departmentId);
+  }
+
+  const roles = await getUserRoles(user.id);
+  const isAdminUser = await isAdmin(user.id);
+
+  return {
+    id: user.id,
+    name: user.name,
+    account: user.account,
+    employeeId: user.employeeId,
+    departmentIds,
+    roles,
+    isAdmin: isAdminUser,
+  };
+});
 
 export const logoutProcedure = protectedProcedure().mutation(
   async ({ ctx }) => {

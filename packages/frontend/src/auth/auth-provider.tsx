@@ -1,107 +1,161 @@
 import * as React from "react";
 import { AuthContext } from ".";
 
+import { FullScreenSpinner } from "@/components/full-screen-spinner";
 import { sessionTokenKey, userKey } from "@/constants";
 import { trpc } from "@/trpc";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { User } from "../../../backend/src/trpc/router";
 
-type StoredAuth = {
-  user: User;
-  sessionToken: string;
-};
-
-function getStoredAuth() {
-  if (
-    !localStorage.getItem(userKey) ||
-    !localStorage.getItem(sessionTokenKey)
-  ) {
-    // if (import.meta.env.PROD) {
-    localStorage.removeItem(userKey);
-    localStorage.removeItem(sessionTokenKey);
-    // }
-    return null;
-  }
-
-  const userFromLocalStorage = JSON.parse(
-    localStorage.getItem(userKey)!
-  ) as User;
-
-  return {
-    user: userFromLocalStorage,
-    sessionToken: localStorage.getItem(sessionTokenKey)!,
-  };
-}
-
-function setStoredAuth(storedAuth: StoredAuth | null) {
-  if (storedAuth) {
-    localStorage.setItem(userKey, JSON.stringify(storedAuth.user));
-    console.log("setting session token key in localstorage");
-    localStorage.setItem(sessionTokenKey, storedAuth.sessionToken);
-    console.log(storedAuth.sessionToken);
-  } else {
-    // if (import.meta.env.PROD) {
-    localStorage.removeItem(userKey);
-    localStorage.removeItem(sessionTokenKey);
-    // }
-  }
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [auth, setAuth] = React.useState<StoredAuth | null>(() =>
-    getStoredAuth()
-  );
-  const isAuthenticated = !!auth;
-  const { mutateAsync: trcpLogin } = useMutation(
-    trpc.auth.login.mutationOptions()
-  );
+  // Single source of truth for auth state
+  const [authState, setAuthState] = React.useState<{
+    isAuthenticated: boolean;
+    user: User | null;
+    sessionToken: string | null;
+    isLoading: boolean;
+  }>(() => {
+    // Initialize from localStorage on mount
+    const sessionToken = localStorage.getItem(sessionTokenKey);
+    const userJson = localStorage.getItem(userKey);
 
-  const { mutateAsync: trpcLogout } = useMutation(
-    trpc.auth.logout.mutationOptions()
-  );
+    // Clear invalid state
+    if (!sessionToken || !userJson) {
+      localStorage.removeItem(sessionTokenKey);
+      localStorage.removeItem(userKey);
+      return {
+        isAuthenticated: false,
+        user: null,
+        sessionToken: null,
+        isLoading: false,
+      };
+    }
 
-  const clearAuth = React.useCallback(() => {
-    setStoredAuth(null);
-    setAuth(null);
-  }, []);
+    // Valid initial state - will validate on mount
+    return {
+      isAuthenticated: true,
+      user: JSON.parse(userJson),
+      sessionToken,
+      isLoading: true,
+    };
+  });
 
-  const logout = React.useCallback(
-    async (cb: () => void) => {
-      try {
-        await trpcLogout();
-      } finally {
-        setStoredAuth(null);
-        setAuth(null);
-        cb();
-      }
+  // Session validation query
+  const validateSessionQuery = useQuery({
+    ...trpc.auth.validateSession.queryOptions(),
+    enabled: !!authState.sessionToken && authState.isLoading,
+    retry: false,
+    staleTime: Infinity,
+  });
+
+  // Handle session validation results
+  React.useEffect(() => {
+    if (validateSessionQuery.isFetching) return;
+
+    if (validateSessionQuery.data) {
+      // Session is valid, update user data
+      setAuthState((prev) => ({
+        ...prev,
+        isAuthenticated: true,
+        user: validateSessionQuery.data,
+        isLoading: false,
+      }));
+
+      // Update localStorage with fresh user data
+      localStorage.setItem(userKey, JSON.stringify(validateSessionQuery.data));
+    } else {
+      // Session validation failed - clear everything
+      localStorage.removeItem(sessionTokenKey);
+      localStorage.removeItem(userKey);
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        sessionToken: null,
+        isLoading: false,
+      });
+    }
+  }, [validateSessionQuery.data, validateSessionQuery.isFetching]);
+
+  // Login mutation
+  const loginMutation = useMutation({
+    mutationFn: trpc.auth.login.mutationOptions().mutationFn,
+    onSuccess: (data) => {
+      // Update localStorage
+      localStorage.setItem(sessionTokenKey, data.sessionToken);
+      localStorage.setItem(userKey, JSON.stringify(data.user));
+
+      // Update state
+      setAuthState({
+        isAuthenticated: true,
+        user: data.user,
+        sessionToken: data.sessionToken,
+        isLoading: false,
+      });
     },
-    [trpcLogout]
-  );
+  });
 
-  const login: AuthContext["login"] = React.useCallback(
-    async (account, password) => {
+  // Login handler
+  const login = React.useCallback(
+    async (account: string, password: string) => {
       try {
-        const data = await trcpLogin({ account: account, password: password });
-        const newAuth = {
-          sessionToken: data.sessionToken,
-          user: data.user,
-        };
-        setStoredAuth(newAuth);
-        setAuth(newAuth);
+        await loginMutation.mutateAsync({ account, password });
       } catch (e) {
-        console.error(e);
+        console.error("Login failed:", e);
         throw e;
       }
     },
-    [trcpLogin]
+    [loginMutation]
   );
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: trpc.auth.logout.mutationOptions().mutationFn,
+  });
+
+  // Logout handler
+  const logout = React.useCallback(async () => {
+    try {
+      // Try server logout but continue even if it fails
+      await logoutMutation.mutateAsync().catch(() => {});
+    } finally {
+      // Always clear local state
+      localStorage.removeItem(sessionTokenKey);
+      localStorage.removeItem(userKey);
+
+      // Update state immediately
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        sessionToken: null,
+        isLoading: false,
+      });
+    }
+  }, [logoutMutation]);
+
+  // Simple clearAuth function
+  const clearAuth = React.useCallback(() => {
+    localStorage.removeItem(sessionTokenKey);
+    localStorage.removeItem(userKey);
+
+    setAuthState({
+      isAuthenticated: false,
+      user: null,
+      sessionToken: null,
+      isLoading: false,
+    });
+  }, []);
+
+  // Show loading spinner during initial auth check
+  if (authState.isLoading) {
+    return <FullScreenSpinner />;
+  }
 
   return (
     <AuthContext.Provider
       value={{
-        isAuthenticated,
-        sessionToken: auth?.sessionToken ?? null,
-        user: auth?.user ?? null,
+        isAuthenticated: authState.isAuthenticated,
+        user: authState.user,
+        sessionToken: authState.sessionToken,
         login,
         logout,
         clearAuth,

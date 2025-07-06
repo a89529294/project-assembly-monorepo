@@ -1,10 +1,4 @@
-import {
-  createFileRoute,
-  Outlet,
-  redirect,
-  useNavigate,
-  useRouter,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../../auth/use-auth";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -15,23 +9,12 @@ import { CustomBreadCrumb } from "@/components/navbar/custom-breadcrumb";
 import { DialogUpdatePassword } from "@/components/dialogs/update-password";
 
 export const Route = createFileRoute("/_dashboard")({
-  async beforeLoad({ context, location }) {
-    if (!context.auth.isAuthenticated) {
-      throw redirect({
-        to: "/login",
-        search: {
-          redirect: location.href,
-        },
-      });
-    }
-  },
   component: RouteComponent,
   errorComponent: ErrorComponent,
 });
 
 function RouteComponent() {
-  const router = useRouter();
-  const navigate = Route.useNavigate();
+  const navigate = useNavigate();
 
   const { logout, user } = useAuth();
 
@@ -57,11 +40,8 @@ function RouteComponent() {
                   <DialogUpdatePassword />
                   <button
                     onClick={async () => {
-                      await logout(async () => {
-                        await router.invalidate();
-
-                        navigate({ to: "/login" });
-                      });
+                      await logout();
+                      navigate({ to: "/login" });
                     }}
                     className="flex items-center gap-2 py-3 px-4 rounded-sm text-button-md border border-primary-300 cursor-pointer"
                   >

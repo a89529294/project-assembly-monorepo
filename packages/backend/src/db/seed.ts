@@ -374,8 +374,37 @@ async function main() {
         Math.floor(Math.random() * warehouseSubLocations.length)
       ];
 
-    // Generate a realistic label ID based on material and spec
-    const labelId = `MAT-${materialType.material}-${materialType.specs[specIndex].replace(/[^a-zA-Z0-9]/g, "")}-${String(i + 1).padStart(4, "0")}`;
+    // Generate a unique 11-digit number for labelId
+    const labelId = String(10000000000 + Math.floor(Math.random() * 90000000000));
+    
+    // Generate specification in format: {H|FT|other}400x400x13x21
+    let prefix;
+    const rand = Math.random();
+    if (rand < 0.05) {
+      // 5% chance for other letters (e.g., A, B, C, etc.)
+      prefix = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
+    } else {
+      // 47.5% H, 47.5% FT
+      prefix = rand < 0.5 ? 'H' : 'FT';
+    }
+    // Parse dimensions from the spec, ensuring we get valid numbers
+    const specParts = materialType.specs[specIndex].split('x');
+    const dimensions = specParts.map(part => {
+      const num = parseFloat(part);
+      return isNaN(num) ? 0 : Math.max(1, num); // Default to 1 if parsing fails
+    });
+    
+    // Ensure we have exactly 4 dimensions, pad with 1 if needed
+    while (dimensions.length < 4) dimensions.push(1);
+    
+    // Add some random variation to the dimensions for realism (±10%)
+    const variedDims = dimensions.map(dim => {
+      const varied = dim * (0.9 + Math.random() * 0.2);
+      return Math.max(1, Math.round(varied));
+    });
+    
+    // Create the specification string
+    const specification = `${prefix}${variedDims.join('x')}`;
 
     const daysAgo = Math.floor(Math.random() * 365 * 5);
 
@@ -387,7 +416,7 @@ async function main() {
       typeName: `型號-${String.fromCharCode(65 + (i % 5))}${i % 10}`,
       labelId,
       material: materialType.material,
-      specification: materialType.specs[specIndex],
+      specification,
       length: (Math.floor(Math.random() * 30) + 1).toString(), // 1-30 meters
       weight: materialType.weights[specIndex],
       status: isInTransport ? MATERIAL_STATUS[0] : MATERIAL_STATUS[1],

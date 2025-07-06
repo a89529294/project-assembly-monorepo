@@ -127,7 +127,6 @@ export function MaterialSearchDialog({
                 <PopoverCalendar
                   filter={filter}
                   onChange={(s) => {
-                    console.log(s);
                     const newFilters = [...localFilters];
                     newFilters[index] = {
                       ...newFilters[index],
