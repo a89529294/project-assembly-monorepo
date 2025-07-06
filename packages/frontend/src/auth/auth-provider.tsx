@@ -2,7 +2,7 @@ import * as React from "react";
 import { AuthContext } from ".";
 
 import { FullScreenSpinner } from "@/components/full-screen-spinner";
-import { sessionTokenKey, userKey } from "@/constants";
+import { sessionTokenKey } from "@/constants";
 import { trpc } from "@/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { User } from "../../../backend/src/trpc/router";
@@ -17,12 +17,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }>(() => {
     // Initialize from localStorage on mount
     const sessionToken = localStorage.getItem(sessionTokenKey);
-    const userJson = localStorage.getItem(userKey);
 
-    // Clear invalid state
-    if (!sessionToken || !userJson) {
-      localStorage.removeItem(sessionTokenKey);
-      localStorage.removeItem(userKey);
+    // No session token = not authenticated
+    if (!sessionToken) {
       return {
         isAuthenticated: false,
         user: null,
@@ -31,19 +28,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
-    // Valid initial state - will validate on mount
+    // Found session token - will validate on mount
     return {
-      isAuthenticated: true,
-      user: JSON.parse(userJson),
+      isAuthenticated: false, // Start with false until validated
+      user: null, // Start with null until user data is fetched
       sessionToken,
-      isLoading: true,
+      isLoading: true, // Show loading state while validating
     };
   });
 
   // Session validation query
   const validateSessionQuery = useQuery({
     ...trpc.auth.validateSession.queryOptions(),
-    enabled: !!authState.sessionToken && authState.isLoading,
+    enabled: !!authState.sessionToken,
     retry: false,
     staleTime: Infinity,
   });
@@ -60,13 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user: validateSessionQuery.data,
         isLoading: false,
       }));
-
-      // Update localStorage with fresh user data
-      localStorage.setItem(userKey, JSON.stringify(validateSessionQuery.data));
     } else {
       // Session validation failed - clear everything
       localStorage.removeItem(sessionTokenKey);
-      localStorage.removeItem(userKey);
       setAuthState({
         isAuthenticated: false,
         user: null,
@@ -80,9 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: trpc.auth.login.mutationOptions().mutationFn,
     onSuccess: (data) => {
-      // Update localStorage
+      // Update localStorage - only store session token
       localStorage.setItem(sessionTokenKey, data.sessionToken);
-      localStorage.setItem(userKey, JSON.stringify(data.user));
 
       // Update state
       setAuthState({
@@ -120,7 +112,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       // Always clear local state
       localStorage.removeItem(sessionTokenKey);
-      localStorage.removeItem(userKey);
 
       // Update state immediately
       setAuthState({
@@ -135,8 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Simple clearAuth function
   const clearAuth = React.useCallback(() => {
     localStorage.removeItem(sessionTokenKey);
-    localStorage.removeItem(userKey);
-
+    
     setAuthState({
       isAuthenticated: false,
       user: null,
